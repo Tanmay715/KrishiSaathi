@@ -1929,6 +1929,87 @@ textarea {
   color: var(--color-text-muted);
 }
 
+.farm-chip.is-crop {
+  color: var(--color-primary-dark);
+  background: #e8f6ee;
+  border-color: #c6e6d3;
+}
+
+.farm-chip.is-profit {
+  color: var(--color-primary-dark);
+  background: #eef8f2;
+}
+
+.farm-chip.is-loss {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.farm-detail-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(61, 184, 114, 0.14), transparent 48%),
+    linear-gradient(145deg, #ffffff 0%, #f3faf6 100%);
+  border: 1px solid var(--color-border);
+}
+
+.farm-detail-hero-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.farm-detail-hero-copy h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.02em;
+}
+
+.farm-detail-hero-copy > p {
+  margin: 0 0 10px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.farm-detail-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.farm-detail-mandi {
+  margin: 12px 0 4px;
+}
+
+.plot-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-primary-dark);
+  background: #e8f6ee;
+  border: 1px solid #c6e6d3;
+}
+
+.farm-card.is-plot .action-row {
+  justify-content: space-between;
+}
+
 .farm-card.is-rich .action-row {
   margin: 0;
   padding: 10px var(--space-4) 12px;

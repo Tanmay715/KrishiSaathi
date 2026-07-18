@@ -25,6 +25,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import Modal from '../components/Modal';
 import RemindersPanel from '../components/RemindersPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
+import OverflowMenu from '../components/OverflowMenu';
 import { INDIAN_STATES } from '../config/indian_states';
 import { normalizeLanguage } from '../utils/language';
 
@@ -266,24 +267,49 @@ function FarmDetailPage() {
   }
 
   return (
-    <div>
+    <div className="farm-detail-page">
       <div className="page-header">
         <Link to="/farms" className="back-link">
           ← {t('farms.title')}
         </Link>
-        <div className="page-header-row">
-          <div>
+      </div>
+
+      <div className="farm-detail-hero card">
+        <div className="farm-detail-hero-main">
+          <span className="farm-mark" aria-hidden="true">
+            {(farm.name || '?').trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="farm-detail-hero-copy">
             <h2>{farm.name}</h2>
             <p>{[farm.village, farm.district, farm.state].filter(Boolean).join(', ') || '—'}</p>
+            <div className="farm-card-chips">
+              <span className="farm-chip">
+                {t('farms.plot_count', { count: farm.plots?.length || 0 })}
+              </span>
+              {Number(farm.total_area) > 0 && (
+                <span className="farm-chip">
+                  {farm.total_area} {land_unit_label}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="action-row">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={openEditFarm}>
-              {t('farms.edit_farm')}
-            </button>
-            <button type="button" className="btn btn-danger btn-sm" onClick={handleDeleteFarm}>
-              {t('common.delete')}
-            </button>
-          </div>
+        </div>
+        <div className="farm-detail-hero-actions">
+          <button type="button" className="btn btn-primary btn-sm" onClick={openEditFarm}>
+            {t('farms.edit_farm')}
+          </button>
+          <OverflowMenu
+            label={t('common.more')}
+            quiet
+            items={[
+              {
+                id: 'delete-farm',
+                label: t('common.delete'),
+                danger: true,
+                onClick: handleDeleteFarm,
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -301,7 +327,7 @@ function FarmDetailPage() {
 
       <PendingIncomeSection crops={pending_income_crops} show_location />
 
-      <div className="no-print" style={{ marginTop: 16 }}>
+      <div className="no-print farm-detail-mandi">
         <MandiPricePanel
           farm_id={farm_id}
           crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
@@ -325,59 +351,61 @@ function FarmDetailPage() {
       ) : (
         <div className="farm-list">
           {farm.plots.map((plot) => (
-            <div key={plot.id} className="card farm-card">
+            <div key={plot.id} className="card farm-card is-rich is-plot">
               <Link to={`/farms/${farm_id}/plots/${plot.id}`} className="farm-card-link">
                 <div className="farm-card-top">
-                  <h3 style={{ margin: '0 0 8px' }}>{plot.name}</h3>
-                  <span className="badge">{t('farms.view_plot')} →</span>
+                  <div className="farm-card-identity">
+                    <span className="plot-mark" aria-hidden="true">
+                      {(plot.name || '?').trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <h3>{plot.name}</h3>
+                      <p className="farm-card-location">
+                        {plot.area} {land_unit_label}
+                        {plot.soil_type ? ` · ${plot.soil_type}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="farm-card-cta">{t('farms.view_plot')} →</span>
                 </div>
-                <div className="farm-meta">
-                  <span>
-                    {plot.area} {land_unit_label}
-                  </span>
-                  {plot.soil_type && <span>{plot.soil_type}</span>}
-                  {plot.active_crop && (
-                    <span className="badge badge-green">
+
+                <div className="farm-card-chips">
+                  {plot.active_crop ? (
+                    <span className="farm-chip is-crop">
                       {t('farms.active_crop')}: {plot.active_crop.crop_name}
                     </span>
+                  ) : (
+                    <span className="farm-chip">{t('crops.no_active_crop_short')}</span>
                   )}
                   {(plot.expense_total > 0 || plot.income_total > 0) && (
-                    <span className={`badge ${plot.profit >= 0 ? 'badge-green' : 'badge-loss'}`}>
+                    <span className={`farm-chip ${plot.profit >= 0 ? 'is-profit' : 'is-loss'}`}>
                       {t('farms.plot_profit')}: {plot.profit >= 0 ? '+' : '-'}₹
                       {Math.abs(Number(plot.profit || 0)).toLocaleString('en-IN')}
                     </span>
                   )}
+                  {plot.crop_history?.length > 0 && (
+                    <span className="farm-chip">
+                      {t('farms.past_crops_count', { count: plot.crop_history.length })}
+                    </span>
+                  )}
                 </div>
-                {plot.crop_history?.length > 0 && (
-                  <div className="plot-rotation-preview">
-                    <span className="section-note">{t('farms.past_crops')}</span>
-                    <ul className="plot-rotation-list">
-                      {plot.crop_history.map((crop) => (
-                        <li key={crop.id}>
-                          <strong>{crop.crop_name}</strong>
-                          <span>
-                            {t(`crops.status.${crop.status}`)}
-                            {crop.season_type ? ` · ${t(`crops.season.${crop.season_type}`)}` : ''}
-                            {crop.actual_harvest_date
-                              ? ` · ${new Date(crop.actual_harvest_date).toLocaleDateString(
-                                app_language === 'hi' ? 'hi-IN' : 'en-IN',
-                                { day: 'numeric', month: 'short', year: 'numeric' },
-                              )}`
-                              : ''}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </Link>
               <div className="action-row">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => openEditPlot(e, plot)}>
                   {t('common.edit')}
                 </button>
-                <button type="button" className="btn btn-danger btn-sm" onClick={(e) => handleDeletePlot(e, plot)}>
-                  {t('common.delete')}
-                </button>
+                <OverflowMenu
+                  label={t('common.more')}
+                  quiet
+                  items={[
+                    {
+                      id: `delete-plot-${plot.id}`,
+                      label: t('common.delete'),
+                      danger: true,
+                      onClick: () => setConfirmAction({ type: 'plot', plot }),
+                    },
+                  ]}
+                />
               </div>
             </div>
           ))}
