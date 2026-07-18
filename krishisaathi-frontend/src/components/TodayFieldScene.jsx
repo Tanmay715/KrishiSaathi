@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WeatherScene from './illustrations/WeatherScene';
 import HealthBloom from './illustrations/HealthBloom';
+import InsightIcon from './InsightIcon';
 import { weatherMood } from '../utils/field_identity';
 import { normalizeLanguage } from '../utils/language';
 
@@ -16,7 +17,6 @@ function formatForecastDate(iso_date, language) {
 function TodayFieldScene({
   weather,
   primary_action,
-  weather_advice = [],
   greeting,
   health,
   farms_count,
@@ -35,6 +35,8 @@ function TodayFieldScene({
     .filter(Boolean)
     .join(', ');
   const is_profit = net >= 0;
+  const focus_tone = primary_action?.tone || 'calm';
+  const focus_icon = primary_action?.icon || 'sprout';
 
   return (
     <section className={`today-field mood-${mood}`} aria-label={t('dashboard.hero_label')}>
@@ -63,10 +65,14 @@ function TodayFieldScene({
         </div>
 
         <div className="today-field-stage">
-          <div className="today-field-focus">
-            <span className="today-field-kicker">{t('dashboard.do_today')}</span>
+          <div className={`today-field-focus tone-${focus_tone}`}>
+            <div className="today-field-focus-top">
+              <span className="today-field-focus-icon" aria-hidden="true">
+                <InsightIcon name={focus_icon} />
+              </span>
+              <span className="today-field-kicker">{t('dashboard.do_today')}</span>
+            </div>
             <p>{primary_action?.text || t('recommendations.default')}</p>
-            {weather_advice[0] && <small>{weather_advice[0]}</small>}
           </div>
 
           <div className="today-field-health">

@@ -1,9 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import OverflowMenu from './OverflowMenu';
+import InsightIcon from './InsightIcon';
 import { formatReminderDue, getReminderBucket, groupReminders } from '../utils/reminder_timing';
 import { normalizeLanguage } from '../utils/language';
 
 const BUCKET_ORDER = ['overdue', 'today', 'upcoming'];
+
+const TYPE_ICON = {
+  irrigation: 'rain',
+  fertilizer: 'sprout',
+  pesticide: 'cloud',
+  harvest: 'sun',
+  weather: 'cloud',
+  custom: 'sprout',
+};
 
 function ReminderList({
   reminders = [],
@@ -63,7 +73,9 @@ function ReminderList({
         const { reminder, bucket } = row;
         return (
           <li key={reminder.id} className={`reminder-calm-item is-${bucket}`}>
-            <span className="reminder-calm-mark" aria-hidden="true" />
+            <span className={`reminder-type-icon is-${reminder.type || 'custom'}`} aria-hidden="true">
+              <InsightIcon name={TYPE_ICON[reminder.type] || 'sprout'} />
+            </span>
             <div className="reminder-calm-body">
               <strong>{reminder.title}</strong>
               <span className="reminder-calm-meta">

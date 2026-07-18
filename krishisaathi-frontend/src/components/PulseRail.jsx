@@ -4,7 +4,6 @@ import OverflowMenu from './OverflowMenu';
 import ReminderList from './ReminderList';
 
 function PulseRail({
-  actions = [],
   reminders = [],
   on_reminder_done,
   on_reminder_dismiss,
@@ -14,18 +13,18 @@ function PulseRail({
 }) {
   const { t } = useTranslation();
   const [show_all, setShowAll] = useState(false);
-  const preview_limit = 3;
+  const preview_limit = 4;
   const hidden = Math.max(0, reminders.length - preview_limit);
 
   return (
     <section className="pulse-rail surface-panel is-focus">
       <header className="pulse-rail-head">
         <div>
-          <p className="surface-kicker">{t('dashboard.today_actions')}</p>
-          <p className="surface-sub">{t('dashboard.today_actions_hint')}</p>
+          <p className="surface-kicker">{t('reminders.title')}</p>
+          <p className="surface-sub">{t('reminders.dashboard_hint')}</p>
         </div>
         <OverflowMenu
-          label={t('reminders.title')}
+          label={t('common.more')}
           quiet
           items={[
             {
@@ -43,23 +42,8 @@ function PulseRail({
         />
       </header>
 
-      {actions.length > 0 && (
-        <div className="pulse-chips">
-          {actions.slice(0, 4).map((item, index) => (
-            <article
-              key={item.id}
-              className={`pulse-chip tone-${item.tone || 'calm'}${index === 0 ? ' is-lead' : ''}`}
-            >
-              <span className="pulse-chip-dot" />
-              <p>{item.text}</p>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {reminders.length > 0 && (
+      {reminders.length > 0 ? (
         <div className="pulse-reminders">
-          <p className="pulse-reminders-label">{t('reminders.title')}</p>
           <ReminderList
             reminders={reminders}
             limit={show_all ? null : preview_limit}
@@ -76,6 +60,18 @@ function PulseRail({
               {t('common.show_less')}
             </button>
           )}
+        </div>
+      ) : (
+        <div className="pulse-reminders-empty">
+          <p>{t('reminders.empty_calm')}</p>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            disabled={is_working}
+            onClick={on_generate_reminders}
+          >
+            {t('reminders.generate')}
+          </button>
         </div>
       )}
     </section>

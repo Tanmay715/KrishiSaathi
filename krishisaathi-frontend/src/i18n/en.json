@@ -387,6 +387,8 @@
     "title": "Farm reminders",
     "subtitle": "Based on your crops and weather",
     "empty": "No reminders yet.",
+    "empty_calm": "No pending reminders. You’re clear for now.",
+    "dashboard_hint": "Tasks for your fields — mark done when finished",
     "add": "Add reminder",
     "generate": "Refresh smart reminders",
     "mark_done": "Done",

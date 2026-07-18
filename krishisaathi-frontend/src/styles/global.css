@@ -4126,6 +4126,29 @@ textarea {
   animation: ks-focus-rise 0.7s ease 0.15s both;
 }
 
+.today-field-focus-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.today-field-focus-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(16, 35, 28, 0.08);
+}
+
+.today-field-focus .today-field-kicker {
+  margin-bottom: 0;
+}
+
 .today-field.mood-rain .today-field-focus {
   background: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.3);
@@ -4482,6 +4505,53 @@ textarea {
 
 .reminder-calm-item.is-upcoming .reminder-calm-mark {
   background: #94a3b8;
+}
+
+.reminder-type-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eef2ef;
+}
+
+.reminder-type-icon.is-irrigation,
+.reminder-type-icon.is-weather {
+  background: #e0f2fe;
+}
+
+.reminder-type-icon.is-fertilizer,
+.reminder-type-icon.is-custom {
+  background: #e8f6ee;
+}
+
+.reminder-type-icon.is-pesticide {
+  background: #f1f5f9;
+}
+
+.reminder-type-icon.is-harvest {
+  background: #fef9c3;
+}
+
+.reminder-calm-item .reminder-calm-mark {
+  display: none;
+}
+
+.pulse-reminders-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.pulse-reminders-empty p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .reminder-calm-body {

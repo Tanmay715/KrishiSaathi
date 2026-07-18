@@ -1,12 +1,11 @@
 /**
- * Build actionable dashboard recommendations from weather + farm context.
- * UI-only helper — no API changes.
+ * Build dashboard insight tips from weather + farm context.
+ * Reminder tasks stay in the reminders list — never duplicated here.
  */
 export function buildTodayRecommendations({
   t,
   weather,
   pending_income_crops = [],
-  reminders = [],
   net = 0,
   farms_count = 0,
 }) {
@@ -20,23 +19,28 @@ export function buildTodayRecommendations({
     items.push({
       id: 'rain_spray',
       tone: 'weather',
+      icon: 'rain',
       text: t('recommendations.rain_avoid_spray'),
-    });
-    items.push({
-      id: 'rain_irrigate',
-      tone: 'weather',
-      text: t('recommendations.rain_skip_irrigation'),
     });
   } else if (rain_chance >= 35 || tomorrow_rain >= 50) {
     items.push({
       id: 'rain_soon',
       tone: 'weather',
+      icon: 'cloud',
       text: t('recommendations.rain_soon'),
+    });
+  } else if (rain_chance < 20 && weather) {
+    items.push({
+      id: 'fair_day',
+      tone: 'calm',
+      icon: 'sun',
+      text: t('weather.advice_good_field_work'),
     });
   } else if (weather?.advisory) {
     items.push({
       id: 'weather_advisory',
       tone: 'calm',
+      icon: 'cloud',
       text: weather.advisory,
     });
   }
@@ -45,33 +49,23 @@ export function buildTodayRecommendations({
     items.push({
       id: 'pending_sale',
       tone: 'money',
+      icon: 'money',
       text: t('recommendations.pending_sales', { count: pending_income_crops.length }),
     });
   }
-
-  const due_soon = reminders
-    .filter((item) => item.status === 'pending')
-    .slice(0, 2);
-
-  due_soon.forEach((reminder) => {
-    const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
-    items.push({
-      id: `reminder_${reminder.id}`,
-      tone: is_overdue ? 'urgent' : 'reminder',
-      text: reminder.title || t('recommendations.reminder_fallback'),
-    });
-  });
 
   if (net < 0 && farms_count > 0) {
     items.push({
       id: 'net_loss',
       tone: 'money',
+      icon: 'money',
       text: t('recommendations.watch_expenses'),
     });
   } else if (net > 0 && farms_count > 0) {
     items.push({
       id: 'net_profit',
       tone: 'calm',
+      icon: 'sprout',
       text: t('recommendations.in_profit'),
     });
   }
@@ -80,11 +74,12 @@ export function buildTodayRecommendations({
     items.push({
       id: 'default',
       tone: 'calm',
+      icon: 'sprout',
       text: t('recommendations.default'),
     });
   }
 
-  return items.slice(0, 5);
+  return items.slice(0, 3);
 }
 
 export function buildWeatherAdvice(t, weather) {

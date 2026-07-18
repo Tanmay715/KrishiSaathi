@@ -22,7 +22,7 @@ import {
   updateReminder,
 } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
-import { buildTodayRecommendations, buildWeatherAdvice } from '../utils/dashboard_insights';
+import { buildTodayRecommendations } from '../utils/dashboard_insights';
 import { farmHealthScore } from '../utils/field_identity';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
@@ -163,16 +163,10 @@ function DashboardPage() {
       t,
       weather,
       pending_income_crops,
-      reminders,
       net,
       farms_count: farms.length,
     }),
-    [t, weather, pending_income_crops, reminders, net, farms.length],
-  );
-
-  const weather_advice = useMemo(
-    () => buildWeatherAdvice(t, weather),
-    [t, weather],
+    [t, weather, pending_income_crops, net, farms.length],
   );
 
   const sorted_reminders = useMemo(() => (
@@ -187,7 +181,6 @@ function DashboardPage() {
   }), [total_earned, total_spent, pending_income_crops.length, sorted_reminders]);
 
   const primary_action = recommendations[0] || null;
-  const secondary_actions = recommendations.slice(1);
   const greeting = `${t('dashboard.welcome')}${user?.name ? `, ${user.name}` : ''}`;
 
   if (is_loading) {
@@ -223,7 +216,6 @@ function DashboardPage() {
           <TodayFieldScene
             weather={weather}
             primary_action={primary_action}
-            weather_advice={weather_advice}
             greeting={greeting}
             health={health}
             farms_count={farms.length}
@@ -234,7 +226,6 @@ function DashboardPage() {
           />
 
           <PulseRail
-            actions={secondary_actions}
             reminders={sorted_reminders}
             is_working={is_working}
             on_reminder_done={(id) => handleReminderStatus(id, 'done')}
