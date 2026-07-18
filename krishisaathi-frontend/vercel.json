@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://krishisaathi-production-ef5b.up.railway.app/api/v1/:path*"
+    }
+  ]
+}

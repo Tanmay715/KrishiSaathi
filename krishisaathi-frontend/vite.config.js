@@ -35,21 +35,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => /\/api\/v1\/(farms|expenses\/summary|incomes\/summary)/.test(url.pathname),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'krishisaathi-api',
-              networkTimeoutSeconds: 8,
-              expiration: {
-                maxEntries: 40,
-                maxAgeSeconds: 60 * 60 * 24,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            handler: 'NetworkOnly',
           },
         ],
       },

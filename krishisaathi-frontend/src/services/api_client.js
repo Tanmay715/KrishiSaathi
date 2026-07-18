@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+function resolveApiBaseUrl() {
+  if (import.meta.env.PROD) {
+    // Same-origin via Vercel proxy — avoids phone/network blocks to Railway.
+    return '/api/v1';
+  }
+
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api_client = axios.create({
   baseURL: API_BASE_URL,
@@ -34,7 +43,7 @@ api_client.interceptors.response.use(
   },
 );
 
-export async function requestWithRetry(request_fn, retries = 1) {
+export async function requestWithRetry(request_fn, retries = 2) {
   try {
     return await request_fn();
   } catch (error) {
@@ -42,7 +51,7 @@ export async function requestWithRetry(request_fn, retries = 1) {
     const is_timeout = error.code === 'ECONNABORTED';
 
     if (retries > 0 && (is_network || is_timeout)) {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       return requestWithRetry(request_fn, retries - 1);
     }
 
