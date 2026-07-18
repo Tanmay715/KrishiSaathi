@@ -153,7 +153,7 @@
     "harvest_success_title": "कटाई दर्ज हो गई",
     "harvest_success_body": "यह फसल अब आपके रोटेशन इतिहास में सहेजी गई है।",
     "harvest_success_hint": "अभी बिक्री की आय दर्ज करें, या बाद में फसल इतिहास से जोड़ें।",
-    "harvest_success_log_income": "बिक्री की आय दर्ज करें",
+    "harvest_success_log_income": "आय जोड़ें",
     "harvest_success_later": "बाद में",
     "harvested_on": "कटाई",
     "abandon": "छोड़ें",
@@ -262,7 +262,7 @@
   },
   "incomes": {
     "title": "आय",
-    "add": "आय दर्ज करें",
+    "add": "आय जोड़ें",
     "edit": "आय संपादित करें",
     "amount_only_hint": "सब्सिडी के लिए राशि और तारीख पर्याप्त हैं।",
     "pending_title": "बाकी बिक्री आय",

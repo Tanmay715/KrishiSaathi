@@ -201,17 +201,33 @@ function FarmsPage() {
       ) : (
         <div className="farm-list">
           {farms.map((farm) => (
-            <div key={farm.id} className="card farm-card">
+            <div key={farm.id} className="card farm-card is-rich">
               <Link to={`/farms/${farm.id}`} className="farm-card-link">
                 <div className="farm-card-top">
-                  <h3>{farm.name}</h3>
-                  <span className="badge">{t('farms.manage_farm')} →</span>
+                  <div className="farm-card-identity">
+                    <span className="farm-mark" aria-hidden="true">
+                      {(farm.name || '?').trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <h3>{farm.name}</h3>
+                      {(farm.village || farm.district || farm.state) && (
+                        <p className="farm-card-location">
+                          {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <span className="farm-card-cta">{t('farms.manage_farm')} →</span>
                 </div>
-                <div className="farm-meta">
-                  {farm.district && <span>{farm.district}</span>}
-                  {farm.state && <span>{farm.state}</span>}
-                  <span>{t('farms.plot_count', { count: farm.plot_count || 0 })}</span>
-                  {farm.total_area > 0 && <span>{farm.total_area} {t('farms.area_unit')}</span>}
+                <div className="farm-card-chips">
+                  <span className="farm-chip">
+                    {t('farms.plot_count', { count: farm.plot_count || 0 })}
+                  </span>
+                  {farm.total_area > 0 && (
+                    <span className="farm-chip">
+                      {farm.total_area} {t('farms.area_unit')}
+                    </span>
+                  )}
                 </div>
               </Link>
               <div className="action-row">

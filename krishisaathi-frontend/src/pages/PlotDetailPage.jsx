@@ -104,7 +104,7 @@ function PlotDetailPage() {
   const [expanded_history_id, setExpandedHistoryId] = useState('');
   const [is_expenses_open, setIsExpensesOpen] = useState(true);
   const [is_incomes_open, setIsIncomesOpen] = useState(true);
-  const [is_history_open, setIsHistoryOpen] = useState(true);
+  const [is_history_open, setIsHistoryOpen] = useState(false);
   const [is_cached_view, setIsCachedView] = useState(false);
   const [weather_tip, setWeatherTip] = useState('');
   const [crop_form, setCropForm] = useState(EMPTY_CROP);
@@ -814,6 +814,17 @@ function PlotDetailPage() {
         </>
       )}
 
+
+
+      <PendingIncomeSection
+        crops={pending_income_crops}
+        on_log_income={(crop) => {
+          setIsHistoryOpen(true);
+          setExpandedHistoryId(crop.id);
+          openCreateIncomeForCrop(crop);
+        }}
+      />
+
       {plot.crop_history?.length > 0 && (
         <section className="surface-panel is-expandable">
           <button
@@ -994,15 +1005,6 @@ function PlotDetailPage() {
           )}
         </section>
       )}
-
-      <PendingIncomeSection
-        crops={pending_income_crops}
-        on_log_income={(crop) => {
-          setIsHistoryOpen(true);
-          setExpandedHistoryId(crop.id);
-          openCreateIncomeForCrop(crop);
-        }}
-      />
       </div>
 
       {crop_to_delete && (
