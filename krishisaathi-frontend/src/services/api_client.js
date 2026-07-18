@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000
 const api_client = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 45000,
 });
 
 api_client.interceptors.request.use((config) => {
@@ -32,5 +33,21 @@ api_client.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export async function requestWithRetry(request_fn, retries = 1) {
+  try {
+    return await request_fn();
+  } catch (error) {
+    const is_network = !error.response;
+    const is_timeout = error.code === 'ECONNABORTED';
+
+    if (retries > 0 && (is_network || is_timeout)) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return requestWithRetry(request_fn, retries - 1);
+    }
+
+    throw error;
+  }
+}
 
 export default api_client;

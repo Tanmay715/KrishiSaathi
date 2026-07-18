@@ -8,10 +8,35 @@ const { errorHandler, notFoundHandler } = require('./middleware/error_handler');
 
 const app = express();
 
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (env.cors_origin.includes(origin)) {
+    return true;
+  }
+
+  if (env.is_production && /^https:\/\/[\w-]+\.vercel\.app$/i.test(origin)) {
+    return true;
+  }
+
+  return !env.is_production && /localhost|127\.0\.0\.1/.test(origin);
+}
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
-app.use(cors({ origin: env.cors_origin, credentials: true }));
+app.use(cors({
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
