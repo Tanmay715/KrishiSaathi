@@ -26,6 +26,7 @@ import Modal from '../components/Modal';
 import RemindersPanel from '../components/RemindersPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import { INDIAN_STATES } from '../config/indian_states';
+import { normalizeLanguage } from '../utils/language';
 
 const EMPTY_PLOT = { name: '', area: '', soil_type: '', notes: '' };
 
@@ -42,7 +43,8 @@ function FarmDetailPage() {
   const [confirm_action, setConfirmAction] = useState(null);
   const [is_saving, setIsSaving] = useState(false);
   const [error_message, setErrorMessage] = useState('');
-  const state_label_key = i18n.language === 'hi' ? 'label_hi' : 'label_en';
+  const app_language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const state_label_key = app_language === 'hi' ? 'label_hi' : 'label_en';
   const [plot_form, setPlotForm] = useState(EMPTY_PLOT);
   const [farm_form, setFarmForm] = useState({
     name: '',
@@ -358,7 +360,7 @@ function FarmDetailPage() {
                             {crop.season_type ? ` · ${t(`crops.season.${crop.season_type}`)}` : ''}
                             {crop.actual_harvest_date
                               ? ` · ${new Date(crop.actual_harvest_date).toLocaleDateString(
-                                i18n.language === 'hi' ? 'hi-IN' : 'en-IN',
+                                app_language === 'hi' ? 'hi-IN' : 'en-IN',
                                 { day: 'numeric', month: 'short', year: 'numeric' },
                               )}`
                               : ''}

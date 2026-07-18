@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import api_client, { requestWithRetry } from '../services/api_client';
 import { sendOtp, verifyOtp } from '../services/auth_service';
 import { isValidIndianMobile, normalizeIndianMobile } from '../utils/phone_validation';
+import { normalizeLanguage } from '../utils/language';
 
 function LoginPage() {
   const { t, i18n } = useTranslation();
@@ -15,7 +16,9 @@ function LoginPage() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
-  const [preferred_language, setPreferredLanguage] = useState(i18n.language);
+  const [preferred_language, setPreferredLanguage] = useState(
+    normalizeLanguage(i18n.resolvedLanguage || i18n.language),
+  );
   const [preferred_land_unit, setPreferredLandUnit] = useState('acre');
   const [is_loading, setIsLoading] = useState(false);
   const [error_message, setErrorMessage] = useState('');
@@ -95,8 +98,9 @@ function LoginPage() {
       });
 
       const { user, token } = response.data;
-      i18n.changeLanguage(user.preferred_language);
-      localStorage.setItem('ks_language', user.preferred_language);
+      const next_lang = normalizeLanguage(user.preferred_language);
+      i18n.changeLanguage(next_lang);
+      localStorage.setItem('ks_language', next_lang);
       login(user, token);
       navigate('/');
     } catch (error) {

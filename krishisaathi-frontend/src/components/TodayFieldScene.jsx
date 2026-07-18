@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import WeatherScene from './illustrations/WeatherScene';
 import HealthBloom from './illustrations/HealthBloom';
 import { weatherMood } from '../utils/field_identity';
+import { normalizeLanguage } from '../utils/language';
 
 function formatForecastDate(iso_date, language) {
   const date = new Date(`${iso_date}T00:00:00`);
-  return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+  return date.toLocaleDateString(normalizeLanguage(language) === 'hi' ? 'hi-IN' : 'en-IN', {
     weekday: 'short',
     day: 'numeric',
   });
@@ -104,7 +105,7 @@ function TodayFieldScene({
           <div className="today-field-forecast">
             {weather.forecast.slice(0, 3).map((day) => (
               <div key={day.date} className="today-field-day">
-                <span>{formatForecastDate(day.date, i18n.language)}</span>
+                <span>{formatForecastDate(day.date, i18n.resolvedLanguage || i18n.language)}</span>
                 <strong>{Math.round(day.temp_max)}°</strong>
                 <small>{day.rain_chance}%</small>
               </div>

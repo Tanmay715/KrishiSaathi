@@ -7,6 +7,7 @@ import { getProfileOverview, updateProfile } from '../services/auth_service';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
+import { normalizeLanguage } from '../utils/language';
 
 function formatMemberSince(value, locale) {
   if (!value) {
@@ -14,7 +15,7 @@ function formatMemberSince(value, locale) {
   }
 
   const date = new Date(value);
-  return date.toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+  return date.toLocaleDateString(normalizeLanguage(locale) === 'hi' ? 'hi-IN' : 'en-IN', {
     month: 'long',
     year: 'numeric',
   });
@@ -94,8 +95,8 @@ function ProfilePage() {
       const response = await updateProfile(form);
       const token = localStorage.getItem('ks_token');
       login(response.data, token);
-      i18n.changeLanguage(response.data.preferred_language);
-      localStorage.setItem('ks_language', response.data.preferred_language);
+      i18n.changeLanguage(normalizeLanguage(response.data.preferred_language));
+      localStorage.setItem('ks_language', normalizeLanguage(response.data.preferred_language));
       setMessage(t('profile.saved'));
       await loadOverview();
     } catch (error) {
@@ -122,7 +123,8 @@ function ProfilePage() {
   const stats = overview?.stats || {};
   const limits = overview?.limits || {};
   const net = Number(stats.net || 0);
-  const state_label_key = i18n.language === 'hi' ? 'label_hi' : 'label_en';
+  const app_language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const state_label_key = app_language === 'hi' ? 'label_hi' : 'label_en';
 
   return (
     <div className="profile-page">
@@ -134,9 +136,9 @@ function ProfilePage() {
           <h3>{profile_user?.name?.trim() || t('profile.default_name')}</h3>
           <p className="profile-phone">{profile_user?.phone}</p>
           <div className="profile-meta">
-            <span>{t('profile.member_since', { date: formatMemberSince(profile_user?.created_at, i18n.language) })}</span>
+            <span>{t('profile.member_since', { date: formatMemberSince(profile_user?.created_at, app_language) })}</span>
             <span>{t(`common.${profile_user?.preferred_land_unit || 'acre'}`)}</span>
-            <span>{profile_user?.preferred_language === 'hi' ? t('common.hindi') : t('common.english')}</span>
+            <span>{normalizeLanguage(profile_user?.preferred_language) === 'hi' ? t('common.hindi') : t('common.english')}</span>
           </div>
         </div>
       </div>

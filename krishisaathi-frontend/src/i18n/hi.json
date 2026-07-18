@@ -341,7 +341,8 @@
     "show": "दिखाएँ",
     "hide": "छिपाएँ",
     "more": "और विकल्प",
-    "show_less": "कम दिखाएँ"
+    "show_less": "कम दिखाएँ",
+    "language_toggle": "भाषा बदलें"
   },
   "analytics": {
     "spend_vs_earn": "खर्च बनाम आमदनी",

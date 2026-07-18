@@ -191,6 +191,82 @@ textarea {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
+
+.language-switcher-label {
+  display: inline-block;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.language-switcher.is-topbar {
+  min-width: 5.25rem;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff !important;
+  font-size: 0.8125rem;
+}
+
+.language-switcher.is-topbar:hover,
+.language-switcher.is-topbar:focus-visible {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff !important;
+}
+
+.language-switcher.is-drawer {
+  width: 100%;
+  min-height: var(--btn-height);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff !important;
+  font-size: var(--text-md);
+}
+
+.language-switcher.is-drawer .language-switcher-label {
+  min-width: 0;
+}
+
+.app-topbar-brand h1,
+.app-topbar-brand p {
+  color: #fff;
+}
+
+.app-topbar-brand {
+  min-width: 0;
+  flex: 1;
+  min-height: 40px;
+}
+
+.page-header-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.page-header-copy h2 {
+  min-height: 1.35em;
+}
+
+.page-header-action {
+  flex-shrink: 0;
+}
+
 .drawer-backdrop {
   position: absolute;
   inset: 0;
@@ -3433,9 +3509,10 @@ textarea {
 }
 
 .main-content:has(.is-field) {
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: 0;
+  /* Keep padding stable across routes to avoid layout jumps. */
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  padding-top: var(--space-4);
 }
 
 .dashboard-page.is-field {
@@ -3448,8 +3525,8 @@ textarea {
 .dashboard-page.is-field > .pending-income-card,
 .dashboard-page.is-field > .field-secondary,
 .dashboard-page.is-field > .assistant-strip {
-  margin-left: 14px;
-  margin-right: 14px;
+  margin-left: var(--space-4);
+  margin-right: var(--space-4);
 }
 
 .dashboard-page.is-field > .pulse-rail,
@@ -4652,17 +4729,27 @@ textarea {
 
 /* Dashboard journey rhythm */
 .main-content:has(.is-field) {
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: 0;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  padding-top: var(--space-4);
   padding-bottom: var(--fab-clearance);
 }
 
 .dashboard-page.is-field {
   gap: 0;
   padding-bottom: var(--space-2);
+  margin: calc(var(--space-4) * -1);
+  margin-bottom: 0;
+  width: calc(100% + var(--space-4) * 2);
 }
 
+.dashboard-page.is-field > .today-field {
+  /* Full-bleed hero inside stable main padding */
+  width: 100%;
+}
+
+.dashboard-page.is-field > .info-banner,
+.dashboard-page.is-field > .error-banner,
 .dashboard-page.is-field > .pulse-rail,
 .dashboard-page.is-field > .pending-income-card,
 .dashboard-page.is-field > .field-secondary,
@@ -4671,6 +4758,11 @@ textarea {
   margin-right: var(--space-4);
   margin-top: var(--space-5);
   margin-bottom: 0;
+}
+
+.dashboard-page.is-field > .info-banner,
+.dashboard-page.is-field > .error-banner {
+  margin-top: var(--space-4);
 }
 
 .dashboard-page.is-field > .assistant-strip {

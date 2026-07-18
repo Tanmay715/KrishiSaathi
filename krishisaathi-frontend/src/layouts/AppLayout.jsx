@@ -6,6 +6,7 @@ import OfflineBanner from '../components/OfflineBanner';
 import PwaInstallPrompt from '../components/PwaInstallPrompt';
 import QuickLogFab from '../components/QuickLogFab';
 import ErrorBoundary from '../components/ErrorBoundary';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const NAV_ITEMS = [
   { to: '/', end: true, key: 'dashboard', icon: 'home' },
@@ -66,7 +67,7 @@ function NavIcon({ name }) {
 }
 
 function AppLayout() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -98,12 +99,6 @@ function AppLayout() {
     navigate('/login');
   }
 
-  function toggleLanguage() {
-    const next_lang = i18n.language === 'en' ? 'hi' : 'en';
-    i18n.changeLanguage(next_lang);
-    localStorage.setItem('ks_language', next_lang);
-  }
-
   return (
     <div className="app-shell">
       <div className="app-frame">
@@ -123,9 +118,7 @@ function AppLayout() {
             <p>{t('app.tagline')}</p>
           </div>
 
-          <button type="button" className="btn btn-secondary btn-sm topbar-lang-btn" onClick={toggleLanguage}>
-            {i18n.language === 'en' ? 'हिंदी' : 'English'}
-          </button>
+          <LanguageSwitcher variant="topbar" />
         </header>
 
         {is_menu_open && (
@@ -171,9 +164,7 @@ function AppLayout() {
           </nav>
 
           <div className="app-drawer-footer">
-            <button type="button" className="btn btn-secondary" onClick={toggleLanguage}>
-              {i18n.language === 'en' ? 'हिंदी' : 'English'}
-            </button>
+            <LanguageSwitcher variant="drawer" />
             <button type="button" className="btn btn-secondary" onClick={handleLogout}>
               {t('nav.logout')}
             </button>

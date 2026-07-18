@@ -36,13 +36,15 @@ export function groupReminders(reminders = []) {
   return groups;
 }
 
+import { normalizeLanguage } from './language';
+
 export function formatReminderDue(due_at, language = 'en') {
   const due = new Date(due_at);
   if (Number.isNaN(due.getTime())) {
     return '—';
   }
 
-  const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
+  const locale = normalizeLanguage(language) === 'hi' ? 'hi-IN' : 'en-IN';
   return due.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',

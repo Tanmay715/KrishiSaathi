@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import OverflowMenu from './OverflowMenu';
 import { formatReminderDue, getReminderBucket, groupReminders } from '../utils/reminder_timing';
+import { normalizeLanguage } from '../utils/language';
 
 const BUCKET_ORDER = ['overdue', 'today', 'upcoming'];
 
@@ -68,7 +69,7 @@ function ReminderList({
               <span className="reminder-calm-meta">
                 {t(`reminders.types.${reminder.type}`)}
                 {' · '}
-                {formatReminderDue(reminder.due_at, i18n.language)}
+                {formatReminderDue(reminder.due_at, normalizeLanguage(i18n.resolvedLanguage || i18n.language))}
               </span>
             </div>
             <OverflowMenu

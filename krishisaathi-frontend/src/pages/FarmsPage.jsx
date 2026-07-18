@@ -10,6 +10,7 @@ import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { normalizeLanguage } from '../utils/language';
 
 const EMPTY_FORM = {
   name: '',
@@ -34,7 +35,9 @@ function FarmsPage() {
   const [load_error, setLoadError] = useState('');
   const [is_cached_view, setIsCachedView] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const state_label_key = i18n.language === 'hi' ? 'label_hi' : 'label_en';
+  const state_label_key = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'hi'
+    ? 'label_hi'
+    : 'label_en';
 
   useEffect(() => {
     loadFarms();

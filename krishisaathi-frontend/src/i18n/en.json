@@ -341,7 +341,8 @@
     "show": "Show",
     "hide": "Hide",
     "more": "More actions",
-    "show_less": "Show less"
+    "show_less": "Show less",
+    "language_toggle": "Switch language"
   },
   "analytics": {
     "spend_vs_earn": "Spend vs earn",
