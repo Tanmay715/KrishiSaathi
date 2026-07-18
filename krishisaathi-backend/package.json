@@ -4,7 +4,7 @@
   "description": "KrishiSaathi farm management API",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "npm run migrate && npm run seed && node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
