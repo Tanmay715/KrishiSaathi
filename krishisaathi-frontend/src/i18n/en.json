@@ -58,7 +58,8 @@
     "plots_short": "plots",
     "health_thriving": "Thriving",
     "health_steady": "Steady",
-    "health_strain": "Needs care"
+    "health_strain": "Needs care",
+    "market_insights": "Market"
   },
   "assistant": {
     "title": "Farm Assistant",

@@ -553,7 +553,7 @@ function PlotDetailPage() {
     }));
 
   return (
-    <div className="plot-detail-page">
+    <div className="plot-detail-page is-crafted">
       <div className="page-header">
         <Link to={`/farms/${farm_id}`} className="back-link">
           ← {t('farms.plots')}
@@ -580,12 +580,9 @@ function PlotDetailPage() {
         <div className="error-banner">{error_message}</div>
       )}
 
-      <div className="section-header">
-        <h3 style={{ margin: 0 }}>{t('crops.current_crop')}</h3>
-      </div>
-
       {!plot.active_crop ? (
-        <div className="card empty-state crop-empty">
+        <div className="card empty-state crop-empty surface-panel">
+          <p className="surface-kicker">{t('crops.current_crop')}</p>
           <p>{t('crops.no_active_crop')}</p>
           <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setShowCropModal(true)}>
             {t('crops.start_crop')}
@@ -608,8 +605,10 @@ function PlotDetailPage() {
         />
       )}
 
+      <div className="plot-flow">
       {plot.active_crop && (
-        <div className="card money-strip is-dense">
+        <div className="money-strip is-dense surface-panel is-summary">
+          <p className="surface-kicker">{t('farms.finance_summary')}</p>
           <div className="money-strip-grid">
             <div>
               <div className="stat-label">{t('expenses.crop_total')}</div>
@@ -633,25 +632,29 @@ function PlotDetailPage() {
       )}
 
       {plot.active_crop && (
-        <DiseaseScanPanel
-          farm_id={farm_id}
-          plot_id={plot_id}
-          crop_cycle_id={plot.active_crop.id}
-          crop_name={plot.active_crop.crop_name}
-        />
+        <div className="plot-flow-block is-soft">
+          <DiseaseScanPanel
+            farm_id={farm_id}
+            plot_id={plot_id}
+            crop_cycle_id={plot.active_crop.id}
+            crop_name={plot.active_crop.crop_name}
+          />
+        </div>
       )}
 
       {plot.active_crop && (
-        <MandiPricePanel
-          crop_name={plot.active_crop.crop_name}
-          farm_id={farm_id}
-          expense_total={spending}
-          compact
-        />
+        <div className="plot-flow-block is-muted">
+          <MandiPricePanel
+            crop_name={plot.active_crop.crop_name}
+            farm_id={farm_id}
+            expense_total={spending}
+            compact
+          />
+        </div>
       )}
 
       {plot.crop_history?.length > 0 && (
-        <section className="card" style={{ marginTop: 20 }}>
+        <section className="surface-panel is-expandable">
           <button
             type="button"
             className="section-toggle"
@@ -664,7 +667,7 @@ function PlotDetailPage() {
                 {t('crops.history_collapsed_hint', { count: plot.crop_history.length })}
               </p>
             </div>
-            <span className="badge">{is_history_open ? t('common.hide') : t('common.show')}</span>
+            <span className="chevron-badge">{is_history_open ? '▾' : '▸'}</span>
           </button>
 
           {is_history_open && (
@@ -831,7 +834,7 @@ function PlotDetailPage() {
 
       {plot.active_crop && (
         <>
-          <section className="card">
+          <section className="surface-panel is-expandable">
             <div className="collapsible-header">
               <button
                 type="button"
@@ -848,7 +851,7 @@ function PlotDetailPage() {
                     })}
                   </p>
                 </div>
-                <span className="badge">{is_expenses_open ? t('common.hide') : t('common.show')}</span>
+                <span className="chevron-badge">{is_expenses_open ? '▾' : '▸'}</span>
               </button>
               <button type="button" className="btn btn-primary btn-sm" onClick={openCreateExpense}>
                 {t('expenses.add')}
@@ -911,7 +914,7 @@ function PlotDetailPage() {
             )}
           </section>
 
-          <section className="card">
+          <section className="surface-panel is-expandable is-soft">
             <div className="collapsible-header">
               <button
                 type="button"
@@ -928,7 +931,7 @@ function PlotDetailPage() {
                     })}
                   </p>
                 </div>
-                <span className="badge">{is_incomes_open ? t('common.hide') : t('common.show')}</span>
+                <span className="chevron-badge">{is_incomes_open ? '▾' : '▸'}</span>
               </button>
               <button type="button" className="btn btn-primary btn-sm" onClick={openCreateIncome}>
                 {t('incomes.add')}
@@ -1000,6 +1003,7 @@ function PlotDetailPage() {
           openCreateIncomeForCrop(crop);
         }}
       />
+      </div>
 
       {crop_to_delete && (
         <div className="modal-overlay" onClick={() => setCropToDelete(null)}>

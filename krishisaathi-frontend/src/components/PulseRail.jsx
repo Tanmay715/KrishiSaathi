@@ -18,11 +18,11 @@ function PulseRail({
   const hidden = Math.max(0, reminders.length - preview_limit);
 
   return (
-    <section className="pulse-rail">
+    <section className="pulse-rail surface-panel is-focus">
       <header className="pulse-rail-head">
         <div>
-          <h2>{t('dashboard.today_actions')}</h2>
-          <p>{t('dashboard.today_actions_hint')}</p>
+          <p className="surface-kicker">{t('dashboard.today_actions')}</p>
+          <p className="surface-sub">{t('dashboard.today_actions_hint')}</p>
         </div>
         <OverflowMenu
           label={t('reminders.title')}

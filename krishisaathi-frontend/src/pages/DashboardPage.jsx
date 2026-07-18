@@ -247,14 +247,15 @@ function DashboardPage() {
             <PendingIncomeSection crops={pending_income_crops} show_location />
           )}
 
-          <section className="field-secondary">
+          <section className="field-secondary surface-panel is-muted">
+            <p className="surface-kicker">{t('dashboard.market_insights')}</p>
             <MandiPricePanel
               farm_id={farms[0]?.id || null}
               crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
             />
           </section>
 
-          <Link to="/assistant" className="assistant-strip is-field">
+          <Link to="/assistant" className="assistant-strip is-field is-quiet">
             <div>
               <strong>{t('assistant.title')}</strong>
               <span>{t('assistant.cta')}</span>

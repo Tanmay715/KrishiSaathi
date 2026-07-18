@@ -11,10 +11,10 @@ function PendingIncomeSection({ crops, show_location = false, on_log_income }) {
   }
 
   return (
-    <div className="card pending-income-card">
-      <div className="page-header-row" style={{ marginBottom: 8 }}>
+    <div className="card pending-income-card surface-panel">
+      <div className="page-header-row surface-panel-head">
         <div>
-          <h3 style={{ margin: 0 }}>{t('incomes.pending_title')}</h3>
+          <p className="surface-kicker">{t('incomes.pending_title')}</p>
           <p className="section-note">{t('incomes.pending_hint')}</p>
         </div>
         <span className="badge badge-pending">{crops.length}</span>
