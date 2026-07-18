@@ -1,0 +1,199 @@
+const { v4: uuidv4 } = require('uuid');
+const db = require('../../db/connection');
+const ApiError = require('../../utils/ApiError');
+const ActivityService = require('../activity/ActivityService');
+
+class ExpenseService {
+  async listFarmExpenses(user_id, farm_id) {
+    await this.#ensureFarmOwnership(user_id, farm_id);
+
+    return db('farm_expenses')
+      .where({ farm_id, user_id })
+      .orderBy('expense_date', 'desc')
+      .orderBy('created_at', 'desc');
+  }
+
+  async listPlotExpenses(user_id, farm_id, plot_id) {
+    await this.#ensurePlotOwnership(user_id, farm_id, plot_id);
+
+    return db('farm_expenses')
+      .where({ farm_id, plot_id, user_id })
+      .orderBy('expense_date', 'desc')
+      .orderBy('created_at', 'desc');
+  }
+
+  async listCropExpenses(user_id, farm_id, plot_id, crop_cycle_id) {
+    await this.#ensurePlotOwnership(user_id, farm_id, plot_id);
+
+    return db('farm_expenses')
+      .where({ farm_id, plot_id, user_id, crop_cycle_id })
+      .orderBy('expense_date', 'desc')
+      .orderBy('created_at', 'desc');
+  }
+
+  async getTotalsByCropCycles(user_id, crop_cycle_ids) {
+    if (!crop_cycle_ids.length) {
+      return {};
+    }
+
+    const rows = await db('farm_expenses')
+      .where({ user_id })
+      .whereIn('crop_cycle_id', crop_cycle_ids)
+      .select('crop_cycle_id')
+      .sum('amount as total')
+      .groupBy('crop_cycle_id');
+
+    return Object.fromEntries(rows.map((row) => [row.crop_cycle_id, Number(row.total || 0)]));
+  }
+
+  async getExpenseSummary(user_id) {
+    const result = await db('farm_expenses')
+      .where({ user_id })
+      .sum('amount as total_spent')
+      .count('id as expense_count')
+      .first();
+
+    return {
+      total_spent: Number(result.total_spent || 0),
+      expense_count: Number(result.expense_count || 0),
+    };
+  }
+
+  async createExpense(user_id, farm_id, payload) {
+    await this.#ensureFarmOwnership(user_id, farm_id);
+
+    const plot_id = payload.plot_id || null;
+    const crop_cycle_id = payload.crop_cycle_id || null;
+
+    if (plot_id) {
+      await this.#ensurePlotOwnership(user_id, farm_id, plot_id);
+    }
+
+    if (crop_cycle_id) {
+      await this.#ensureCropOwnership(farm_id, plot_id, crop_cycle_id);
+    }
+
+    const expense_id = uuidv4();
+    await db('farm_expenses').insert({
+      id: expense_id,
+      user_id,
+      farm_id,
+      plot_id,
+      crop_cycle_id,
+      category: payload.category || 'other',
+      title: payload.title,
+      amount: payload.amount,
+      quantity: payload.quantity ?? null,
+      unit: payload.unit || null,
+      expense_date: payload.expense_date,
+      notes: payload.notes || null,
+    });
+
+    await ActivityService.logActivity(
+      user_id,
+      'expense_added',
+      `Logged expense "${payload.title}" (₹${payload.amount})`,
+      'expense',
+      expense_id,
+    );
+
+    return db('farm_expenses').where({ id: expense_id }).first();
+  }
+
+  async updateExpense(user_id, farm_id, expense_id, payload) {
+    await this.#findOwnedExpense(user_id, farm_id, expense_id);
+
+    const allowed_fields = [
+      'plot_id',
+      'crop_cycle_id',
+      'category',
+      'title',
+      'amount',
+      'quantity',
+      'unit',
+      'expense_date',
+      'notes',
+    ];
+    const updates = {};
+
+    allowed_fields.forEach((field) => {
+      if (payload[field] !== undefined) {
+        updates[field] = payload[field];
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      throw ApiError.badRequest('No valid fields to update');
+    }
+
+    if (updates.plot_id) {
+      await this.#ensurePlotOwnership(user_id, farm_id, updates.plot_id);
+    }
+
+    await db('farm_expenses').where({ id: expense_id }).update(updates);
+    return db('farm_expenses').where({ id: expense_id }).first();
+  }
+
+  async deleteExpense(user_id, farm_id, expense_id) {
+    const expense = await this.#findOwnedExpense(user_id, farm_id, expense_id);
+    await db('farm_expenses').where({ id: expense_id }).del();
+
+    await ActivityService.logActivity(
+      user_id,
+      'expense_deleted',
+      `Deleted expense "${expense.title}"`,
+      'expense',
+      expense_id,
+    );
+  }
+
+  async #ensureFarmOwnership(user_id, farm_id) {
+    const farm = await db('farms').where({ id: farm_id, user_id, is_active: true }).first();
+
+    if (!farm) {
+      throw ApiError.notFound('Farm not found');
+    }
+
+    return farm;
+  }
+
+  async #ensurePlotOwnership(user_id, farm_id, plot_id) {
+    await this.#ensureFarmOwnership(user_id, farm_id);
+    const plot = await db('plots').where({ id: plot_id, farm_id, is_active: true }).first();
+
+    if (!plot) {
+      throw ApiError.notFound('Plot not found');
+    }
+
+    return plot;
+  }
+
+  async #ensureCropOwnership(farm_id, plot_id, crop_cycle_id) {
+    if (!plot_id) {
+      throw ApiError.badRequest('plot_id is required when linking a crop cycle');
+    }
+
+    const cycle = await db('crop_cycles')
+      .join('plots', 'crop_cycles.plot_id', 'plots.id')
+      .where('crop_cycles.id', crop_cycle_id)
+      .where('crop_cycles.plot_id', plot_id)
+      .where('plots.farm_id', farm_id)
+      .first();
+
+    if (!cycle) {
+      throw ApiError.notFound('Crop cycle not found');
+    }
+  }
+
+  async #findOwnedExpense(user_id, farm_id, expense_id) {
+    const expense = await db('farm_expenses').where({ id: expense_id, farm_id, user_id }).first();
+
+    if (!expense) {
+      throw ApiError.notFound('Expense not found');
+    }
+
+    return expense;
+  }
+}
+
+module.exports = new ExpenseService();

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KrishiSaathi">
+  <rect width="512" height="512" rx="96" fill="#2d6a4f"/>
+  <path
+    d="M256 96c-48 72-96 120-96 184a96 96 0 0 0 192 0c0-64-48-112-96-184z"
+    fill="#95d5b2"
+  />
+  <path
+    d="M256 320v96M208 368h96"
+    stroke="#f8f6f0"
+    stroke-width="24"
+    stroke-linecap="round"
+  />
+</svg>
