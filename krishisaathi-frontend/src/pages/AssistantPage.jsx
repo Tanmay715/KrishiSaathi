@@ -139,8 +139,6 @@ function AssistantPage() {
     <div className="assistant-page">
       <PageHeader title={t('assistant.title')} subtitle={t('assistant.subtitle')} />
 
-      <div className="info-banner">{t('assistant.disclaimer')}</div>
-
       {error_message && <div className="error-banner">{error_message}</div>}
 
       <div className="card assistant-card">

@@ -27,7 +27,8 @@
     "farms": "Farms",
     "activity": "Activity",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "menu": "Menu"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -264,6 +265,7 @@
     "retry": "Retry",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "close": "Close",
     "view": "View",
     "edit": "Edit",
     "delete": "Delete",
