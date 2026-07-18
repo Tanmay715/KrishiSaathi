@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-function OverflowMenu({ items = [], label = 'More' }) {
+function OverflowMenu({ items = [], label = 'More', quiet = false }) {
   const [is_open, setIsOpen] = useState(false);
   const root_ref = useRef(null);
 
@@ -38,12 +38,12 @@ function OverflowMenu({ items = [], label = 'More' }) {
     <div className="overflow-menu" ref={root_ref}>
       <button
         type="button"
-        className="overflow-menu-trigger"
+        className={`overflow-menu-trigger${quiet ? ' is-quiet' : ''}`}
         aria-label={label}
         aria-expanded={is_open}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <span aria-hidden="true">⋯</span>
+        <span aria-hidden="true">···</span>
       </button>
       {is_open && (
         <ul className="overflow-menu-list" role="menu">

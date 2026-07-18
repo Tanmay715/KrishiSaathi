@@ -10,6 +10,7 @@ import LoadingState from './LoadingState';
 import EmptyState from './EmptyState';
 import Modal from './Modal';
 import OverflowMenu from './OverflowMenu';
+import ReminderList from './ReminderList';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
@@ -99,7 +100,6 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
   }
 
   const preview_limit = compact ? 3 : 20;
-  const visible = show_all ? reminders : reminders.slice(0, preview_limit);
   const hidden_count = Math.max(0, reminders.length - preview_limit);
 
   const soon = reminders.filter((item) => {
@@ -137,6 +137,7 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
             <div style={{ marginLeft: 'auto' }}>
               <OverflowMenu
                 label={t('common.more')}
+                quiet
                 items={[
                   {
                     id: 'generate',
@@ -162,37 +163,12 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
             <EmptyState message={t('reminders.empty')} />
           ) : (
             <>
-              <ul className="reminder-list is-calm">
-                {visible.map((reminder) => {
-                  const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
-                  return (
-                    <li key={reminder.id} className={`reminder-item${is_overdue ? ' is-overdue' : ''}`}>
-                      <div>
-                        <strong>{reminder.title}</strong>
-                        <div className="reminder-meta">
-                          {t(`reminders.types.${reminder.type}`)} · {t('reminders.due')}:{' '}
-                          {new Date(reminder.due_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <OverflowMenu
-                        label={t('common.more')}
-                        items={[
-                          {
-                            id: 'done',
-                            label: t('reminders.mark_done'),
-                            onClick: () => handleStatus(reminder.id, 'done'),
-                          },
-                          {
-                            id: 'dismiss',
-                            label: t('reminders.dismiss'),
-                            onClick: () => handleStatus(reminder.id, 'dismissed'),
-                          },
-                        ]}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
+              <ReminderList
+                reminders={reminders}
+                limit={show_all ? null : preview_limit}
+                on_done={(id) => handleStatus(id, 'done')}
+                on_dismiss={(id) => handleStatus(id, 'dismissed')}
+              />
               {hidden_count > 0 && !show_all && (
                 <button type="button" className="text-link-btn" onClick={() => setShowAll(true)}>
                   {t('reminders.view_all', { count: reminders.length })}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import OverflowMenu from './OverflowMenu';
+import ReminderList from './ReminderList';
 
 function PulseRail({
   actions = [],
@@ -13,8 +14,8 @@ function PulseRail({
 }) {
   const { t } = useTranslation();
   const [show_all, setShowAll] = useState(false);
-  const preview = show_all ? reminders : reminders.slice(0, 3);
-  const hidden = Math.max(0, reminders.length - 3);
+  const preview_limit = 3;
+  const hidden = Math.max(0, reminders.length - preview_limit);
 
   return (
     <section className="pulse-rail">
@@ -25,6 +26,7 @@ function PulseRail({
         </div>
         <OverflowMenu
           label={t('reminders.title')}
+          quiet
           items={[
             {
               id: 'generate',
@@ -57,45 +59,19 @@ function PulseRail({
 
       {reminders.length > 0 && (
         <div className="pulse-reminders">
-          {preview.map((reminder) => {
-            const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
-            return (
-              <div
-                key={reminder.id}
-                className={`pulse-reminder${is_overdue ? ' is-overdue' : ''}`}
-              >
-                <div>
-                  <strong>{reminder.title}</strong>
-                  <span>
-                    {t(`reminders.types.${reminder.type}`)}
-                    {' · '}
-                    {new Date(reminder.due_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <OverflowMenu
-                  label={t('common.more')}
-                  items={[
-                    {
-                      id: 'done',
-                      label: t('reminders.mark_done'),
-                      onClick: () => on_reminder_done?.(reminder.id),
-                    },
-                    {
-                      id: 'dismiss',
-                      label: t('reminders.dismiss'),
-                      onClick: () => on_reminder_dismiss?.(reminder.id),
-                    },
-                  ]}
-                />
-              </div>
-            );
-          })}
+          <p className="pulse-reminders-label">{t('reminders.title')}</p>
+          <ReminderList
+            reminders={reminders}
+            limit={show_all ? null : preview_limit}
+            on_done={on_reminder_done}
+            on_dismiss={on_reminder_dismiss}
+          />
           {hidden > 0 && !show_all && (
             <button type="button" className="text-link-btn" onClick={() => setShowAll(true)}>
               {t('reminders.view_all', { count: reminders.length })}
             </button>
           )}
-          {show_all && reminders.length > 3 && (
+          {show_all && reminders.length > preview_limit && (
             <button type="button" className="text-link-btn" onClick={() => setShowAll(false)}>
               {t('common.show_less')}
             </button>
