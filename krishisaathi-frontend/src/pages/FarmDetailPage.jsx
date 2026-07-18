@@ -346,6 +346,28 @@ function FarmDetailPage() {
                     </span>
                   )}
                 </div>
+                {plot.crop_history?.length > 0 && (
+                  <div className="plot-rotation-preview">
+                    <span className="section-note">{t('farms.past_crops')}</span>
+                    <ul className="plot-rotation-list">
+                      {plot.crop_history.map((crop) => (
+                        <li key={crop.id}>
+                          <strong>{crop.crop_name}</strong>
+                          <span>
+                            {t(`crops.status.${crop.status}`)}
+                            {crop.season_type ? ` · ${t(`crops.season.${crop.season_type}`)}` : ''}
+                            {crop.actual_harvest_date
+                              ? ` · ${new Date(crop.actual_harvest_date).toLocaleDateString(
+                                i18n.language === 'hi' ? 'hi-IN' : 'en-IN',
+                                { day: 'numeric', month: 'short', year: 'numeric' },
+                              )}`
+                              : ''}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </Link>
               <div className="action-row">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => openEditPlot(e, plot)}>

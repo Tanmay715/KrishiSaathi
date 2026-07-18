@@ -120,6 +120,7 @@
     "click_to_manage": "Click to add plots and crops",
     "view_plot": "Manage plot",
     "active_crop": "Active crop",
+    "past_crops": "Crop rotation",
     "finance_summary": "Farm money summary",
     "plot_profit": "Net",
     "delete_confirm": "Archive farm \"{{name}}\"? You can no longer manage it from the list.",
@@ -184,7 +185,7 @@
       "harvested": "Harvested",
       "abandoned": "Abandoned"
     },
-    "history_collapsed_hint": "{{count}} past crops — open only when needed"
+    "history_collapsed_hint": "{{count}} past crops in this plot's rotation"
   },
   "expenses": {
     "title": "Input & Expenses",

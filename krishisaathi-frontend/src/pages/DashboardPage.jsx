@@ -7,11 +7,9 @@ import LoadingState from '../components/LoadingState';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
-import MoneyFlowChart from '../components/MoneyFlowChart';
 import RemindersPanel from '../components/RemindersPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import TodayRecommendations from '../components/TodayRecommendations';
-import StatCard from '../components/StatCard';
 import {
   getExpenseSummary,
   getFarms,
@@ -205,27 +203,6 @@ function DashboardPage() {
 
           <TodayRecommendations items={recommendations} />
 
-          <section className="card active-crop-summary fade-in">
-            <div className="section-head-row">
-              <div>
-                <h3>{t('dashboard.active_crop_summary')}</h3>
-                <p>{t('dashboard.active_crop_summary_hint')}</p>
-              </div>
-              <Link to="/farms" className="btn btn-secondary btn-sm">{t('nav.farms')}</Link>
-            </div>
-            <div className="summary-chip-row">
-              <span className="summary-chip">🌾 {t('dashboard.total_farms')}: {farms.length}</span>
-              <span className="summary-chip">📍 {t('dashboard.total_plots')}: {total_plots}</span>
-              <span className="summary-chip">
-                ⏳ {t('profile.pending_sales')}: {pending_income_crops.length}
-              </span>
-              <span className={`summary-chip ${net >= 0 ? 'is-profit-chip' : 'is-loss-chip'}`}>
-                📈 {net >= 0 ? t('finance.profit') : t('finance.loss')}: {net >= 0 ? '+' : '-'}₹
-                {Math.abs(net).toLocaleString('en-IN')}
-              </span>
-            </div>
-          </section>
-
           <RemindersPanel compact default_open />
 
           <div className="card quick-log-cta no-print fade-in">
@@ -239,7 +216,17 @@ function DashboardPage() {
           </div>
 
           <section className="card pl-summary fade-in">
-            <h3 className="pl-summary-title">{t('dashboard.farm_pl')}</h3>
+            <div className="section-head-row">
+              <div>
+                <h3 className="pl-summary-title">{t('dashboard.farm_pl')}</h3>
+                <p className="section-note" style={{ margin: '4px 0 0' }}>
+                  {t('dashboard.total_farms')}: {farms.length}
+                  {' · '}
+                  {t('dashboard.total_plots')}: {total_plots}
+                </p>
+              </div>
+              <Link to="/farms" className="btn btn-secondary btn-sm">{t('nav.farms')}</Link>
+            </div>
             <div className="pl-summary-grid">
               <div className="pl-item is-earned">
                 <span>{t('dashboard.total_earned')}</span>
@@ -280,38 +267,6 @@ function DashboardPage() {
             <Link to="/assistant" className="btn btn-primary">
               {t('assistant.open')}
             </Link>
-          </div>
-
-          <div className="card-grid stats-grid-compact">
-            <StatCard icon="🌾" label={t('dashboard.total_farms')} value={farms.length} tone="farms" />
-            <StatCard icon="📍" label={t('dashboard.total_plots')} value={total_plots} tone="plots" />
-            <StatCard
-              icon="💰"
-              label={t('dashboard.total_earned')}
-              value={`₹${total_earned.toLocaleString('en-IN')}`}
-              tone="income"
-            />
-            <StatCard
-              icon="📉"
-              label={t('dashboard.total_spent')}
-              value={`₹${total_spent.toLocaleString('en-IN')}`}
-              tone="expense"
-            />
-            <StatCard
-              icon="📈"
-              label={net >= 0 ? t('finance.profit') : t('finance.loss')}
-              value={`${net >= 0 ? '+' : '-'}₹${Math.abs(net).toLocaleString('en-IN')}`}
-              tone={net >= 0 ? 'profit' : 'loss'}
-            />
-          </div>
-
-          <div className="card analytics-card fade-in">
-            <h3 className="analytics-card-title">{t('analytics.spend_vs_earn')}</h3>
-            <MoneyFlowChart
-              spent={total_spent}
-              earned={total_earned}
-              empty_label={t('analytics.no_money_data')}
-            />
           </div>
         </>
       )}

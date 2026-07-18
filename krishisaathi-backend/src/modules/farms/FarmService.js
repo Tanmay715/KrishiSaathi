@@ -108,12 +108,28 @@ class FarmService {
 
     const plot_ids = plots.map((plot) => plot.id);
     let active_crops = [];
+    let past_crops = [];
 
     if (plot_ids.length > 0) {
       active_crops = await db('crop_cycles')
         .whereIn('plot_id', plot_ids)
         .whereIn('status', ['planned', 'active'])
         .orderBy('created_at', 'desc');
+
+      past_crops = await db('crop_cycles')
+        .whereIn('plot_id', plot_ids)
+        .whereIn('status', ['harvested', 'abandoned'])
+        .orderBy('created_at', 'desc')
+        .select(
+          'id',
+          'plot_id',
+          'crop_name',
+          'season_type',
+          'status',
+          'sowing_date',
+          'actual_harvest_date',
+          'created_at',
+        );
     }
 
     const crop_map = {};
@@ -123,9 +139,20 @@ class FarmService {
       }
     });
 
+    const history_map = {};
+    past_crops.forEach((crop) => {
+      if (!history_map[crop.plot_id]) {
+        history_map[crop.plot_id] = [];
+      }
+      if (history_map[crop.plot_id].length < 5) {
+        history_map[crop.plot_id].push(crop);
+      }
+    });
+
     const plots_with_crops = plots.map((plot) => ({
       ...plot,
       active_crop: crop_map[plot.id] || null,
+      crop_history: history_map[plot.id] || [],
     }));
 
     const finance = await this.#getFarmFinance(user_id, farm_id, plot_ids);

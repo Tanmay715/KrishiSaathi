@@ -121,7 +121,7 @@ function PlotDetailPage() {
   const [expanded_history_id, setExpandedHistoryId] = useState('');
   const [is_expenses_open, setIsExpensesOpen] = useState(true);
   const [is_incomes_open, setIsIncomesOpen] = useState(true);
-  const [is_history_open, setIsHistoryOpen] = useState(false);
+  const [is_history_open, setIsHistoryOpen] = useState(true);
   const [is_cached_view, setIsCachedView] = useState(false);
   const [crop_form, setCropForm] = useState(EMPTY_CROP);
   const [expense_form, setExpenseForm] = useState(getExpenseFormDefaults());
@@ -706,178 +706,6 @@ function PlotDetailPage() {
         />
       )}
 
-      {plot.active_crop && (
-        <>
-          <section className="card">
-            <div className="collapsible-header">
-              <button
-                type="button"
-                className="section-toggle"
-                onClick={() => setIsExpensesOpen((prev) => !prev)}
-                aria-expanded={is_expenses_open}
-              >
-                <div>
-                  <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
-                  <p className="section-note" style={{ margin: '4px 0 0' }}>
-                    {t('expenses.collapsed_hint', {
-                      count: plot.expenses?.length || 0,
-                      amount: spending.toLocaleString('en-IN'),
-                    })}
-                  </p>
-                </div>
-                <span className="badge">{is_expenses_open ? t('common.hide') : t('common.show')}</span>
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateExpense}>
-                {t('expenses.add')}
-              </button>
-            </div>
-
-            {is_expenses_open && (
-              <div className="section-panel-body">
-                <p className="section-note" style={{ marginTop: 0 }}>
-                  {t('expenses.for_crop', { crop: plot.active_crop.crop_name })}
-                </p>
-                {!plot.expenses?.length ? (
-                  <div className="empty-state" style={{ padding: '8px 0' }}>
-                    <p>{t('expenses.empty')}</p>
-                  </div>
-                ) : (
-                  <ul className="activity-list">
-                    {plot.expenses.map((expense) => (
-                      <li key={expense.id} className="activity-item expense-item">
-                        <span className="activity-dot" />
-                        <div className="expense-body">
-                          <div className="farm-card-top">
-                            <div>
-                              <strong>{expense.title}</strong>
-                              <div className="farm-meta">
-                                <span>{t(`expenses.category.${expense.category}`)}</span>
-                                <span>{formatMoneyDate(expense.expense_date, i18n.language)}</span>
-                                {!expense.crop_cycle_id && <span>{t('expenses.unlinked_crop')}</span>}
-                                {expense.quantity != null && (
-                                  <span>
-                                    {expense.quantity} {expense.unit || ''}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="action-row">
-                              <span className="expense-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => openEditExpense(expense)}
-                              >
-                                {t('common.edit')}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteExpense(expense)}
-                              >
-                                {t('common.delete')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </section>
-
-          <section className="card">
-            <div className="collapsible-header">
-              <button
-                type="button"
-                className="section-toggle"
-                onClick={() => setIsIncomesOpen((prev) => !prev)}
-                aria-expanded={is_incomes_open}
-              >
-                <div>
-                  <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
-                  <p className="section-note" style={{ margin: '4px 0 0' }}>
-                    {t('incomes.collapsed_hint', {
-                      count: plot.incomes?.length || 0,
-                      amount: earned.toLocaleString('en-IN'),
-                    })}
-                  </p>
-                </div>
-                <span className="badge">{is_incomes_open ? t('common.hide') : t('common.show')}</span>
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateIncome}>
-                {t('incomes.add')}
-              </button>
-            </div>
-
-            {is_incomes_open && (
-              <div className="section-panel-body">
-                <p className="section-note" style={{ marginTop: 0 }}>
-                  {t('incomes.for_crop', { crop: plot.active_crop.crop_name })}
-                </p>
-                {!plot.incomes?.length ? (
-                  <div className="empty-state" style={{ padding: '8px 0' }}>
-                    <p>{t('incomes.empty')}</p>
-                  </div>
-                ) : (
-                  <ul className="activity-list">
-                    {plot.incomes.map((income) => (
-                      <li key={income.id} className="activity-item expense-item">
-                        <span className="activity-dot" />
-                        <div className="expense-body">
-                          <div className="farm-card-top">
-                            <div>
-                              <strong>{income.title}</strong>
-                              <div className="farm-meta">
-                                <span>{t(`incomes.category.${income.category}`)}</span>
-                                <span>{formatMoneyDate(income.income_date, i18n.language)}</span>
-                                {income.quantity != null && (
-                                  <span>
-                                    {income.quantity} {income.unit || ''}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="action-row">
-                              <span className="expense-amount">₹{Number(income.amount).toLocaleString('en-IN')}</span>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => openEditIncome(income)}
-                              >
-                                {t('common.edit')}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteIncome(income)}
-                              >
-                                {t('common.delete')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </section>
-        </>
-      )}
-
-      <PendingIncomeSection
-        crops={pending_income_crops}
-        on_log_income={(crop) => {
-          setIsHistoryOpen(true);
-          setExpandedHistoryId(crop.id);
-          openCreateIncomeForCrop(crop);
-        }}
-      />
-
       {plot.crop_history?.length > 0 && (
         <section className="card" style={{ marginTop: 20 }}>
           <button
@@ -1055,6 +883,179 @@ function PlotDetailPage() {
           )}
         </section>
       )}
+
+
+      {plot.active_crop && (
+        <>
+          <section className="card">
+            <div className="collapsible-header">
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setIsExpensesOpen((prev) => !prev)}
+                aria-expanded={is_expenses_open}
+              >
+                <div>
+                  <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
+                  <p className="section-note" style={{ margin: '4px 0 0' }}>
+                    {t('expenses.collapsed_hint', {
+                      count: plot.expenses?.length || 0,
+                      amount: spending.toLocaleString('en-IN'),
+                    })}
+                  </p>
+                </div>
+                <span className="badge">{is_expenses_open ? t('common.hide') : t('common.show')}</span>
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateExpense}>
+                {t('expenses.add')}
+              </button>
+            </div>
+
+            {is_expenses_open && (
+              <div className="section-panel-body">
+                <p className="section-note" style={{ marginTop: 0 }}>
+                  {t('expenses.for_crop', { crop: plot.active_crop.crop_name })}
+                </p>
+                {!plot.expenses?.length ? (
+                  <div className="empty-state" style={{ padding: '8px 0' }}>
+                    <p>{t('expenses.empty')}</p>
+                  </div>
+                ) : (
+                  <ul className="activity-list">
+                    {plot.expenses.map((expense) => (
+                      <li key={expense.id} className="activity-item expense-item">
+                        <span className="activity-dot" />
+                        <div className="expense-body">
+                          <div className="farm-card-top">
+                            <div>
+                              <strong>{expense.title}</strong>
+                              <div className="farm-meta">
+                                <span>{t(`expenses.category.${expense.category}`)}</span>
+                                <span>{formatMoneyDate(expense.expense_date, i18n.language)}</span>
+                                {!expense.crop_cycle_id && <span>{t('expenses.unlinked_crop')}</span>}
+                                {expense.quantity != null && (
+                                  <span>
+                                    {expense.quantity} {expense.unit || ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="action-row">
+                              <span className="expense-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => openEditExpense(expense)}
+                              >
+                                {t('common.edit')}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDeleteExpense(expense)}
+                              >
+                                {t('common.delete')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="card">
+            <div className="collapsible-header">
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setIsIncomesOpen((prev) => !prev)}
+                aria-expanded={is_incomes_open}
+              >
+                <div>
+                  <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
+                  <p className="section-note" style={{ margin: '4px 0 0' }}>
+                    {t('incomes.collapsed_hint', {
+                      count: plot.incomes?.length || 0,
+                      amount: earned.toLocaleString('en-IN'),
+                    })}
+                  </p>
+                </div>
+                <span className="badge">{is_incomes_open ? t('common.hide') : t('common.show')}</span>
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateIncome}>
+                {t('incomes.add')}
+              </button>
+            </div>
+
+            {is_incomes_open && (
+              <div className="section-panel-body">
+                <p className="section-note" style={{ marginTop: 0 }}>
+                  {t('incomes.for_crop', { crop: plot.active_crop.crop_name })}
+                </p>
+                {!plot.incomes?.length ? (
+                  <div className="empty-state" style={{ padding: '8px 0' }}>
+                    <p>{t('incomes.empty')}</p>
+                  </div>
+                ) : (
+                  <ul className="activity-list">
+                    {plot.incomes.map((income) => (
+                      <li key={income.id} className="activity-item expense-item">
+                        <span className="activity-dot" />
+                        <div className="expense-body">
+                          <div className="farm-card-top">
+                            <div>
+                              <strong>{income.title}</strong>
+                              <div className="farm-meta">
+                                <span>{t(`incomes.category.${income.category}`)}</span>
+                                <span>{formatMoneyDate(income.income_date, i18n.language)}</span>
+                                {income.quantity != null && (
+                                  <span>
+                                    {income.quantity} {income.unit || ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="action-row">
+                              <span className="expense-amount">₹{Number(income.amount).toLocaleString('en-IN')}</span>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => openEditIncome(income)}
+                              >
+                                {t('common.edit')}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDeleteIncome(income)}
+                              >
+                                {t('common.delete')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      <PendingIncomeSection
+        crops={pending_income_crops}
+        on_log_income={(crop) => {
+          setIsHistoryOpen(true);
+          setExpandedHistoryId(crop.id);
+          openCreateIncomeForCrop(crop);
+        }}
+      />
 
       {crop_to_delete && (
         <div className="modal-overlay" onClick={() => setCropToDelete(null)}>
