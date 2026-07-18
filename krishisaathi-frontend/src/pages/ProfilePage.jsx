@@ -141,23 +141,11 @@ function ProfilePage() {
         </div>
       </div>
 
-      <div className="card-grid profile-stats-grid">
-        <div className="card stat-card">
-          <div className="stat-label">{t('dashboard.total_farms')}</div>
-          <div className="stat-value">{limits.farms?.used || 0}</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-label">{t('dashboard.total_plots')}</div>
-          <div className="stat-value">{limits.plots?.used || 0}</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-label">{t('profile.active_crops')}</div>
-          <div className="stat-value">{stats.active_crops || 0}</div>
-        </div>
-        <div className="card stat-card stat-card-earn">
-          <div className="stat-label">{t('profile.pending_sales')}</div>
-          <div className="stat-value">{stats.pending_income_crops || 0}</div>
-        </div>
+      <div className="summary-chip-row profile-chip-row">
+        <span className="summary-chip">🌾 {t('dashboard.total_farms')}: {limits.farms?.used || 0}</span>
+        <span className="summary-chip">📍 {t('dashboard.total_plots')}: {limits.plots?.used || 0}</span>
+        <span className="summary-chip">🌱 {t('profile.active_crops')}: {stats.active_crops || 0}</span>
+        <span className="summary-chip">⏳ {t('profile.pending_sales')}: {stats.pending_income_crops || 0}</span>
       </div>
 
       <div className="card profile-finance-card">

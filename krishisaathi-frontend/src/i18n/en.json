@@ -43,7 +43,12 @@
     "recent_activity": "Recent Activity",
     "view_all": "View all",
     "no_activity": "No activity yet. Start by adding a farm.",
-    "get_started": "Get started by creating your first farm."
+    "get_started": "Get started by creating your first farm.",
+    "empty_hint": "Add a farm to see weather, reminders, and profit on this screen.",
+    "active_crop_summary": "Active crop summary",
+    "active_crop_summary_hint": "Quick view of your farms and pending sales",
+    "farm_pl": "Farm profit & loss",
+    "pending_income_note": "{{count}} sale(s) still pending income"
   },
   "assistant": {
     "title": "Farm Assistant",
@@ -68,7 +73,24 @@
   "weather": {
     "title": "Weather",
     "rain_chance": "Rain chance",
-    "rain": "rain"
+    "rain": "rain",
+    "advice_delay_spray": "Rain expected — delay pesticide spraying.",
+    "advice_skip_irrigation": "Skip irrigation today if soil is wet.",
+    "advice_harvest_after_rain": "Plan harvest after the rain clears.",
+    "advice_rain_tomorrow": "Rain likely tomorrow — finish field work today if possible.",
+    "advice_good_field_work": "Low rain chance — good day for field work."
+  },
+  "recommendations": {
+    "title": "Today's recommendations",
+    "subtitle": "Based on weather, crops, and reminders",
+    "rain_avoid_spray": "Rain expected today. Avoid pesticide spraying.",
+    "rain_skip_irrigation": "Irrigation can be postponed.",
+    "rain_soon": "Rain may come soon — plan field work carefully.",
+    "pending_sales": "{{count}} harvested crop(s) still need sale income.",
+    "reminder_fallback": "You have a farm reminder due.",
+    "watch_expenses": "Expenses are ahead of income — review spending.",
+    "in_profit": "Your farms are in profit so far this season.",
+    "default": "Check reminders and log today's expenses to stay on track."
   },
   "farms": {
     "title": "My Farms",
@@ -125,7 +147,23 @@
     "abandon_confirm": "Mark this crop as abandoned? The plot will be free for a new crop.",
     "lifecycle": "Lifecycle stages",
     "stage_done": "Done",
-    "stage_pending": "Pending",
+    "stage_pending": "Upcoming",
+    "stage_current": "Now",
+    "stages": {
+      "land_preparation": "Land preparation",
+      "sowing": "Sowing",
+      "planting": "Planting",
+      "nursery": "Nursery",
+      "transplanting": "Transplanting",
+      "earthing_up": "Earthing up",
+      "weeding": "Weeding",
+      "irrigation": "Irrigation",
+      "fertilizer": "Fertilizer",
+      "pest_control": "Pest control",
+      "flowering": "Flowering",
+      "growth": "Growth",
+      "harvest": "Harvest"
+    },
     "history": "Crop rotation history",
     "history_hint": "Tap a past crop to view money. You can log sale income after harvest.",
     "view_details": "View details",
@@ -236,6 +274,7 @@
   },
   "finance": {
     "profit": "Profit",
+    "loss": "Loss",
     "summary": "Plot money summary",
     "farm_summary": "Totals across all plots in this farm",
     "farm_summary_plots": "Across {{count}} plot(s) on this farm",

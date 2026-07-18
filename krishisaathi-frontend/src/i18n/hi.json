@@ -43,7 +43,12 @@
     "recent_activity": "हाल की गतिविधि",
     "view_all": "सभी देखें",
     "no_activity": "अभी कोई गतिविधि नहीं। खेत जोड़कर शुरू करें।",
-    "get_started": "अपना पहला खेत बनाकर शुरू करें।"
+    "get_started": "अपना पहला खेत बनाकर शुरू करें।",
+    "empty_hint": "मौसम, रिमाइंडर और मुनाफा देखने के लिए खेत जोड़ें।",
+    "active_crop_summary": "सक्रिय फसल सारांश",
+    "active_crop_summary_hint": "खेत और बाकी बिक्री का त्वरित नज़ारा",
+    "farm_pl": "खेत का लाभ-हानि",
+    "pending_income_note": "{{count}} बिक्री की आय अभी बाकी है"
   },
   "assistant": {
     "title": "फार्म सहायक",
@@ -68,7 +73,24 @@
   "weather": {
     "title": "मौसम",
     "rain_chance": "बारिश की संभावना",
-    "rain": "बारिश"
+    "rain": "बारिश",
+    "advice_delay_spray": "बारिश संभव है — छिड़काव टालें।",
+    "advice_skip_irrigation": "मिट्टी गीली हो तो आज सिंचाई न करें।",
+    "advice_harvest_after_rain": "कटाई बारिश थमने के बाद करें।",
+    "advice_rain_tomorrow": "कल बारिश हो सकती है — आज खेत का काम पूरा करें।",
+    "advice_good_field_work": "बारिश कम — खेत के काम के लिए अच्छा दिन।"
+  },
+  "recommendations": {
+    "title": "आज की सिफारिशें",
+    "subtitle": "मौसम, फसल और रिमाइंडर के आधार पर",
+    "rain_avoid_spray": "आज बारिश संभव है। कीटनाशक छिड़काव न करें।",
+    "rain_skip_irrigation": "सिंचाई टाली जा सकती है।",
+    "rain_soon": "जल्द बारिश हो सकती है — खेत का काम सोच-समझकर करें।",
+    "pending_sales": "{{count}} कटी फसल की बिक्री आय अभी बाकी है।",
+    "reminder_fallback": "आपका एक फार्म रिमाइंडर बाकी है।",
+    "watch_expenses": "खर्च आय से आगे है — खर्च जाँचें।",
+    "in_profit": "इस मौसम में आपके खेत अभी मुनाफे में हैं।",
+    "default": "रिमाइंडर देखें और आज का खर्च दर्ज करें।"
   },
   "farms": {
     "title": "मेरे खेत",
@@ -125,7 +147,23 @@
     "abandon_confirm": "इस फसल को छोड़ें? टुकड़ा नई फसल के लिए खाली हो जाएगा।",
     "lifecycle": "जीवनचक्र चरण",
     "stage_done": "हो गया",
-    "stage_pending": "बाकी",
+    "stage_pending": "आगे",
+    "stage_current": "अभी",
+    "stages": {
+      "land_preparation": "खेत की तैयारी",
+      "sowing": "बुवाई",
+      "planting": "रोपाई",
+      "nursery": "नर्सरी",
+      "transplanting": "रोपाई",
+      "earthing_up": "मिट्टी चढ़ाना",
+      "weeding": "निराई",
+      "irrigation": "सिंचाई",
+      "fertilizer": "उर्वरक",
+      "pest_control": "कीट नियंत्रण",
+      "flowering": "फूल आना",
+      "growth": "विकास",
+      "harvest": "कटाई"
+    },
     "history": "फसल रोटेशन इतिहास",
     "history_hint": "पिछली फसल पर क्लिक करके खर्च और आय देखें। कटाई के बाद बिक्री की आय यहाँ दर्ज करें।",
     "view_details": "विवरण देखें",
@@ -236,6 +274,7 @@
   },
   "finance": {
     "profit": "मुनाफा",
+    "loss": "नुकसान",
     "summary": "टुकड़े का हिसाब",
     "farm_summary": "इस खेत के सभी टुकड़ों का कुल हिसाब",
     "farm_summary_plots": "इस खेत के {{count}} टुकड़ों पर",

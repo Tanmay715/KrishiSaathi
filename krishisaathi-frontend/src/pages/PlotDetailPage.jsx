@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import PendingIncomeSection from '../components/PendingIncomeSection';
 import { formatMoneyDate } from '../utils/format_date';
+import { stageIcon, translateStageName } from '../utils/dashboard_insights';
 import {
   EXPENSE_CATEGORIES,
   applyExpenseCategoryChange,
@@ -616,25 +617,48 @@ function PlotDetailPage() {
           </div>
 
           {plot.active_crop.lifecycle_stages?.length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <h4 style={{ margin: '0 0 12px' }}>{t('crops.lifecycle')}</h4>
-              <ul className="stage-list">
-                {plot.active_crop.lifecycle_stages.map((stage, index) => (
-                  <li
-                    key={`${stage.name}-${index}`}
-                    className={`stage-item${stage.completed ? ' stage-item-done' : ''}`}
-                  >
-                    <label className="stage-label">
-                      <input
-                        type="checkbox"
-                        checked={stage.completed}
-                        onChange={() => toggleStage(index)}
-                      />
-                      <span className="stage-name">{stage.name}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
+            <div className="lifecycle-block">
+              <h4>{t('crops.lifecycle')}</h4>
+              <ol className="stage-timeline">
+                {plot.active_crop.lifecycle_stages.map((stage, index) => {
+                  const is_done = Boolean(stage.completed);
+                  const is_current = !is_done
+                    && plot.active_crop.lifecycle_stages.slice(0, index).every((item) => item.completed);
+
+                  return (
+                    <li
+                      key={`${stage.name}-${index}`}
+                      className={`stage-timeline-item${is_done ? ' is-done' : ''}${is_current ? ' is-current' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="stage-timeline-node"
+                        onClick={() => toggleStage(index)}
+                        aria-pressed={is_done}
+                      >
+                        <span className="stage-timeline-icon" aria-hidden="true">
+                          {is_done ? '✓' : stageIcon(stage.name)}
+                        </span>
+                      </button>
+                      <div className="stage-timeline-body">
+                        <button
+                          type="button"
+                          className="stage-timeline-label"
+                          onClick={() => toggleStage(index)}
+                        >
+                          {translateStageName(t, stage.name)}
+                        </button>
+                        <span className="stage-timeline-status">
+                          {is_done ? t('crops.stage_done') : is_current ? t('crops.stage_current') : t('crops.stage_pending')}
+                        </span>
+                      </div>
+                      {index < plot.active_crop.lifecycle_stages.length - 1 && (
+                        <span className="stage-timeline-connector" aria-hidden="true" />
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           )}
         </div>
@@ -652,7 +676,9 @@ function PlotDetailPage() {
               <strong>₹{earned.toLocaleString('en-IN')}</strong>
             </div>
             <div>
-              <div className="stat-label">{t('finance.profit')}</div>
+              <div className="stat-label">
+                {profit >= 0 ? t('finance.status_profit') : t('finance.status_loss')}
+              </div>
               <strong className={profit >= 0 ? 'is-profit' : 'is-loss'}>
                 {profit >= 0 ? '+' : '-'}₹{Math.abs(profit).toLocaleString('en-IN')}
               </strong>

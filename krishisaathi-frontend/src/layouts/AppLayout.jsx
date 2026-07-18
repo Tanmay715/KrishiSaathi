@@ -8,11 +8,11 @@ import QuickLogFab from '../components/QuickLogFab';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const NAV_ITEMS = [
-  { to: '/', end: true, key: 'dashboard' },
-  { to: '/farms', key: 'farms' },
-  { to: '/assistant', key: 'assistant' },
-  { to: '/activity', key: 'activity' },
-  { to: '/profile', key: 'profile' },
+  { to: '/', end: true, key: 'dashboard', icon: '🏠' },
+  { to: '/farms', key: 'farms', icon: '🌾' },
+  { to: '/assistant', key: 'assistant', icon: '🤖' },
+  { to: '/activity', key: 'activity', icon: '📋' },
+  { to: '/profile', key: 'profile', icon: '👤' },
 ];
 
 function AppLayout() {
@@ -112,7 +112,8 @@ function AppLayout() {
                 className={({ isActive }) => `drawer-link${isActive ? ' active' : ''}`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                {t(`nav.${item.key}`)}
+                <span className="drawer-link-icon" aria-hidden="true">{item.icon}</span>
+                <span>{t(`nav.${item.key}`)}</span>
               </NavLink>
             ))}
           </nav>
