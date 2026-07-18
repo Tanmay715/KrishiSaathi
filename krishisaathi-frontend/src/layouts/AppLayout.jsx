@@ -17,51 +17,68 @@ const NAV_ITEMS = [
 ];
 
 function NavIcon({ name }) {
-  const common = {
-    width: 18,
-    height: 18,
+  const frame = {
+    width: 22,
+    height: 22,
     viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.85,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
     'aria-hidden': true,
   };
 
   if (name === 'home') {
     return (
-      <svg {...common}>
-        <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" />
+      <svg {...frame}>
+        <path fill="#60a5fa" d="M4 11.2 12 4.2l8 7V20a1.2 1.2 0 0 1-1.2 1.2H14v-6.2h-4v6.2H5.2A1.2 1.2 0 0 1 4 20v-8.8z" />
+        <path fill="#fbbf24" d="M10 15h4v6.2h-4z" />
+        <circle cx="12" cy="10.2" r="1.3" fill="#fff7ed" />
       </svg>
     );
   }
   if (name === 'farms') {
     return (
-      <svg {...common}>
-        <path d="M12 3c2.5 3 4 6 4 9a4 4 0 1 1-8 0c0-3 1.5-6 4-9z" />
-        <path d="M12 22v-6" />
+      <svg {...frame}>
+        <ellipse cx="12" cy="20.4" rx="7" ry="1.7" fill="#a16207" opacity="0.4" />
+        <path
+          fill="#22c55e"
+          d="M12 19C8.2 17.6 6 14.8 6 11.2c3.4.5 5.2 2.8 6 5.6.8-2.8 2.6-5.1 6-5.6C18 14.8 15.8 17.6 12 19z"
+        />
+        <path
+          fill="#86efac"
+          d="M12 13.5c-1.8-3-3-5.2-3.4-6.8 2 .9 3 2.8 3.4 5 .4-2.2 1.4-4.1 3.4-5-.4 1.6-1.6 3.8-3.4 6.8z"
+        />
+        <path d="M12 20.2V11" stroke="#166534" strokeWidth="1.7" strokeLinecap="round" fill="none" />
+        <circle cx="12" cy="8.2" r="2.2" fill="#facc15" />
+        <circle cx="11.3" cy="7.5" r="0.55" fill="#fef9c3" />
       </svg>
     );
   }
   if (name === 'chat') {
     return (
-      <svg {...common}>
-        <path d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" />
+      <svg {...frame}>
+        <path fill="#fbbf24" d="M4.2 6.2h15.6A1.8 1.8 0 0 1 21.6 8v7.2a1.8 1.8 0 0 1-1.8 1.8H9.4L4.2 20.8V6.2z" />
+        <circle cx="9" cy="11.4" r="1.15" fill="#fff7ed" />
+        <circle cx="12.2" cy="11.4" r="1.15" fill="#fff7ed" />
+        <circle cx="15.4" cy="11.4" r="1.15" fill="#fff7ed" />
       </svg>
     );
   }
   if (name === 'list') {
     return (
-      <svg {...common}>
-        <path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01" />
+      <svg {...frame}>
+        <rect x="3.8" y="4.2" width="16.4" height="15.6" rx="2.4" fill="#a78bfa" />
+        <rect x="7.4" y="7.2" width="9.2" height="1.8" rx="0.9" fill="#ede9fe" />
+        <rect x="7.4" y="11.1" width="9.2" height="1.8" rx="0.9" fill="#ede9fe" />
+        <rect x="7.4" y="15" width="6.4" height="1.8" rx="0.9" fill="#ede9fe" />
+        <circle cx="5.8" cy="8.1" r="0.85" fill="#fef08a" />
+        <circle cx="5.8" cy="12" r="0.85" fill="#fef08a" />
+        <circle cx="5.8" cy="15.9" r="0.85" fill="#fef08a" />
       </svg>
     );
   }
   return (
-    <svg {...common}>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
+    <svg {...frame}>
+      <circle cx="12" cy="8.2" r="4" fill="#fb923c" />
+      <path fill="#fdba74" d="M5.2 19.6c1.4-3.4 3.8-5 6.8-5s5.4 1.6 6.8 5c-2.1 1-4.4 1.5-6.8 1.5s-4.7-.5-6.8-1.5z" />
+      <circle cx="12" cy="8" r="1.5" fill="#fff7ed" opacity="0.55" />
     </svg>
   );
 }

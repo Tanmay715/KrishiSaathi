@@ -268,40 +268,30 @@ function FarmDetailPage() {
 
   return (
     <div className="farm-detail-page">
-      <div className="page-header">
+      <div className="page-header farm-detail-header">
         <Link to="/farms" className="back-link">
           ← {t('farms.title')}
         </Link>
-      </div>
-
-      <div className="farm-detail-hero card">
-        <div className="farm-detail-hero-main">
-          <span className="farm-mark" aria-hidden="true">
+        <div className="farm-context-bar">
+          <span className="farm-mark is-sm" aria-hidden="true">
             {(farm.name || '?').trim().charAt(0).toUpperCase()}
           </span>
-          <div className="farm-detail-hero-copy">
-            <h2>{farm.name}</h2>
-            <p>{[farm.village, farm.district, farm.state].filter(Boolean).join(', ') || '—'}</p>
-            <div className="farm-card-chips">
-              <span className="farm-chip">
-                {t('farms.plot_count', { count: farm.plots?.length || 0 })}
-              </span>
-              {Number(farm.total_area) > 0 && (
-                <span className="farm-chip">
-                  {farm.total_area} {land_unit_label}
-                </span>
-              )}
-            </div>
+          <div className="farm-context-copy">
+            <strong>{farm.name}</strong>
+            <span>
+              {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')
+                || t('farms.plot_count', { count: farm.plots?.length || 0 })}
+            </span>
           </div>
-        </div>
-        <div className="farm-detail-hero-actions">
-          <button type="button" className="btn btn-primary btn-sm" onClick={openEditFarm}>
-            {t('farms.edit_farm')}
-          </button>
           <OverflowMenu
             label={t('common.more')}
             quiet
             items={[
+              {
+                id: 'edit-farm',
+                label: t('farms.edit_farm'),
+                onClick: openEditFarm,
+              },
               {
                 id: 'delete-farm',
                 label: t('common.delete'),
