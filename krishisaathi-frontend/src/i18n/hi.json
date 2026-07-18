@@ -48,7 +48,14 @@
     "active_crop_summary": "सक्रिय फसल सारांश",
     "active_crop_summary_hint": "खेत और बाकी बिक्री का त्वरित नज़ारा",
     "farm_pl": "खेत का लाभ-हानि",
-    "pending_income_note": "{{count}} बिक्री की आय अभी बाकी है"
+    "pending_income_note": "{{count}} बिक्री की आय अभी बाकी है",
+    "hero_label": "आज आपके खेत पर",
+    "do_today": "आज यह करें",
+    "today_actions": "आज का फोकस",
+    "today_actions_hint": "अभी किस पर ध्यान दें",
+    "farm_health": "खेत की सेहत",
+    "farms_short": "खेत",
+    "plots_short": "टुकड़े"
   },
   "assistant": {
     "title": "फार्म सहायक",
@@ -150,6 +157,16 @@
     "stage_done": "हो गया",
     "stage_pending": "आगे",
     "stage_current": "अभी",
+    "growth": "वृद्धि",
+    "next_up": "अगला काम",
+    "next_harvest": "कटाई के लिए तैयार",
+    "weather_impact": "मौसम का असर",
+    "days_growing": "दिन {{count}}",
+    "health": {
+      "on_track": "ठीक चल रहा",
+      "strong": "अच्छी वृद्धि",
+      "attention": "ध्यान दें"
+    },
     "stages": {
       "land_preparation": "खेत की तैयारी",
       "sowing": "बुवाई",
@@ -318,7 +335,9 @@
     "hindi": "हिंदी",
     "invalid_phone": "मान्य 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें",
     "show": "दिखाएँ",
-    "hide": "छिपाएँ"
+    "hide": "छिपाएँ",
+    "more": "और विकल्प",
+    "show_less": "कम दिखाएँ"
   },
   "analytics": {
     "spend_vs_earn": "खर्च बनाम आमदनी",
@@ -368,6 +387,7 @@
     "pending_count": "{{count}} जल्द देय",
     "collapsed_hint": "जरूरत पड़ने पर खेत के रिमाइंडर देखें",
     "collapsed_hint_count": "{{count}} बाकी रिमाइंडर",
+    "view_all": "सभी {{count}} रिमाइंडर देखें",
     "type": "प्रकार",
     "reminder_title": "शीर्षक",
     "due_at": "तारीख",

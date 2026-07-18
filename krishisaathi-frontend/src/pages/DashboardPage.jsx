@@ -6,31 +6,29 @@ import PendingIncomeSection from '../components/PendingIncomeSection';
 import LoadingState from '../components/LoadingState';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
-import PageHeader from '../components/PageHeader';
-import RemindersPanel from '../components/RemindersPanel';
+import DashboardHero from '../components/DashboardHero';
+import TodayActions from '../components/TodayActions';
+import FarmHealthCard from '../components/FarmHealthCard';
 import MandiPricePanel from '../components/MandiPricePanel';
-import TodayRecommendations from '../components/TodayRecommendations';
+import Modal from '../components/Modal';
 import {
+  createReminder,
+  generateReminders,
   getExpenseSummary,
   getFarms,
   getIncomeSummary,
   getPendingIncomeCrops,
   getReminders,
   getWeather,
+  updateReminder,
 } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { buildTodayRecommendations, buildWeatherAdvice } from '../utils/dashboard_insights';
 
-function formatForecastDate(iso_date, language) {
-  const date = new Date(`${iso_date}T00:00:00`);
-  return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-    day: 'numeric',
-    month: 'short',
-  });
-}
+const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
 function DashboardPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [farms, setFarms] = useState([]);
   const [expense_summary, setExpenseSummary] = useState({ total_spent: 0 });
@@ -41,6 +39,13 @@ function DashboardPage() {
   const [is_loading, setIsLoading] = useState(true);
   const [is_cached_view, setIsCachedView] = useState(false);
   const [error_message, setErrorMessage] = useState('');
+  const [is_working, setIsWorking] = useState(false);
+  const [show_reminder_modal, setShowReminderModal] = useState(false);
+  const [reminder_form, setReminderForm] = useState({
+    title: '',
+    type: 'custom',
+    due_at: new Date().toISOString().slice(0, 10),
+  });
 
   useEffect(() => {
     loadDashboard();
@@ -103,6 +108,51 @@ function DashboardPage() {
     }
   }
 
+  async function handleReminderStatus(reminder_id, status) {
+    try {
+      await updateReminder(reminder_id, { status });
+      setReminders((prev) => prev.filter((item) => item.id !== reminder_id));
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || t('common.error'));
+    }
+  }
+
+  async function handleGenerateReminders() {
+    setIsWorking(true);
+    try {
+      const response = await generateReminders();
+      setReminders(response.data || []);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || t('common.error'));
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  async function handleCreateReminder(event) {
+    event.preventDefault();
+    setIsWorking(true);
+    try {
+      await createReminder({
+        type: reminder_form.type,
+        title: reminder_form.title,
+        due_at: new Date(`${reminder_form.due_at}T09:00:00`).toISOString(),
+      });
+      setShowReminderModal(false);
+      setReminderForm({
+        title: '',
+        type: 'custom',
+        due_at: new Date().toISOString().slice(0, 10),
+      });
+      const response = await getReminders({ status: 'pending' });
+      setReminders(response.data || []);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || t('common.error'));
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
   const total_plots = farms.reduce((sum, farm) => sum + (farm.plot_count || 0), 0);
   const total_spent = Number(expense_summary.total_spent || 0);
   const total_earned = Number(income_summary.total_earned || 0);
@@ -125,23 +175,30 @@ function DashboardPage() {
     [t, weather],
   );
 
+  const sorted_reminders = useMemo(() => (
+    [...reminders].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+  ), [reminders]);
+
+  const primary_action = recommendations[0] || null;
+  const secondary_actions = recommendations.slice(1);
+  const greeting = `${t('dashboard.welcome')}${user?.name ? `, ${user.name}` : ''}`;
+
   if (is_loading) {
     return <LoadingState />;
   }
 
-  if (error_message) {
+  if (error_message && farms.length === 0 && !weather) {
     return <ErrorState message={error_message} on_retry={loadDashboard} />;
   }
 
   return (
-    <div className="dashboard-page page-stack">
-      <PageHeader
-        title={t('dashboard.title')}
-        subtitle={`${t('dashboard.welcome')}${user?.name ? `, ${user.name}` : ''}`}
-      />
-
+    <div className="dashboard-page page-stack is-premium">
       {is_cached_view && (
         <div className="info-banner">{t('pwa.cached_data')}</div>
+      )}
+
+      {error_message && (
+        <div className="error-banner">{error_message}</div>
       )}
 
       {farms.length === 0 ? (
@@ -156,119 +213,99 @@ function DashboardPage() {
         />
       ) : (
         <>
-          {weather && (
-            <div className="card weather-strip fade-in">
-              <div className="weather-main">
-                <div>
-                  <div className="stat-label">{t('weather.title')}</div>
-                  <strong className="weather-temp">
-                    {weather.current?.temperature_c != null
-                      ? `${Math.round(weather.current.temperature_c)}°C`
-                      : '—'}
-                  </strong>
-                  <span className="weather-condition">{weather.current?.condition}</span>
-                </div>
-                <div className="weather-meta">
-                  <span>
-                    {weather.location?.name}
-                    {weather.location?.region ? `, ${weather.location.region}` : ''}
-                  </span>
-                  <span>
-                    {t('weather.rain_chance')}: {weather.current?.rain_chance ?? 0}%
-                  </span>
-                </div>
-              </div>
-              {weather_advice.length > 0 && (
-                <ul className="weather-advice-list">
-                  {weather_advice.map((tip) => (
-                    <li key={tip}>{tip}</li>
-                  ))}
-                </ul>
-              )}
-              {weather.forecast?.length > 0 && (
-                <div className="weather-forecast">
-                  {weather.forecast.map((day) => (
-                    <div key={day.date} className="weather-day">
-                      <strong>{formatForecastDate(day.date, i18n.language)}</strong>
-                      <span>
-                        {Math.round(day.temp_max)}° / {Math.round(day.temp_min)}°
-                      </span>
-                      <span>{day.rain_chance}% {t('weather.rain')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <TodayRecommendations items={recommendations} />
-
-          <RemindersPanel compact default_open />
-
-          <div className="card quick-log-cta no-print fade-in">
-            <div>
-              <h3 style={{ margin: '0 0 4px' }}>{t('quick_log.title')}</h3>
-              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                {t('quick_log.dashboard_hint')}
-              </p>
-            </div>
-            <p className="section-note" style={{ margin: 0 }}>{t('quick_log.fab_hint')}</p>
-          </div>
-
-          <section className="card pl-summary fade-in">
-            <div className="section-head-row">
-              <div>
-                <h3 className="pl-summary-title">{t('dashboard.farm_pl')}</h3>
-                <p className="section-note" style={{ margin: '4px 0 0' }}>
-                  {t('dashboard.total_farms')}: {farms.length}
-                  {' · '}
-                  {t('dashboard.total_plots')}: {total_plots}
-                </p>
-              </div>
-              <Link to="/farms" className="btn btn-secondary btn-sm">{t('nav.farms')}</Link>
-            </div>
-            <div className="pl-summary-grid">
-              <div className="pl-item is-earned">
-                <span>{t('dashboard.total_earned')}</span>
-                <strong>₹{total_earned.toLocaleString('en-IN')}</strong>
-              </div>
-              <div className="pl-item is-spent">
-                <span>{t('dashboard.total_spent')}</span>
-                <strong>₹{total_spent.toLocaleString('en-IN')}</strong>
-              </div>
-              <div className={`pl-item ${net >= 0 ? 'is-profit' : 'is-loss'}`}>
-                <span>{net >= 0 ? t('finance.status_profit') : t('finance.status_loss')}</span>
-                <strong>
-                  {net >= 0 ? '+' : '-'}₹{Math.abs(net).toLocaleString('en-IN')}
-                </strong>
-              </div>
-            </div>
-            {pending_income_crops.length > 0 && (
-              <p className="pl-pending-note">
-                {t('dashboard.pending_income_note', { count: pending_income_crops.length })}
-              </p>
-            )}
-          </section>
-
-          <PendingIncomeSection crops={pending_income_crops} show_location />
-
-          <MandiPricePanel
-            farm_id={farms[0]?.id || null}
-            crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
+          <DashboardHero
+            weather={weather}
+            primary_action={primary_action}
+            weather_advice={weather_advice}
+            greeting={greeting}
           />
 
-          <div className="card assistant-cta fade-in">
+          <TodayActions
+            actions={secondary_actions}
+            reminders={sorted_reminders}
+            is_working={is_working}
+            on_reminder_done={(id) => handleReminderStatus(id, 'done')}
+            on_reminder_dismiss={(id) => handleReminderStatus(id, 'dismissed')}
+            on_add_reminder={() => setShowReminderModal(true)}
+            on_generate_reminders={handleGenerateReminders}
+          />
+
+          <FarmHealthCard
+            farms_count={farms.length}
+            plots_count={total_plots}
+            earned={total_earned}
+            spent={total_spent}
+            net={net}
+            pending_count={pending_income_crops.length}
+          />
+
+          {pending_income_crops.length > 0 && (
+            <PendingIncomeSection crops={pending_income_crops} show_location />
+          )}
+
+          <section className="dash-secondary fade-in">
+            <MandiPricePanel
+              farm_id={farms[0]?.id || null}
+              crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
+            />
+          </section>
+
+          <Link to="/assistant" className="assistant-strip fade-in">
             <div>
-              <h3 style={{ margin: '0 0 4px' }}>{t('assistant.title')}</h3>
-              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                {t('assistant.cta')}
-              </p>
+              <strong>{t('assistant.title')}</strong>
+              <span>{t('assistant.cta')}</span>
             </div>
-            <Link to="/assistant" className="btn btn-primary">
-              {t('assistant.open')}
-            </Link>
-          </div>
+            <span className="assistant-strip-arrow" aria-hidden="true">→</span>
+          </Link>
         </>
+      )}
+
+      {show_reminder_modal && (
+        <Modal title={t('reminders.add')} on_close={() => setShowReminderModal(false)}>
+          <form onSubmit={handleCreateReminder}>
+            <div className="form-group">
+              <label>{t('reminders.reminder_title')}</label>
+              <input
+                className="form-input"
+                value={reminder_form.title}
+                onChange={(e) => setReminderForm((prev) => ({ ...prev, title: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('reminders.type')}</label>
+                <select
+                  className="form-select"
+                  value={reminder_form.type}
+                  onChange={(e) => setReminderForm((prev) => ({ ...prev, type: e.target.value }))}
+                >
+                  {REMINDER_TYPES.map((type) => (
+                    <option key={type} value={type}>{t(`reminders.types.${type}`)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>{t('reminders.due_at')}</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={reminder_form.due_at}
+                  onChange={(e) => setReminderForm((prev) => ({ ...prev, due_at: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowReminderModal(false)}>
+                {t('common.cancel')}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={is_working}>
+                {is_working ? t('common.loading') : t('reminders.add')}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import PendingIncomeSection from '../components/PendingIncomeSection';
 import { formatMoneyDate } from '../utils/format_date';
-import { stageIcon, translateStageName } from '../utils/dashboard_insights';
 import {
   EXPENSE_CATEGORIES,
   applyExpenseCategoryChange,
@@ -32,6 +31,7 @@ import {
   deleteIncome,
   getCropTemplates,
   getPlotDetail,
+  getWeather,
   harvestCrop,
   updateCropCycle,
   updateExpense,
@@ -43,7 +43,9 @@ import ErrorState from '../components/ErrorState';
 import ConfirmDialog from '../components/ConfirmDialog';
 import DiseaseScanPanel from '../components/DiseaseScanPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
+import CropLivingPanel from '../components/CropLivingPanel';
 import { loadPlotDetail, savePlotDetail } from '../utils/offline_store';
+import { buildWeatherAdvice } from '../utils/dashboard_insights';
 
 const SEASON_OPTIONS = ['rabi', 'kharif', 'zaid', 'custom'];
 
@@ -123,6 +125,7 @@ function PlotDetailPage() {
   const [is_incomes_open, setIsIncomesOpen] = useState(true);
   const [is_history_open, setIsHistoryOpen] = useState(true);
   const [is_cached_view, setIsCachedView] = useState(false);
+  const [weather_tip, setWeatherTip] = useState('');
   const [crop_form, setCropForm] = useState(EMPTY_CROP);
   const [expense_form, setExpenseForm] = useState(getExpenseFormDefaults());
   const [income_form, setIncomeForm] = useState(getIncomeFormDefaults());
@@ -137,14 +140,17 @@ function PlotDetailPage() {
   async function loadPlot() {
     setIsLoading(true);
 
-    try {
-      const [plot_response, templates_response] = await Promise.all([
+      try {
+      const [plot_response, templates_response, weather_response] = await Promise.all([
         getPlotDetail(farm_id, plot_id),
         getCropTemplates(i18n.language),
+        getWeather().catch(() => null),
       ]);
       const plot_data = plot_response.data;
       setPlot(plot_data);
       setTemplates(templates_response.data || []);
+      const tips = buildWeatherAdvice(t, weather_response?.data || null);
+      setWeatherTip(tips[0] || '');
       setIsCachedView(false);
       savePlotDetail(farm_id, plot_id, {
         plot: plot_data,
@@ -579,12 +585,12 @@ function PlotDetailPage() {
       </div>
 
       {!plot.active_crop ? (
-        <div className="card empty-state">
+        <div className="card empty-state crop-empty">
           <p>{t('crops.no_active_crop')}</p>
-          <button type="button" className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setShowCropModal(true)}>
+          <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setShowCropModal(true)}>
             {t('crops.start_crop')}
           </button>
-          <p className="section-note" style={{ marginTop: 16 }}>
+          <p className="section-note" style={{ marginTop: 12 }}>
             {t('expenses.plot_level_hint')}
           </p>
           <button type="button" className="btn btn-secondary btn-sm" onClick={openCreateExpense}>
@@ -592,80 +598,18 @@ function PlotDetailPage() {
           </button>
         </div>
       ) : (
-        <div className="card">
-          <div className="farm-card-top">
-            <div>
-              <h3 style={{ margin: '0 0 8px' }}>{plot.active_crop.crop_name}</h3>
-              <div className="farm-meta">
-                <span>{t(`crops.season.${plot.active_crop.season_type}`)}</span>
-                <span>{t(`crops.status.${plot.active_crop.status}`)}</span>
-                {plot.active_crop.sowing_date && (
-                  <span>
-                    {t('crops.sowing')}: {formatMoneyDate(plot.active_crop.sowing_date, i18n.language)}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="action-row">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={handleAbandon} disabled={is_saving}>
-                {t('crops.abandon')}
-              </button>
-              <button type="button" className="btn btn-primary" onClick={handleHarvest} disabled={is_saving}>
-                {t('crops.record_harvest')}
-              </button>
-            </div>
-          </div>
-
-          {plot.active_crop.lifecycle_stages?.length > 0 && (
-            <div className="lifecycle-block">
-              <h4>{t('crops.lifecycle')}</h4>
-              <ol className="stage-timeline">
-                {plot.active_crop.lifecycle_stages.map((stage, index) => {
-                  const is_done = Boolean(stage.completed);
-                  const is_current = !is_done
-                    && plot.active_crop.lifecycle_stages.slice(0, index).every((item) => item.completed);
-
-                  return (
-                    <li
-                      key={`${stage.name}-${index}`}
-                      className={`stage-timeline-item${is_done ? ' is-done' : ''}${is_current ? ' is-current' : ''}`}
-                    >
-                      <button
-                        type="button"
-                        className="stage-timeline-node"
-                        onClick={() => toggleStage(index)}
-                        aria-pressed={is_done}
-                      >
-                        <span className="stage-timeline-icon" aria-hidden="true">
-                          {is_done ? '✓' : stageIcon(stage.name)}
-                        </span>
-                      </button>
-                      <div className="stage-timeline-body">
-                        <button
-                          type="button"
-                          className="stage-timeline-label"
-                          onClick={() => toggleStage(index)}
-                        >
-                          {translateStageName(t, stage.name)}
-                        </button>
-                        <span className="stage-timeline-status">
-                          {is_done ? t('crops.stage_done') : is_current ? t('crops.stage_current') : t('crops.stage_pending')}
-                        </span>
-                      </div>
-                      {index < plot.active_crop.lifecycle_stages.length - 1 && (
-                        <span className="stage-timeline-connector" aria-hidden="true" />
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          )}
-        </div>
+        <CropLivingPanel
+          crop={plot.active_crop}
+          weather_tip={weather_tip}
+          is_saving={is_saving}
+          on_toggle_stage={toggleStage}
+          on_harvest={handleHarvest}
+          on_abandon={handleAbandon}
+        />
       )}
 
       {plot.active_crop && (
-        <div className="card money-strip">
+        <div className="card money-strip is-dense">
           <div className="money-strip-grid">
             <div>
               <div className="stat-label">{t('expenses.crop_total')}</div>

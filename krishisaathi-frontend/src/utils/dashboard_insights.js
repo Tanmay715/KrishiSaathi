@@ -19,24 +19,24 @@ export function buildTodayRecommendations({
   if (rain_chance >= 60 || condition.includes('rain')) {
     items.push({
       id: 'rain_spray',
-      icon: '✅',
+      tone: 'weather',
       text: t('recommendations.rain_avoid_spray'),
     });
     items.push({
       id: 'rain_irrigate',
-      icon: '💧',
+      tone: 'weather',
       text: t('recommendations.rain_skip_irrigation'),
     });
   } else if (rain_chance >= 35 || tomorrow_rain >= 50) {
     items.push({
       id: 'rain_soon',
-      icon: '🌧',
+      tone: 'weather',
       text: t('recommendations.rain_soon'),
     });
   } else if (weather?.advisory) {
     items.push({
       id: 'weather_advisory',
-      icon: '☀️',
+      tone: 'calm',
       text: weather.advisory,
     });
   }
@@ -44,7 +44,7 @@ export function buildTodayRecommendations({
   if (pending_income_crops.length > 0) {
     items.push({
       id: 'pending_sale',
-      icon: '📈',
+      tone: 'money',
       text: t('recommendations.pending_sales', { count: pending_income_crops.length }),
     });
   }
@@ -54,9 +54,10 @@ export function buildTodayRecommendations({
     .slice(0, 2);
 
   due_soon.forEach((reminder) => {
+    const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
     items.push({
       id: `reminder_${reminder.id}`,
-      icon: '⏰',
+      tone: is_overdue ? 'urgent' : 'reminder',
       text: reminder.title || t('recommendations.reminder_fallback'),
     });
   });
@@ -64,13 +65,13 @@ export function buildTodayRecommendations({
   if (net < 0 && farms_count > 0) {
     items.push({
       id: 'net_loss',
-      icon: '📉',
+      tone: 'money',
       text: t('recommendations.watch_expenses'),
     });
   } else if (net > 0 && farms_count > 0) {
     items.push({
       id: 'net_profit',
-      icon: '📈',
+      tone: 'calm',
       text: t('recommendations.in_profit'),
     });
   }
@@ -78,7 +79,7 @@ export function buildTodayRecommendations({
   if (items.length === 0) {
     items.push({
       id: 'default',
-      icon: '🌱',
+      tone: 'calm',
       text: t('recommendations.default'),
     });
   }

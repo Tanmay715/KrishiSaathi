@@ -8,12 +8,62 @@ import QuickLogFab from '../components/QuickLogFab';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const NAV_ITEMS = [
-  { to: '/', end: true, key: 'dashboard', icon: '🏠' },
-  { to: '/farms', key: 'farms', icon: '🌾' },
-  { to: '/assistant', key: 'assistant', icon: '🤖' },
-  { to: '/activity', key: 'activity', icon: '📋' },
-  { to: '/profile', key: 'profile', icon: '👤' },
+  { to: '/', end: true, key: 'dashboard', icon: 'home' },
+  { to: '/farms', key: 'farms', icon: 'farms' },
+  { to: '/assistant', key: 'assistant', icon: 'chat' },
+  { to: '/activity', key: 'activity', icon: 'list' },
+  { to: '/profile', key: 'profile', icon: 'user' },
 ];
+
+function NavIcon({ name }) {
+  const common = {
+    width: 18,
+    height: 18,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+  };
+
+  if (name === 'home') {
+    return (
+      <svg {...common}>
+        <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" />
+      </svg>
+    );
+  }
+  if (name === 'farms') {
+    return (
+      <svg {...common}>
+        <path d="M12 3c2.5 3 4 6 4 9a4 4 0 1 1-8 0c0-3 1.5-6 4-9z" />
+        <path d="M12 22v-6" />
+      </svg>
+    );
+  }
+  if (name === 'chat') {
+    return (
+      <svg {...common}>
+        <path d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" />
+      </svg>
+    );
+  }
+  if (name === 'list') {
+    return (
+      <svg {...common}>
+        <path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
+    </svg>
+  );
+}
 
 function AppLayout() {
   const { t, i18n } = useTranslation();
@@ -112,7 +162,9 @@ function AppLayout() {
                 className={({ isActive }) => `drawer-link${isActive ? ' active' : ''}`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className="drawer-link-icon" aria-hidden="true">{item.icon}</span>
+                <span className="drawer-link-icon" aria-hidden="true">
+                  <NavIcon name={item.icon} />
+                </span>
                 <span>{t(`nav.${item.key}`)}</span>
               </NavLink>
             ))}

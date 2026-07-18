@@ -9,12 +9,14 @@ import {
 import LoadingState from './LoadingState';
 import EmptyState from './EmptyState';
 import Modal from './Modal';
+import OverflowMenu from './OverflowMenu';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
 function RemindersPanel({ farm_id = null, compact = false, default_open = false }) {
   const { t } = useTranslation();
   const [is_open, setIsOpen] = useState(default_open);
+  const [show_all, setShowAll] = useState(false);
   const [reminders, setReminders] = useState([]);
   const [is_loading, setIsLoading] = useState(true);
   const [is_working, setIsWorking] = useState(false);
@@ -96,6 +98,10 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
     }
   }
 
+  const preview_limit = compact ? 3 : 20;
+  const visible = show_all ? reminders : reminders.slice(0, preview_limit);
+  const hidden_count = Math.max(0, reminders.length - preview_limit);
+
   const soon = reminders.filter((item) => {
     const due = new Date(item.due_at).getTime();
     return due <= Date.now() + 3 * 24 * 60 * 60 * 1000;
@@ -108,7 +114,7 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
       : t('reminders.collapsed_hint');
 
   return (
-    <section className="card">
+    <section className="reminders-panel surface-quiet">
       <button
         type="button"
         className="section-toggle"
@@ -119,22 +125,32 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
           <h3 style={{ margin: 0 }}>{t('reminders.title')}</h3>
           <p className="section-note" style={{ margin: '4px 0 0' }}>{collapsed_hint}</p>
         </div>
-        <span className="badge">{is_open ? t('common.hide') : t('common.show')}</span>
+        <span className="chevron-badge">{is_open ? '▾' : '▸'}</span>
       </button>
 
       {is_open && (
         <div className="section-panel-body">
-          <div className="page-header-row" style={{ marginBottom: 12 }}>
+          <div className="page-header-row" style={{ marginBottom: 10 }}>
             {!compact && (
               <p className="section-note" style={{ margin: 0 }}>{t('reminders.subtitle')}</p>
             )}
-            <div className="action-row" style={{ marginLeft: 'auto' }}>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={handleGenerate} disabled={is_working}>
-                {t('reminders.generate')}
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-                {t('reminders.add')}
-              </button>
+            <div style={{ marginLeft: 'auto' }}>
+              <OverflowMenu
+                label={t('common.more')}
+                items={[
+                  {
+                    id: 'generate',
+                    label: t('reminders.generate'),
+                    disabled: is_working,
+                    onClick: handleGenerate,
+                  },
+                  {
+                    id: 'add',
+                    label: t('reminders.add'),
+                    onClick: () => setShowModal(true),
+                  },
+                ]}
+              />
             </div>
           </div>
 
@@ -145,38 +161,49 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
           ) : reminders.length === 0 ? (
             <EmptyState message={t('reminders.empty')} />
           ) : (
-            <ul className="reminder-list">
-              {reminders.slice(0, compact ? 5 : 20).map((reminder) => {
-                const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
-                return (
-                  <li key={reminder.id} className={`reminder-item${is_overdue ? ' is-overdue' : ''}`}>
-                    <div>
-                      <strong>{reminder.title}</strong>
-                      <div className="reminder-meta">
-                        {t(`reminders.types.${reminder.type}`)} · {t('reminders.due')}:{' '}
-                        {new Date(reminder.due_at).toLocaleDateString()}
+            <>
+              <ul className="reminder-list is-calm">
+                {visible.map((reminder) => {
+                  const is_overdue = new Date(reminder.due_at).getTime() < Date.now();
+                  return (
+                    <li key={reminder.id} className={`reminder-item${is_overdue ? ' is-overdue' : ''}`}>
+                      <div>
+                        <strong>{reminder.title}</strong>
+                        <div className="reminder-meta">
+                          {t(`reminders.types.${reminder.type}`)} · {t('reminders.due')}:{' '}
+                          {new Date(reminder.due_at).toLocaleDateString()}
+                        </div>
                       </div>
-                    </div>
-                    <div className="action-row">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleStatus(reminder.id, 'done')}
-                      >
-                        {t('reminders.mark_done')}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => handleStatus(reminder.id, 'dismissed')}
-                      >
-                        {t('reminders.dismiss')}
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                      <OverflowMenu
+                        label={t('common.more')}
+                        items={[
+                          {
+                            id: 'done',
+                            label: t('reminders.mark_done'),
+                            onClick: () => handleStatus(reminder.id, 'done'),
+                          },
+                          {
+                            id: 'dismiss',
+                            label: t('reminders.dismiss'),
+                            onClick: () => handleStatus(reminder.id, 'dismissed'),
+                          },
+                        ]}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+              {hidden_count > 0 && !show_all && (
+                <button type="button" className="text-link-btn" onClick={() => setShowAll(true)}>
+                  {t('reminders.view_all', { count: reminders.length })}
+                </button>
+              )}
+              {show_all && reminders.length > preview_limit && (
+                <button type="button" className="text-link-btn" onClick={() => setShowAll(false)}>
+                  {t('common.show_less')}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
