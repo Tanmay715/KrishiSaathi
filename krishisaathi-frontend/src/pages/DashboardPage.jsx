@@ -151,7 +151,7 @@ function DashboardPage() {
           title={t('dashboard.get_started')}
           message={t('dashboard.empty_hint')}
           action={(
-            <Link to="/farms" className="btn btn-primary" style={{ marginTop: 12 }}>
+            <Link to="/farms?add=1" className="btn btn-primary" style={{ marginTop: 12 }}>
               {t('farms.add_farm')}
             </Link>
           )}

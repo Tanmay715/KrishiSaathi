@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createFarm, deleteFarm, getFarms, updateFarm } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
@@ -22,6 +22,7 @@ const EMPTY_FORM = {
 
 function FarmsPage() {
   const { t, i18n } = useTranslation();
+  const [search_params, setSearchParams] = useSearchParams();
   const [farms, setFarms] = useState([]);
   const [is_loading, setIsLoading] = useState(true);
   const [show_modal, setShowModal] = useState(false);
@@ -38,6 +39,21 @@ function FarmsPage() {
   useEffect(() => {
     loadFarms();
   }, []);
+
+  useEffect(() => {
+    if (search_params.get('add') !== '1') {
+      return;
+    }
+
+    setEditingFarm(null);
+    setForm(EMPTY_FORM);
+    setErrorMessage('');
+    setShowModal(true);
+
+    const next = new URLSearchParams(search_params);
+    next.delete('add');
+    setSearchParams(next, { replace: true });
+  }, [search_params, setSearchParams]);
 
   async function loadFarms() {
     setIsLoading(true);
@@ -74,6 +90,12 @@ function FarmsPage() {
     setShowModal(true);
   }
 
+  function closeModal() {
+    setShowModal(false);
+    setEditingFarm(null);
+    setErrorMessage('');
+  }
+
   function openEditModal(event, farm) {
     event.preventDefault();
     event.stopPropagation();
@@ -106,8 +128,7 @@ function FarmsPage() {
       } else {
         await createFarm(payload);
       }
-      setShowModal(false);
-      setEditingFarm(null);
+      closeModal();
       setForm(EMPTY_FORM);
       await loadFarms();
     } catch (error) {
@@ -144,16 +165,18 @@ function FarmsPage() {
     return <ErrorState message={load_error} on_retry={loadFarms} />;
   }
 
+  const has_farms = farms.length > 0;
+
   return (
     <div>
       <PageHeader
         title={t('farms.title')}
         subtitle={t('farms.subtitle')}
-        action={(
+        action={has_farms ? (
           <button type="button" className="btn btn-primary" onClick={openCreateModal}>
             {t('farms.add_farm')}
           </button>
-        )}
+        ) : null}
       />
 
       {is_cached_view && (
@@ -162,7 +185,7 @@ function FarmsPage() {
 
       {error_message && !show_modal && <div className="error-banner">{error_message}</div>}
 
-      {farms.length === 0 ? (
+      {!has_farms ? (
         <EmptyState
           title={t('farms.no_farms')}
           message={t('farms.create_first')}
@@ -212,54 +235,81 @@ function FarmsPage() {
       {show_modal && (
         <Modal
           title={editing_farm ? t('farms.edit_farm') : t('farms.add_farm')}
-          on_close={() => setShowModal(false)}
+          on_close={closeModal}
         >
           {error_message && <div className="error-banner">{error_message}</div>}
           <form onSubmit={handleSaveFarm}>
             <div className="form-group">
-              <label>{t('farms.name')}</label>
-              <input className="form-input" value={form.name} onChange={(e) => updateForm('name', e.target.value)} required />
+              <label htmlFor="farm-name">{t('farms.name')}</label>
+              <input
+                id="farm-name"
+                className="form-input"
+                value={form.name}
+                onChange={(e) => updateForm('name', e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="farm-state">{t('farms.state')}</label>
+              <select
+                id="farm-state"
+                className="form-select"
+                value={form.state}
+                onChange={(e) => updateForm('state', e.target.value)}
+              >
+                <option value="">—</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state.code} value={state.label_en}>
+                    {state[state_label_key]}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>{t('farms.state')}</label>
-                <select className="form-select" value={form.state} onChange={(e) => updateForm('state', e.target.value)}>
-                  <option value="">—</option>
-                  {INDIAN_STATES.map((state) => (
-                    <option key={state.code} value={state.label_en}>
-                      {state[state_label_key]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>{t('farms.district')}</label>
-                <input className="form-input" value={form.district} onChange={(e) => updateForm('district', e.target.value)} />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('farms.village')}</label>
-                <input className="form-input" value={form.village} onChange={(e) => updateForm('village', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>{t('farms.total_area')}</label>
+                <label htmlFor="farm-district">{t('farms.district')}</label>
                 <input
+                  id="farm-district"
                   className="form-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.total_area}
-                  onChange={(e) => updateForm('total_area', e.target.value)}
+                  value={form.district}
+                  onChange={(e) => updateForm('district', e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="farm-village">{t('farms.village')}</label>
+                <input
+                  id="farm-village"
+                  className="form-input"
+                  value={form.village}
+                  onChange={(e) => updateForm('village', e.target.value)}
                 />
               </div>
             </div>
             <div className="form-group">
-              <label>{t('farms.notes')}</label>
-              <textarea className="form-textarea" rows={3} value={form.notes} onChange={(e) => updateForm('notes', e.target.value)} />
+              <label htmlFor="farm-area">{t('farms.total_area')}</label>
+              <input
+                id="farm-area"
+                className="form-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.total_area}
+                onChange={(e) => updateForm('total_area', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="farm-notes">{t('farms.notes')}</label>
+              <textarea
+                id="farm-notes"
+                className="form-textarea"
+                value={form.notes}
+                onChange={(e) => updateForm('notes', e.target.value)}
+                rows={3}
+              />
             </div>
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+              <button type="button" className="btn btn-secondary" onClick={closeModal}>
                 {t('farms.cancel')}
               </button>
               <button type="submit" className="btn btn-primary" disabled={is_saving}>
@@ -274,6 +324,7 @@ function FarmsPage() {
         <ConfirmDialog
           title={t('common.delete')}
           message={t('farms.delete_confirm', { name: farm_to_delete.name })}
+          confirm_label={t('common.delete')}
           is_danger
           is_loading={is_deleting}
           on_confirm={confirmDeleteFarm}
