@@ -1,15 +1,24 @@
 require('dotenv').config();
 
+function buildDbConnection() {
+  const mysql_url = process.env.MYSQL_URL || process.env.DATABASE_URL;
+  if (mysql_url) {
+    return mysql_url;
+  }
+
+  return {
+    host: process.env.DB_HOST || process.env.MYSQLHOST || '127.0.0.1',
+    port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
+    user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '',
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'krishisaathi',
+    timezone: '+05:30',
+  };
+}
+
 const base_config = {
   client: 'mysql2',
-  connection: {
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'krishisaathi',
-    timezone: '+05:30',
-  },
+  connection: buildDbConnection(),
   pool: { min: 2, max: 10 },
   migrations: {
     directory: './src/db/migrations',
