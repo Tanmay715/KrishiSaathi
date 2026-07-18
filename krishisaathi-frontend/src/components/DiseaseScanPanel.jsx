@@ -83,27 +83,31 @@ function DiseaseScanPanel({ farm_id, plot_id, crop_cycle_id, crop_name, default_
   const diagnosis = latest?.diagnosis_json;
 
   return (
-    <section className="card disease-panel">
-      <button
-        type="button"
-        className="section-toggle"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={is_open}
-      >
-        <div>
-          <h3 style={{ margin: 0 }}>{t('disease.title')}</h3>
-          <p className="section-note" style={{ margin: '4px 0 0' }}>
-            {crop_name
-              ? t('disease.collapsed_hint_crop', { crop: crop_name })
-              : t('disease.collapsed_hint')}
-          </p>
+    <section className="card disease-panel is-quick-action">
+      <div className="quick-action-head">
+        <div className="quick-action-copy">
+          <h3>{t('disease.title')}</h3>
+          {!is_open && (
+            <p className="section-note is-one-line">
+              {crop_name
+                ? t('disease.collapsed_hint_crop', { crop: crop_name })
+                : t('disease.collapsed_hint')}
+            </p>
+          )}
         </div>
-        <span className="badge">{is_open ? t('common.hide') : t('disease.check')}</span>
-      </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          aria-expanded={is_open}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {is_open ? t('common.hide') : t('disease.check')}
+        </button>
+      </div>
 
       {is_open && (
-        <div className="section-panel-body">
-          <div className="page-header-row" style={{ marginBottom: 12 }}>
+        <div className="section-panel-body is-compact">
+          <div className="quick-action-toolbar">
             <p className="section-note" style={{ margin: 0 }}>{t('disease.subtitle')}</p>
             <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
               {is_scanning ? t('disease.scanning') : t('disease.upload')}

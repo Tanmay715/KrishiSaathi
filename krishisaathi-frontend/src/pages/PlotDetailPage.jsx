@@ -44,6 +44,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import DiseaseScanPanel from '../components/DiseaseScanPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import CropLivingPanel from '../components/CropLivingPanel';
+import OverflowMenu from '../components/OverflowMenu';
 import { loadPlotDetail, savePlotDetail } from '../utils/offline_store';
 import { buildWeatherAdvice } from '../utils/dashboard_insights';
 
@@ -58,21 +59,7 @@ const EMPTY_CROP = {
   notes: '',
 };
 
-function getTopExpenseCategory(expenses) {
-  if (!expenses.length) {
-    return null;
-  }
-
-  const totals = {};
-  expenses.forEach((expense) => {
-    const key = expense.category || 'other';
-    totals[key] = (totals[key] || 0) + Number(expense.amount || 0);
-  });
-
-  return Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-}
-
-function getFinanceInsight({ t, profit, spending, earned, top_expense }) {
+function getFinanceInsight({ t, profit, spending, earned }) {
   if (spending === 0 && earned === 0) {
     return t('finance.insight_empty');
   }
@@ -82,14 +69,7 @@ function getFinanceInsight({ t, profit, spending, earned, top_expense }) {
   }
 
   if (profit > 0) {
-    const base = t('finance.insight_profit', { amount: profit.toLocaleString('en-IN') });
-    if (top_expense) {
-      return `${base} ${t('finance.insight_top_cost', {
-        category: t(`expenses.category.${top_expense[0]}`),
-        amount: Number(top_expense[1]).toLocaleString('en-IN'),
-      })}`;
-    }
-    return base;
+    return t('finance.insight_profit', { amount: profit.toLocaleString('en-IN') });
   }
 
   if (profit < 0) {
@@ -530,7 +510,6 @@ function PlotDetailPage() {
   const spending = Number(plot.expense_total || 0);
   const earned = Number(plot.income_total || 0);
   const profit = earned - spending;
-  const top_expense = getTopExpenseCategory(plot.expenses || []);
   const expense_field_config = getExpenseCategoryConfig(expense_form.category);
   const income_field_config = getIncomeCategoryConfig(income_form.category);
   const finance_insight = getFinanceInsight({
@@ -538,7 +517,6 @@ function PlotDetailPage() {
     profit,
     spending,
     earned,
-    top_expense,
   });
   const pending_income_crops = (plot.crop_history || [])
     .filter((crop) => crop.status === 'harvested' && Number(crop.income_total || 0) === 0)
@@ -608,7 +586,10 @@ function PlotDetailPage() {
       <div className="plot-flow">
       {plot.active_crop && (
         <div className="money-strip is-dense surface-panel is-summary">
-          <p className="surface-kicker">{t('farms.finance_summary')}</p>
+          <div className="money-strip-head">
+            <p className="surface-kicker">{t('farms.finance_summary')}</p>
+            <p className="finance-insight is-inline">{finance_insight}</p>
+          </div>
           <div className="money-strip-grid">
             <div>
               <div className="stat-label">{t('expenses.crop_total')}</div>
@@ -627,7 +608,6 @@ function PlotDetailPage() {
               </strong>
             </div>
           </div>
-          <p className="finance-insight" style={{ marginBottom: 0 }}>{finance_insight}</p>
         </div>
       )}
 
@@ -868,43 +848,42 @@ function PlotDetailPage() {
                     <p>{t('expenses.empty')}</p>
                   </div>
                 ) : (
-                  <ul className="activity-list">
+                  <ul className="txn-list">
                     {plot.expenses.map((expense) => (
-                      <li key={expense.id} className="activity-item expense-item">
-                        <span className="activity-dot" />
-                        <div className="expense-body">
-                          <div className="farm-card-top">
-                            <div>
-                              <strong>{expense.title}</strong>
-                              <div className="farm-meta">
-                                <span>{t(`expenses.category.${expense.category}`)}</span>
-                                <span>{formatMoneyDate(expense.expense_date, i18n.language)}</span>
-                                {!expense.crop_cycle_id && <span>{t('expenses.unlinked_crop')}</span>}
-                                {expense.quantity != null && (
-                                  <span>
-                                    {expense.quantity} {expense.unit || ''}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="action-row">
-                              <span className="expense-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => openEditExpense(expense)}
-                              >
-                                {t('common.edit')}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteExpense(expense)}
-                              >
-                                {t('common.delete')}
-                              </button>
-                            </div>
-                          </div>
+                      <li key={expense.id} className="txn-row">
+                        <div className="txn-main">
+                          <strong>{expense.title}</strong>
+                          <span className="txn-meta">
+                            {t(`expenses.category.${expense.category}`)}
+                            {' · '}
+                            {formatMoneyDate(expense.expense_date, i18n.language)}
+                            {!expense.crop_cycle_id ? ` · ${t('expenses.unlinked_crop')}` : ''}
+                            {expense.quantity != null
+                              ? ` · ${expense.quantity} ${expense.unit || ''}`.trim()
+                              : ''}
+                          </span>
+                        </div>
+                        <div className="txn-aside">
+                          <span className="txn-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => openEditExpense(expense)}
+                          >
+                            {t('common.edit')}
+                          </button>
+                          <OverflowMenu
+                            label={t('common.more')}
+                            quiet
+                            items={[
+                              {
+                                id: 'delete',
+                                label: t('common.delete'),
+                                danger: true,
+                                onClick: () => handleDeleteExpense(expense),
+                              },
+                            ]}
+                          />
                         </div>
                       </li>
                     ))}
@@ -948,42 +927,41 @@ function PlotDetailPage() {
                     <p>{t('incomes.empty')}</p>
                   </div>
                 ) : (
-                  <ul className="activity-list">
+                  <ul className="txn-list">
                     {plot.incomes.map((income) => (
-                      <li key={income.id} className="activity-item expense-item">
-                        <span className="activity-dot" />
-                        <div className="expense-body">
-                          <div className="farm-card-top">
-                            <div>
-                              <strong>{income.title}</strong>
-                              <div className="farm-meta">
-                                <span>{t(`incomes.category.${income.category}`)}</span>
-                                <span>{formatMoneyDate(income.income_date, i18n.language)}</span>
-                                {income.quantity != null && (
-                                  <span>
-                                    {income.quantity} {income.unit || ''}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="action-row">
-                              <span className="expense-amount">₹{Number(income.amount).toLocaleString('en-IN')}</span>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => openEditIncome(income)}
-                              >
-                                {t('common.edit')}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteIncome(income)}
-                              >
-                                {t('common.delete')}
-                              </button>
-                            </div>
-                          </div>
+                      <li key={income.id} className="txn-row">
+                        <div className="txn-main">
+                          <strong>{income.title}</strong>
+                          <span className="txn-meta">
+                            {t(`incomes.category.${income.category}`)}
+                            {' · '}
+                            {formatMoneyDate(income.income_date, i18n.language)}
+                            {income.quantity != null
+                              ? ` · ${income.quantity} ${income.unit || ''}`.trim()
+                              : ''}
+                          </span>
+                        </div>
+                        <div className="txn-aside">
+                          <span className="txn-amount is-income">₹{Number(income.amount).toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => openEditIncome(income)}
+                          >
+                            {t('common.edit')}
+                          </button>
+                          <OverflowMenu
+                            label={t('common.more')}
+                            quiet
+                            items={[
+                              {
+                                id: 'delete',
+                                label: t('common.delete'),
+                                danger: true,
+                                onClick: () => handleDeleteIncome(income),
+                              },
+                            ]}
+                          />
                         </div>
                       </li>
                     ))}

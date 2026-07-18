@@ -144,10 +144,10 @@ function ProfilePage() {
       </div>
 
       <div className="summary-chip-row profile-chip-row">
-        <span className="summary-chip">🌾 {t('dashboard.total_farms')}: {limits.farms?.used || 0}</span>
-        <span className="summary-chip">📍 {t('dashboard.total_plots')}: {limits.plots?.used || 0}</span>
-        <span className="summary-chip">🌱 {t('profile.active_crops')}: {stats.active_crops || 0}</span>
-        <span className="summary-chip">⏳ {t('profile.pending_sales')}: {stats.pending_income_crops || 0}</span>
+        <span className="summary-chip">{t('dashboard.total_farms')} · {limits.farms?.used || 0}</span>
+        <span className="summary-chip">{t('dashboard.total_plots')} · {limits.plots?.used || 0}</span>
+        <span className="summary-chip">{t('profile.active_crops')} · {stats.active_crops || 0}</span>
+        <span className="summary-chip">{t('profile.pending_sales')} · {stats.pending_income_crops || 0}</span>
       </div>
 
       <div className="card profile-finance-card">

@@ -95,26 +95,30 @@ function MandiPricePanel({
     : t('mandi.disclaimer');
 
   return (
-    <section className={`mandi-panel${compact ? ' is-compact' : ' card'}`}>
-      <button
-        type="button"
-        className="section-toggle"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={is_open}
-      >
-        <div>
-          <h3 style={{ margin: 0 }}>{t('mandi.title')}</h3>
-          <p className="section-note" style={{ margin: '4px 0 0' }}>
-            {crop_name
-              ? t('mandi.collapsed_hint_crop', { crop: crop_name })
-              : t('mandi.collapsed_hint')}
-          </p>
+    <section className={`mandi-panel is-quick-action${compact ? ' is-compact' : ' card'}`}>
+      <div className="quick-action-head">
+        <div className="quick-action-copy">
+          <h3>{t('mandi.title')}</h3>
+          {!is_open && (
+            <p className="section-note is-one-line">
+              {crop_name
+                ? t('mandi.collapsed_hint_crop', { crop: crop_name })
+                : t('mandi.collapsed_hint')}
+            </p>
+          )}
         </div>
-        <span className="badge">{is_open ? t('common.hide') : t('common.show')}</span>
-      </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          aria-expanded={is_open}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {is_open ? t('common.hide') : t('common.show')}
+        </button>
+      </div>
 
       {is_open && (
-        <div className="section-panel-body">
+        <div className="section-panel-body is-compact">
           {!crop_name && crop_options.length > 0 && (
             <div className="form-group" style={{ marginBottom: 12 }}>
               <label htmlFor="mandi-crop">{t('mandi.crop_label')}</label>
