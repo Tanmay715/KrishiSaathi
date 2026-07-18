@@ -1,12 +1,12 @@
-import api_client from './api_client';
+import api_client, { requestWithRetry } from './api_client';
 
 export async function sendOtp(phone) {
-  const response = await api_client.post('/auth/send-otp', { phone });
+  const response = await requestWithRetry(() => api_client.post('/auth/send-otp', { phone }));
   return response.data;
 }
 
 export async function verifyOtp(payload) {
-  const response = await api_client.post('/auth/verify-otp', payload);
+  const response = await requestWithRetry(() => api_client.post('/auth/verify-otp', payload));
   return response.data;
 }
 
