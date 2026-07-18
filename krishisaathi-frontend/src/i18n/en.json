@@ -19,7 +19,8 @@
     "language_label": "Preferred language",
     "land_unit_label": "Land unit",
     "invalid_phone": "Enter a valid 10-digit Indian mobile number",
-    "resend_otp": "Resend OTP"
+    "resend_otp": "Resend OTP",
+    "network_error": "Cannot reach server. Check internet and try again."
   },
   "nav": {
     "dashboard": "Dashboard",

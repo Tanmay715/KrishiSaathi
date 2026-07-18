@@ -44,7 +44,12 @@ function LoginPage() {
       }
       setStep('otp');
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || t('common.error'));
+      const api_message = error.response?.data?.message;
+      const is_network = !error.response;
+      setErrorMessage(
+        api_message
+          || (is_network ? t('auth.network_error') : t('common.error')),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +75,12 @@ function LoginPage() {
       login(user, token);
       navigate('/');
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || t('common.error'));
+      const api_message = error.response?.data?.message;
+      const is_network = !error.response;
+      setErrorMessage(
+        api_message
+          || (is_network ? t('auth.network_error') : t('common.error')),
+      );
     } finally {
       setIsLoading(false);
     }
