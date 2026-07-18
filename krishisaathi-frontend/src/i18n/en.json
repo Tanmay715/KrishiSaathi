@@ -13,15 +13,15 @@
     "otp_label": "Enter OTP",
     "otp_sent": "OTP sent to",
     "change_number": "Change number",
-    "dev_otp_hint": "Development mode: OTP is not sent by SMS. Use the code below:",
+    "dev_otp_hint": "Your login code (pilot mode — no SMS yet):",
     "dev_otp_label": "Your OTP code",
     "name_label": "Your name (optional)",
     "language_label": "Preferred language",
     "land_unit_label": "Land unit",
     "invalid_phone": "Enter a valid 10-digit Indian mobile number",
     "resend_otp": "Resend OTP",
-    "network_error": "Cannot reach server. Check internet and try again.",
-    "server_waking": "Connecting to server… if Send OTP fails, wait 10 seconds and try again."
+    "network_error": "Login is taking longer than usual. Please tap Send OTP again.",
+    "slow_server": "Server is slow right now. Please try once more."
   },
   "nav": {
     "dashboard": "Dashboard",

@@ -7,8 +7,8 @@ const ApiError = require('../../utils/ApiError');
 const { generateOtp, normalizePhone, isValidIndianPhone } = require('../../utils/phone_utils');
 const ActivityService = require('../activity/ActivityService');
 
-const OTP_RATE_LIMIT_SECONDS = 60;
-const MAX_OTP_ATTEMPTS = 5;
+const OTP_RATE_LIMIT_SECONDS = 20;
+const MAX_OTP_ATTEMPTS = 8;
 
 class AuthService {
   #otpRedisKey(phone) {

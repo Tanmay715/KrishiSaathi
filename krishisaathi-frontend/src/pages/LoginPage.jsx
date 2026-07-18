@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
-import api_client from '../services/api_client';
+import api_client, { requestWithRetry } from '../services/api_client';
 import { sendOtp, verifyOtp } from '../services/auth_service';
 import { isValidIndianMobile, normalizeIndianMobile } from '../utils/phone_validation';
 
@@ -20,29 +20,35 @@ function LoginPage() {
   const [is_loading, setIsLoading] = useState(false);
   const [error_message, setErrorMessage] = useState('');
   const [dev_otp, setDevOtp] = useState('');
-  const [is_server_ready, setIsServerReady] = useState(true);
 
   useEffect(() => {
     let is_active = true;
 
-    async function wakeServer() {
-      try {
-        await api_client.get('/health', { timeout: 20000 });
-        if (is_active) {
-          setIsServerReady(true);
-        }
-      } catch (_error) {
-        if (is_active) {
-          setIsServerReady(false);
+    async function warmApi() {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          await requestWithRetry(() => api_client.get('/health', { timeout: 25000 }), 1);
+          return;
+        } catch (_error) {
+          if (!is_active) {
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       }
     }
 
-    wakeServer();
+    warmApi();
     return () => {
       is_active = false;
     };
   }, []);
+
+  function readErrorMessage(error) {
+    return error.response?.data?.message
+      || (error.code === 'ECONNABORTED' ? t('auth.slow_server') : null)
+      || (!error.response ? t('auth.network_error') : t('common.error'));
+  }
 
   async function handleSendOtp(event) {
     event.preventDefault();
@@ -68,12 +74,7 @@ function LoginPage() {
       }
       setStep('otp');
     } catch (error) {
-      const api_message = error.response?.data?.message;
-      const is_network = !error.response;
-      setErrorMessage(
-        api_message
-          || (is_network ? t('auth.network_error') : t('common.error')),
-      );
+      setErrorMessage(readErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -99,12 +100,7 @@ function LoginPage() {
       login(user, token);
       navigate('/');
     } catch (error) {
-      const api_message = error.response?.data?.message;
-      const is_network = !error.response;
-      setErrorMessage(
-        api_message
-          || (is_network ? t('auth.network_error') : t('common.error')),
-      );
+      setErrorMessage(readErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -116,10 +112,17 @@ function LoginPage() {
         <h1>{t('auth.login_title')}</h1>
         <p className="subtitle">{t('auth.login_subtitle')}</p>
 
-        {error_message && <div className="error-banner">{error_message}</div>}
-        {!is_server_ready && !error_message && (
-          <div className="error-banner" style={{ background: '#fff4e5', color: '#8a5a00' }}>
-            {t('auth.server_waking')}
+        {error_message && (
+          <div className="error-banner">
+            <div>{error_message}</div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              style={{ marginTop: 10 }}
+              onClick={() => setErrorMessage('')}
+            >
+              {t('common.retry')}
+            </button>
           </div>
         )}
 
@@ -165,7 +168,7 @@ function LoginPage() {
                 style={{ background: '#e8f4ec', color: 'var(--color-primary-dark)', marginBottom: 16 }}
               >
                 <div style={{ marginBottom: 6 }}>{t('auth.dev_otp_hint')}</div>
-                <strong style={{ fontSize: '1.25rem', letterSpacing: '0.2em' }}>{dev_otp}</strong>
+                <strong style={{ fontSize: '1.35rem', letterSpacing: '0.25em' }}>{dev_otp}</strong>
               </div>
             )}
 
@@ -180,6 +183,7 @@ function LoginPage() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 required
+                autoComplete="one-time-code"
               />
             </div>
 

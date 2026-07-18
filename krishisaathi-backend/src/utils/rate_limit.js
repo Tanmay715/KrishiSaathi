@@ -26,7 +26,8 @@ async function assertRateLimit({ key, limit, window_seconds, message }) {
 
     console.error('[rate_limit]', error.message);
 
-    if (env.is_production) {
+    // Pilot mode: never block login because Redis blipped.
+    if (env.is_production && !env.otp_pilot_mode) {
       throw ApiError.serviceUnavailable('Rate limiting unavailable. Please try again shortly.');
     }
   }

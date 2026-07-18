@@ -8,6 +8,7 @@ const { errorHandler, notFoundHandler } = require('./middleware/error_handler');
 
 const app = express();
 
+app.set('trust proxy', 1);
 function isAllowedOrigin(origin) {
   if (!origin) {
     return true;
