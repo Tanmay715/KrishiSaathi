@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatMoneyDate } from '../utils/format_date';
-import MandiPricePanel from './MandiPricePanel';
 
 function PendingIncomeSection({ crops, show_location = false, on_log_income }) {
   const { t } = useTranslation();
@@ -21,7 +20,7 @@ function PendingIncomeSection({ crops, show_location = false, on_log_income }) {
       </div>
       <ul className="pending-income-list">
         {crops.map((crop) => (
-          <li key={crop.id} className="pending-income-item pending-income-item-stack">
+          <li key={crop.id} className="pending-income-item">
             <div className="pending-income-row">
               <div className="pending-income-body">
                 <strong>{crop.crop_name}</strong>
@@ -54,12 +53,6 @@ function PendingIncomeSection({ crops, show_location = false, on_log_income }) {
                 </Link>
               )}
             </div>
-            <MandiPricePanel
-              crop_name={crop.crop_name}
-              farm_id={crop.farm_id}
-              expense_total={Number(crop.expense_total || 0)}
-              compact
-            />
           </li>
         ))}
       </ul>
