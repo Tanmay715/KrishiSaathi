@@ -7,13 +7,13 @@ import {
 
 function LanguageSwitcher({ variant = 'topbar', className = '' }) {
   const { i18n, t } = useTranslation();
-  const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language || 'en');
   const label = getLanguageToggleLabel(current);
 
   function handleToggle() {
     const next_lang = getNextLanguage(current);
     localStorage.setItem('ks_language', next_lang);
-    i18n.changeLanguage(next_lang);
+    void i18n.changeLanguage(next_lang);
   }
 
   return (
@@ -23,8 +23,11 @@ function LanguageSwitcher({ variant = 'topbar', className = '' }) {
       onClick={handleToggle}
       aria-label={t('common.language_toggle', { defaultValue: 'Switch language' })}
       data-lang={current}
+      data-label={label}
     >
-      <span className="language-switcher-label">{label}</span>
+      <span className="language-switcher-label" aria-hidden={false}>
+        {label}
+      </span>
     </button>
   );
 }
