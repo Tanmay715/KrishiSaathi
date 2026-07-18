@@ -100,9 +100,11 @@ function LoginPage() {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={is_loading}>
-              {is_loading ? t('common.loading') : t('auth.send_otp')}
-            </button>
+            <div className="auth-submit-bar">
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={is_loading}>
+                {is_loading ? t('common.loading') : t('auth.send_otp')}
+              </button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp}>
@@ -175,9 +177,11 @@ function LoginPage() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={is_loading}>
-              {is_loading ? t('common.loading') : t('auth.verify_otp')}
-            </button>
+            <div className="auth-submit-bar">
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={is_loading}>
+                {is_loading ? t('common.loading') : t('auth.verify_otp')}
+              </button>
+            </div>
           </form>
         )}
       </div>
