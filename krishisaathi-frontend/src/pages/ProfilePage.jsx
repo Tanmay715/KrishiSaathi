@@ -7,6 +7,7 @@ import { getProfileOverview, updateProfile } from '../services/auth_service';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
+import SectionIcon from '../components/SectionIcon';
 import { normalizeLanguage } from '../utils/language';
 
 function formatMemberSince(value, locale) {
@@ -127,12 +128,14 @@ function ProfilePage() {
   const state_label_key = app_language === 'hi' ? 'label_hi' : 'label_en';
 
   return (
-    <div className="profile-page">
+    <div className="profile-page is-lively">
       <PageHeader title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
       <div className="profile-hero card">
+        <div className="profile-hero-glow" aria-hidden="true" />
         <div className="profile-avatar">{getInitials(profile_user?.name, profile_user?.phone)}</div>
         <div className="profile-hero-body">
+          <p className="profile-eyebrow">{t('profile.welcome_back')}</p>
           <h3>{profile_user?.name?.trim() || t('profile.default_name')}</h3>
           <p className="profile-phone">{profile_user?.phone}</p>
           <div className="profile-meta">
@@ -143,16 +146,43 @@ function ProfilePage() {
         </div>
       </div>
 
-      <div className="summary-chip-row profile-chip-row">
-        <span className="summary-chip">{t('dashboard.total_farms')} · {limits.farms?.used || 0}</span>
-        <span className="summary-chip">{t('dashboard.total_plots')} · {limits.plots?.used || 0}</span>
-        <span className="summary-chip">{t('profile.active_crops')} · {stats.active_crops || 0}</span>
-        <span className="summary-chip">{t('profile.pending_sales')} · {stats.pending_income_crops || 0}</span>
+      <div className="profile-stat-grid">
+        <div className="profile-stat-tile tone-farms">
+          <SectionIcon name="crop" tone="success" />
+          <div>
+            <strong>{limits.farms?.used || 0}</strong>
+            <span>{t('dashboard.total_farms')}</span>
+          </div>
+        </div>
+        <div className="profile-stat-tile tone-plots">
+          <SectionIcon name="history" tone="accent" />
+          <div>
+            <strong>{limits.plots?.used || 0}</strong>
+            <span>{t('dashboard.total_plots')}</span>
+          </div>
+        </div>
+        <div className="profile-stat-tile tone-crops">
+          <SectionIcon name="crop" tone="success" />
+          <div>
+            <strong>{stats.active_crops || 0}</strong>
+            <span>{t('profile.active_crops')}</span>
+          </div>
+        </div>
+        <div className="profile-stat-tile tone-pending">
+          <SectionIcon name="income" tone="warn" />
+          <div>
+            <strong>{stats.pending_income_crops || 0}</strong>
+            <span>{t('profile.pending_sales')}</span>
+          </div>
+        </div>
       </div>
 
       <div className="card profile-finance-card">
         <div className="profile-section-head">
-          <h3>{t('profile.farm_summary')}</h3>
+          <div className="section-title-row">
+            <SectionIcon name="mandi" tone="accent" />
+            <h3>{t('profile.farm_summary')}</h3>
+          </div>
           <Link to="/farms" className="btn btn-secondary btn-sm">{t('nav.farms')}</Link>
         </div>
         <div className="card-grid profile-finance-grid">
@@ -174,7 +204,10 @@ function ProfilePage() {
       </div>
 
       <div className="card profile-capacity-card">
-        <h3>{t('profile.account_capacity')}</h3>
+        <div className="section-title-row" style={{ marginBottom: 14 }}>
+          <SectionIcon name="crop" tone="default" />
+          <h3>{t('profile.account_capacity')}</h3>
+        </div>
         <CapacityBar
           label={t('dashboard.total_farms')}
           used={limits.farms?.used || 0}
@@ -188,7 +221,10 @@ function ProfilePage() {
       </div>
 
       <div className="card profile-settings-card">
-        <h3>{t('profile.settings')}</h3>
+        <div className="section-title-row" style={{ marginBottom: 14 }}>
+          <SectionIcon name="history" tone="default" />
+          <h3>{t('profile.settings')}</h3>
+        </div>
         {message && (
           <div className={`info-banner ${message === t('profile.saved') ? 'is-success' : 'is-error'}`}>
             {message}

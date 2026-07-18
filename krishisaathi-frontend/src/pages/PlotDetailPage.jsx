@@ -560,18 +560,32 @@ function PlotDetailPage() {
       )}
 
       {!plot.active_crop ? (
-        <div className="card empty-state crop-empty surface-panel">
-          <p className="surface-kicker">{t('crops.current_crop')}</p>
-          <p>{t('crops.no_active_crop')}</p>
-          <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setShowCropModal(true)}>
-            {t('crops.start_crop')}
-          </button>
-          <p className="section-note" style={{ marginTop: 12 }}>
-            {t('expenses.plot_level_hint')}
-          </p>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={openCreateExpense}>
-            {t('expenses.add')}
-          </button>
+        <div className="crop-invite surface-panel">
+          <div className="crop-invite-art" aria-hidden="true">
+            <svg viewBox="0 0 160 120" className="crop-invite-svg">
+              <ellipse cx="80" cy="102" rx="54" ry="10" fill="rgba(30,92,64,0.12)" />
+              <path d="M80 98 V48" stroke="#3db872" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+              <path d="M80 72 C58 64, 46 48, 50 30 C64 42, 74 56, 80 66" fill="#2f9e5f" opacity="0.9" />
+              <path d="M80 66 C102 56, 116 40, 112 22 C98 36, 88 50, 80 60" fill="#3db872" opacity="0.85" />
+              <circle cx="80" cy="40" r="9" fill="#f0c419" />
+              <circle cx="118" cy="28" r="3" fill="#fde68a" opacity="0.8" />
+              <circle cx="42" cy="36" r="2.5" fill="#fde68a" opacity="0.7" />
+            </svg>
+          </div>
+          <div className="crop-invite-copy">
+            <p className="surface-kicker">{t('crops.current_crop')}</p>
+            <h2>{t('crops.start_crop_title')}</h2>
+            <p>{t('crops.no_active_crop')}</p>
+            <div className="crop-invite-actions">
+              <button type="button" className="btn btn-primary" onClick={() => setShowCropModal(true)}>
+                {t('crops.start_crop')}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={openCreateExpense}>
+                {t('expenses.add')}
+              </button>
+            </div>
+            <p className="section-note crop-invite-note">{t('expenses.plot_level_hint')}</p>
+          </div>
         </div>
       ) : (
         <CropLivingPanel
@@ -631,6 +645,173 @@ function PlotDetailPage() {
             expense_total={spending}
           />
         </div>
+      )}
+
+      {plot.active_crop && (
+        <>
+          <section className="surface-panel is-expandable">
+            <div className="collapsible-header">
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setIsExpensesOpen((prev) => !prev)}
+                aria-expanded={is_expenses_open}
+              >
+                <div>
+                  <div className="section-title-row">
+                    <SectionIcon name="expense" tone="danger" />
+                    <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
+                  </div>
+                  <p className="section-note" style={{ margin: '4px 0 0' }}>
+                    {t('expenses.collapsed_hint', {
+                      count: plot.expenses?.length || 0,
+                      amount: spending.toLocaleString('en-IN'),
+                    })}
+                  </p>
+                </div>
+                <span className="chevron-badge">{is_expenses_open ? '▾' : '▸'}</span>
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateExpense}>
+                {t('expenses.add')}
+              </button>
+            </div>
+
+            {is_expenses_open && (
+              <div className="section-panel-body">
+                <p className="section-note" style={{ marginTop: 0 }}>
+                  {t('expenses.for_crop', { crop: plot.active_crop.crop_name })}
+                </p>
+                {!plot.expenses?.length ? (
+                  <div className="empty-state" style={{ padding: '8px 0' }}>
+                    <p>{t('expenses.empty')}</p>
+                  </div>
+                ) : (
+                  <ul className="txn-list">
+                    {plot.expenses.map((expense) => (
+                      <li key={expense.id} className="txn-row">
+                        <div className="txn-main">
+                          <strong>{expense.title}</strong>
+                          <span className="txn-meta">
+                            {t(`expenses.category.${expense.category}`)}
+                            {' · '}
+                            {formatMoneyDate(expense.expense_date, i18n.language)}
+                            {!expense.crop_cycle_id ? ` · ${t('expenses.unlinked_crop')}` : ''}
+                            {expense.quantity != null
+                              ? ` · ${expense.quantity} ${expense.unit || ''}`.trim()
+                              : ''}
+                          </span>
+                        </div>
+                        <div className="txn-aside">
+                          <span className="txn-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => openEditExpense(expense)}
+                          >
+                            {t('common.edit')}
+                          </button>
+                          <OverflowMenu
+                            label={t('common.more')}
+                            quiet
+                            items={[
+                              {
+                                id: 'delete',
+                                label: t('common.delete'),
+                                danger: true,
+                                onClick: () => handleDeleteExpense(expense),
+                              },
+                            ]}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="surface-panel is-expandable is-soft">
+            <div className="collapsible-header">
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setIsIncomesOpen((prev) => !prev)}
+                aria-expanded={is_incomes_open}
+              >
+                <div>
+                  <div className="section-title-row">
+                    <SectionIcon name="income" tone="success" />
+                    <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
+                  </div>
+                  <p className="section-note" style={{ margin: '4px 0 0' }}>
+                    {t('incomes.collapsed_hint', {
+                      count: plot.incomes?.length || 0,
+                      amount: earned.toLocaleString('en-IN'),
+                    })}
+                  </p>
+                </div>
+                <span className="chevron-badge">{is_incomes_open ? '▾' : '▸'}</span>
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateIncome}>
+                {t('incomes.add')}
+              </button>
+            </div>
+
+            {is_incomes_open && (
+              <div className="section-panel-body">
+                <p className="section-note" style={{ marginTop: 0 }}>
+                  {t('incomes.for_crop', { crop: plot.active_crop.crop_name })}
+                </p>
+                {!plot.incomes?.length ? (
+                  <div className="empty-state" style={{ padding: '8px 0' }}>
+                    <p>{t('incomes.empty')}</p>
+                  </div>
+                ) : (
+                  <ul className="txn-list">
+                    {plot.incomes.map((income) => (
+                      <li key={income.id} className="txn-row">
+                        <div className="txn-main">
+                          <strong>{income.title}</strong>
+                          <span className="txn-meta">
+                            {t(`incomes.category.${income.category}`)}
+                            {' · '}
+                            {formatMoneyDate(income.income_date, i18n.language)}
+                            {income.quantity != null
+                              ? ` · ${income.quantity} ${income.unit || ''}`.trim()
+                              : ''}
+                          </span>
+                        </div>
+                        <div className="txn-aside">
+                          <span className="txn-amount is-income">₹{Number(income.amount).toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => openEditIncome(income)}
+                          >
+                            {t('common.edit')}
+                          </button>
+                          <OverflowMenu
+                            label={t('common.more')}
+                            quiet
+                            items={[
+                              {
+                                id: 'delete',
+                                label: t('common.delete'),
+                                danger: true,
+                                onClick: () => handleDeleteIncome(income),
+                              },
+                            ]}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+        </>
       )}
 
       {plot.crop_history?.length > 0 && (
@@ -812,174 +993,6 @@ function PlotDetailPage() {
             </div>
           )}
         </section>
-      )}
-
-
-      {plot.active_crop && (
-        <>
-          <section className="surface-panel is-expandable">
-            <div className="collapsible-header">
-              <button
-                type="button"
-                className="section-toggle"
-                onClick={() => setIsExpensesOpen((prev) => !prev)}
-                aria-expanded={is_expenses_open}
-              >
-                <div>
-                  <div className="section-title-row">
-                    <SectionIcon name="expense" tone="danger" />
-                    <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
-                  </div>
-                  <p className="section-note" style={{ margin: '4px 0 0' }}>
-                    {t('expenses.collapsed_hint', {
-                      count: plot.expenses?.length || 0,
-                      amount: spending.toLocaleString('en-IN'),
-                    })}
-                  </p>
-                </div>
-                <span className="chevron-badge">{is_expenses_open ? '▾' : '▸'}</span>
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateExpense}>
-                {t('expenses.add')}
-              </button>
-            </div>
-
-            {is_expenses_open && (
-              <div className="section-panel-body">
-                <p className="section-note" style={{ marginTop: 0 }}>
-                  {t('expenses.for_crop', { crop: plot.active_crop.crop_name })}
-                </p>
-                {!plot.expenses?.length ? (
-                  <div className="empty-state" style={{ padding: '8px 0' }}>
-                    <p>{t('expenses.empty')}</p>
-                  </div>
-                ) : (
-                  <ul className="txn-list">
-                    {plot.expenses.map((expense) => (
-                      <li key={expense.id} className="txn-row">
-                        <div className="txn-main">
-                          <strong>{expense.title}</strong>
-                          <span className="txn-meta">
-                            {t(`expenses.category.${expense.category}`)}
-                            {' · '}
-                            {formatMoneyDate(expense.expense_date, i18n.language)}
-                            {!expense.crop_cycle_id ? ` · ${t('expenses.unlinked_crop')}` : ''}
-                            {expense.quantity != null
-                              ? ` · ${expense.quantity} ${expense.unit || ''}`.trim()
-                              : ''}
-                          </span>
-                        </div>
-                        <div className="txn-aside">
-                          <span className="txn-amount">₹{Number(expense.amount).toLocaleString('en-IN')}</span>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => openEditExpense(expense)}
-                          >
-                            {t('common.edit')}
-                          </button>
-                          <OverflowMenu
-                            label={t('common.more')}
-                            quiet
-                            items={[
-                              {
-                                id: 'delete',
-                                label: t('common.delete'),
-                                danger: true,
-                                onClick: () => handleDeleteExpense(expense),
-                              },
-                            ]}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </section>
-
-          <section className="surface-panel is-expandable is-soft">
-            <div className="collapsible-header">
-              <button
-                type="button"
-                className="section-toggle"
-                onClick={() => setIsIncomesOpen((prev) => !prev)}
-                aria-expanded={is_incomes_open}
-              >
-                <div>
-                  <div className="section-title-row">
-                    <SectionIcon name="income" tone="success" />
-                    <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
-                  </div>
-                  <p className="section-note" style={{ margin: '4px 0 0' }}>
-                    {t('incomes.collapsed_hint', {
-                      count: plot.incomes?.length || 0,
-                      amount: earned.toLocaleString('en-IN'),
-                    })}
-                  </p>
-                </div>
-                <span className="chevron-badge">{is_incomes_open ? '▾' : '▸'}</span>
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={openCreateIncome}>
-                {t('incomes.add')}
-              </button>
-            </div>
-
-            {is_incomes_open && (
-              <div className="section-panel-body">
-                <p className="section-note" style={{ marginTop: 0 }}>
-                  {t('incomes.for_crop', { crop: plot.active_crop.crop_name })}
-                </p>
-                {!plot.incomes?.length ? (
-                  <div className="empty-state" style={{ padding: '8px 0' }}>
-                    <p>{t('incomes.empty')}</p>
-                  </div>
-                ) : (
-                  <ul className="txn-list">
-                    {plot.incomes.map((income) => (
-                      <li key={income.id} className="txn-row">
-                        <div className="txn-main">
-                          <strong>{income.title}</strong>
-                          <span className="txn-meta">
-                            {t(`incomes.category.${income.category}`)}
-                            {' · '}
-                            {formatMoneyDate(income.income_date, i18n.language)}
-                            {income.quantity != null
-                              ? ` · ${income.quantity} ${income.unit || ''}`.trim()
-                              : ''}
-                          </span>
-                        </div>
-                        <div className="txn-aside">
-                          <span className="txn-amount is-income">₹{Number(income.amount).toLocaleString('en-IN')}</span>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => openEditIncome(income)}
-                          >
-                            {t('common.edit')}
-                          </button>
-                          <OverflowMenu
-                            label={t('common.more')}
-                            quiet
-                            items={[
-                              {
-                                id: 'delete',
-                                label: t('common.delete'),
-                                danger: true,
-                                onClick: () => handleDeleteIncome(income),
-                              },
-                            ]}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </section>
-        </>
       )}
 
       <PendingIncomeSection

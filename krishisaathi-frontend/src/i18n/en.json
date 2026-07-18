@@ -140,7 +140,8 @@
   "crops": {
     "current_crop": "Current Crop",
     "start_crop": "Start Crop",
-    "no_active_crop": "No crop on this plot yet. Start one to track spending, income, and profit.",
+    "start_crop_title": "Ready to plant?",
+    "no_active_crop": "Start a crop to track stages, spending, income, and profit on this plot.",
     "template": "Crop type",
     "custom_crop": "Custom crop (enter name below)",
     "crop_name": "Crop name",
@@ -452,6 +453,7 @@
     "title": "Profile",
     "subtitle": "Your account, farm overview, and preferences",
     "default_name": "Farmer",
+    "welcome_back": "Your farm desk",
     "member_since": "Member since {{date}}",
     "active_crops": "Active Crops",
     "pending_sales": "Pending Sales",

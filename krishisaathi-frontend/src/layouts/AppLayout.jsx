@@ -9,11 +9,11 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const NAV_ITEMS = [
-  { to: '/', end: true, key: 'dashboard', icon: 'home' },
-  { to: '/farms', key: 'farms', icon: 'farms' },
-  { to: '/assistant', key: 'assistant', icon: 'chat' },
-  { to: '/activity', key: 'activity', icon: 'list' },
-  { to: '/profile', key: 'profile', icon: 'user' },
+  { to: '/', end: true, key: 'dashboard', icon: 'home', tone: 'home' },
+  { to: '/farms', key: 'farms', icon: 'farms', tone: 'farms' },
+  { to: '/assistant', key: 'assistant', icon: 'chat', tone: 'chat' },
+  { to: '/activity', key: 'activity', icon: 'list', tone: 'list' },
+  { to: '/profile', key: 'profile', icon: 'user', tone: 'user' },
 ];
 
 function NavIcon({ name }) {
@@ -23,7 +23,7 @@ function NavIcon({ name }) {
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
-    strokeWidth: 1.8,
+    strokeWidth: 1.85,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     'aria-hidden': true,
@@ -155,7 +155,7 @@ function AppLayout() {
                 className={({ isActive }) => `drawer-link${isActive ? ' active' : ''}`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className="drawer-link-icon" aria-hidden="true">
+                <span className={`drawer-link-icon tone-${item.tone}`} aria-hidden="true">
                   <NavIcon name={item.icon} />
                 </span>
                 <span>{t(`nav.${item.key}`)}</span>
