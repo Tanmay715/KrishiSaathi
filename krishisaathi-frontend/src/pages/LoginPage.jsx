@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
+import api_client from '../services/api_client';
 import { sendOtp, verifyOtp } from '../services/auth_service';
 import { isValidIndianMobile, normalizeIndianMobile } from '../utils/phone_validation';
 
@@ -19,6 +20,29 @@ function LoginPage() {
   const [is_loading, setIsLoading] = useState(false);
   const [error_message, setErrorMessage] = useState('');
   const [dev_otp, setDevOtp] = useState('');
+  const [is_server_ready, setIsServerReady] = useState(true);
+
+  useEffect(() => {
+    let is_active = true;
+
+    async function wakeServer() {
+      try {
+        await api_client.get('/health', { timeout: 20000 });
+        if (is_active) {
+          setIsServerReady(true);
+        }
+      } catch (_error) {
+        if (is_active) {
+          setIsServerReady(false);
+        }
+      }
+    }
+
+    wakeServer();
+    return () => {
+      is_active = false;
+    };
+  }, []);
 
   async function handleSendOtp(event) {
     event.preventDefault();
@@ -93,6 +117,11 @@ function LoginPage() {
         <p className="subtitle">{t('auth.login_subtitle')}</p>
 
         {error_message && <div className="error-banner">{error_message}</div>}
+        {!is_server_ready && !error_message && (
+          <div className="error-banner" style={{ background: '#fff4e5', color: '#8a5a00' }}>
+            {t('auth.server_waking')}
+          </div>
+        )}
 
         {step === 'phone' ? (
           <form onSubmit={handleSendOtp}>

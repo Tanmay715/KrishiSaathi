@@ -17,7 +17,7 @@ function isAllowedOrigin(origin) {
     return true;
   }
 
-  if (env.is_production && /^https:\/\/[\w-]+\.vercel\.app$/i.test(origin)) {
+  if (env.is_production && /^https:\/\/([\w-]+\.)*vercel\.app$/i.test(origin)) {
     return true;
   }
 
@@ -33,7 +33,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(null, false);
   },
   credentials: true,
 }));

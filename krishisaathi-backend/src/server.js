@@ -21,8 +21,8 @@ async function startServer() {
       console.warn('[redis] unavailable — OTP will fail until Redis is running');
     }
 
-    app.listen(env.port, () => {
-      console.log(`[server] KrishiSaathi API running on http://localhost:${env.port}${env.api_prefix}`);
+    app.listen(env.port, '0.0.0.0', () => {
+      console.log(`[server] KrishiSaathi API running on port ${env.port}${env.api_prefix}`);
     });
   } catch (error) {
     console.error('[server] failed to start:', error.message);

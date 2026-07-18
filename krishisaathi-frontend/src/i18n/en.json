@@ -20,7 +20,8 @@
     "land_unit_label": "Land unit",
     "invalid_phone": "Enter a valid 10-digit Indian mobile number",
     "resend_otp": "Resend OTP",
-    "network_error": "Cannot reach server. Check internet and try again."
+    "network_error": "Cannot reach server. Check internet and try again.",
+    "server_waking": "Connecting to server… if Send OTP fails, wait 10 seconds and try again."
   },
   "nav": {
     "dashboard": "Dashboard",
