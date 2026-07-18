@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMandiRates } from '../services/farm_service';
 import LoadingState from './LoadingState';
+import SectionIcon from './SectionIcon';
 
 function formatRate(value) {
   if (value == null || Number.isNaN(Number(value))) {
@@ -98,7 +99,10 @@ function MandiPricePanel({
     <section className={`mandi-panel is-quick-action${compact ? ' is-compact' : ' card'}`}>
       <div className="quick-action-head">
         <div className="quick-action-copy">
-          <h3>{t('mandi.title')}</h3>
+          <div className="section-title-row">
+            <SectionIcon name="mandi" tone="accent" />
+            <h3>{t('mandi.title')}</h3>
+          </div>
           {!is_open && (
             <p className="section-note is-one-line">
               {crop_name

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import OverflowMenu from './OverflowMenu';
-import CropSilhouette from './illustrations/CropSilhouette';
+import CropPortrait from './CropPortrait';
 import { getCropProgress } from '../utils/crop_progress';
 import { stageIcon, translateStageName } from '../utils/dashboard_insights';
 
@@ -20,7 +20,7 @@ function CropLivingPanel({
       <div className="crop-theater-sky" aria-hidden="true" />
 
       <div className="crop-theater-stage">
-        <CropSilhouette
+        <CropPortrait
           crop_name={crop.crop_name}
           progress={progress.progress_pct}
           className="crop-theater-art"

@@ -6,6 +6,7 @@ import {
 } from '../services/farm_service';
 import LoadingState from './LoadingState';
 import EmptyState from './EmptyState';
+import SectionIcon from './SectionIcon';
 import { formatShortDate } from '../utils/format_date';
 
 function DiseaseScanPanel({ farm_id, plot_id, crop_cycle_id, crop_name, default_open = false }) {
@@ -86,7 +87,10 @@ function DiseaseScanPanel({ farm_id, plot_id, crop_cycle_id, crop_name, default_
     <section className="card disease-panel is-quick-action">
       <div className="quick-action-head">
         <div className="quick-action-copy">
-          <h3>{t('disease.title')}</h3>
+          <div className="section-title-row">
+            <SectionIcon name="disease" tone="warn" />
+            <h3>{t('disease.title')}</h3>
+          </div>
           {!is_open && (
             <p className="section-note is-one-line">
               {crop_name

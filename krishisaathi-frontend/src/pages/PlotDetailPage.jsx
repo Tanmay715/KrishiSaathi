@@ -45,6 +45,7 @@ import DiseaseScanPanel from '../components/DiseaseScanPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import CropLivingPanel from '../components/CropLivingPanel';
 import OverflowMenu from '../components/OverflowMenu';
+import SectionIcon from '../components/SectionIcon';
 import { loadPlotDetail, savePlotDetail } from '../utils/offline_store';
 import { buildWeatherAdvice } from '../utils/dashboard_insights';
 
@@ -623,12 +624,11 @@ function PlotDetailPage() {
       )}
 
       {plot.active_crop && (
-        <div className="plot-flow-block is-muted">
+        <div className="plot-flow-block is-soft">
           <MandiPricePanel
             crop_name={plot.active_crop.crop_name}
             farm_id={farm_id}
             expense_total={spending}
-            compact
           />
         </div>
       )}
@@ -642,7 +642,10 @@ function PlotDetailPage() {
             aria-expanded={is_history_open}
           >
             <div>
-              <h3 style={{ margin: 0 }}>{t('crops.history')}</h3>
+              <div className="section-title-row">
+                <SectionIcon name="history" tone="default" />
+                <h3 style={{ margin: 0 }}>{t('crops.history')}</h3>
+              </div>
               <p className="section-note" style={{ margin: '4px 0 0' }}>
                 {t('crops.history_collapsed_hint', { count: plot.crop_history.length })}
               </p>
@@ -823,7 +826,10 @@ function PlotDetailPage() {
                 aria-expanded={is_expenses_open}
               >
                 <div>
-                  <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
+                  <div className="section-title-row">
+                    <SectionIcon name="expense" tone="danger" />
+                    <h3 style={{ margin: 0 }}>{t('expenses.title')}</h3>
+                  </div>
                   <p className="section-note" style={{ margin: '4px 0 0' }}>
                     {t('expenses.collapsed_hint', {
                       count: plot.expenses?.length || 0,
@@ -902,7 +908,10 @@ function PlotDetailPage() {
                 aria-expanded={is_incomes_open}
               >
                 <div>
-                  <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
+                  <div className="section-title-row">
+                    <SectionIcon name="income" tone="success" />
+                    <h3 style={{ margin: 0 }}>{t('incomes.title')}</h3>
+                  </div>
                   <p className="section-note" style={{ margin: '4px 0 0' }}>
                     {t('incomes.collapsed_hint', {
                       count: plot.incomes?.length || 0,
