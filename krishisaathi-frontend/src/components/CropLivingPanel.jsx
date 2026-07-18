@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import ProgressRing from './ProgressRing';
 import OverflowMenu from './OverflowMenu';
+import CropSilhouette from './illustrations/CropSilhouette';
 import { getCropProgress } from '../utils/crop_progress';
 import { stageIcon, translateStageName } from '../utils/dashboard_insights';
 
@@ -16,83 +16,93 @@ function CropLivingPanel({
   const progress = getCropProgress(crop, t);
 
   return (
-    <section className="crop-living fade-in">
-      <div className="crop-living-top">
-        <div className="crop-living-identity">
-          <p className="crop-living-eyebrow">{t('crops.current_crop')}</p>
+    <section className="crop-theater">
+      <div className="crop-theater-sky" aria-hidden="true" />
+
+      <div className="crop-theater-stage">
+        <CropSilhouette
+          crop_name={crop.crop_name}
+          progress={progress.progress_pct}
+          className="crop-theater-art"
+        />
+
+        <div className="crop-theater-copy">
+          <p className="crop-theater-eyebrow">{t('crops.current_crop')}</p>
           <h2>{crop.crop_name}</h2>
-          <div className="crop-living-chips">
+
+          <div className="crop-theater-chips">
             <span className="status-chip">{t(`crops.season.${crop.season_type}`)}</span>
             <span className={`status-chip tone-${progress.health}`}>
               {t(`crops.health.${progress.health}`)}
             </span>
             {progress.days_growing != null && (
-              <span className="status-chip">
+              <span className="status-chip glow">
                 {t('crops.days_growing', { count: progress.days_growing })}
               </span>
             )}
           </div>
-        </div>
 
-        <div className="crop-living-actions">
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
-            onClick={on_harvest}
-            disabled={is_saving}
-          >
-            {t('crops.record_harvest')}
-          </button>
-          <OverflowMenu
-            label={t('common.more')}
-            items={[
-              {
-                id: 'abandon',
-                label: t('crops.abandon'),
-                danger: true,
-                disabled: is_saving,
-                onClick: on_abandon,
-              },
-            ]}
-          />
-        </div>
-      </div>
+          <div className="crop-theater-progress">
+            <div className="crop-growth-track">
+              <div
+                className="crop-growth-fill"
+                style={{ width: `${progress.progress_pct}%` }}
+              />
+            </div>
+            <div className="crop-growth-meta">
+              <strong>{progress.progress_pct}%</strong>
+              <span>{t('crops.growth')}</span>
+            </div>
+          </div>
 
-      <div className="crop-living-pulse">
-        <ProgressRing
-          value={progress.progress_pct}
-          size={110}
-          stroke={10}
-          tone="growth"
-          label={`${progress.progress_pct}%`}
-          sublabel={t('crops.growth')}
-        />
-        <div className="crop-living-next">
-          {progress.current_stage_name && (
-            <div>
-              <span className="stat-label">{t('crops.stage_current')}</span>
-              <strong>{progress.current_stage_name}</strong>
-            </div>
-          )}
-          {progress.next_activity && (
-            <div>
-              <span className="stat-label">{t('crops.next_up')}</span>
-              <strong>{progress.next_activity}</strong>
-            </div>
-          )}
+          <div className="crop-theater-next">
+            {progress.current_stage_name && (
+              <div>
+                <span>{t('crops.stage_current')}</span>
+                <strong>{progress.current_stage_name}</strong>
+              </div>
+            )}
+            {progress.next_activity && (
+              <div>
+                <span>{t('crops.next_up')}</span>
+                <strong>{progress.next_activity}</strong>
+              </div>
+            )}
+          </div>
+
           {weather_tip && (
-            <div className="crop-weather-impact">
-              <span className="stat-label">{t('crops.weather_impact')}</span>
-              <p>{weather_tip}</p>
-            </div>
+            <p className="crop-theater-weather">{weather_tip}</p>
           )}
+
+          <div className="crop-theater-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={on_harvest}
+              disabled={is_saving}
+            >
+              {t('crops.record_harvest')}
+            </button>
+            <OverflowMenu
+              label={t('common.more')}
+              items={[
+                {
+                  id: 'abandon',
+                  label: t('crops.abandon'),
+                  danger: true,
+                  disabled: is_saving,
+                  onClick: on_abandon,
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
       {crop.lifecycle_stages?.length > 0 && (
-        <div className="lifecycle-block crop-living-timeline">
+        <div className="crop-theater-timeline">
           <h3>{t('crops.lifecycle')}</h3>
-          <ol className="stage-timeline">
+          <ol className="stage-timeline is-theater">
             {crop.lifecycle_stages.map((stage, index) => {
               const is_done = Boolean(stage.completed);
               const is_current = index === progress.current_index && !is_done;

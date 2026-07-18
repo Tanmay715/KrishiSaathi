@@ -6,9 +6,8 @@ import PendingIncomeSection from '../components/PendingIncomeSection';
 import LoadingState from '../components/LoadingState';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
-import DashboardHero from '../components/DashboardHero';
-import TodayActions from '../components/TodayActions';
-import FarmHealthCard from '../components/FarmHealthCard';
+import TodayFieldScene from '../components/TodayFieldScene';
+import PulseRail from '../components/PulseRail';
 import MandiPricePanel from '../components/MandiPricePanel';
 import Modal from '../components/Modal';
 import {
@@ -24,6 +23,7 @@ import {
 } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { buildTodayRecommendations, buildWeatherAdvice } from '../utils/dashboard_insights';
+import { farmHealthScore } from '../utils/field_identity';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
@@ -179,6 +179,13 @@ function DashboardPage() {
     [...reminders].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
   ), [reminders]);
 
+  const health = useMemo(() => farmHealthScore({
+    earned: total_earned,
+    spent: total_spent,
+    pending_count: pending_income_crops.length,
+    reminders: sorted_reminders,
+  }), [total_earned, total_spent, pending_income_crops.length, sorted_reminders]);
+
   const primary_action = recommendations[0] || null;
   const secondary_actions = recommendations.slice(1);
   const greeting = `${t('dashboard.welcome')}${user?.name ? `, ${user.name}` : ''}`;
@@ -192,7 +199,7 @@ function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-page page-stack is-premium">
+    <div className="dashboard-page page-stack is-field">
       {is_cached_view && (
         <div className="info-banner">{t('pwa.cached_data')}</div>
       )}
@@ -213,14 +220,20 @@ function DashboardPage() {
         />
       ) : (
         <>
-          <DashboardHero
+          <TodayFieldScene
             weather={weather}
             primary_action={primary_action}
             weather_advice={weather_advice}
             greeting={greeting}
+            health={health}
+            farms_count={farms.length}
+            plots_count={total_plots}
+            earned={total_earned}
+            spent={total_spent}
+            net={net}
           />
 
-          <TodayActions
+          <PulseRail
             actions={secondary_actions}
             reminders={sorted_reminders}
             is_working={is_working}
@@ -230,27 +243,18 @@ function DashboardPage() {
             on_generate_reminders={handleGenerateReminders}
           />
 
-          <FarmHealthCard
-            farms_count={farms.length}
-            plots_count={total_plots}
-            earned={total_earned}
-            spent={total_spent}
-            net={net}
-            pending_count={pending_income_crops.length}
-          />
-
           {pending_income_crops.length > 0 && (
             <PendingIncomeSection crops={pending_income_crops} show_location />
           )}
 
-          <section className="dash-secondary fade-in">
+          <section className="field-secondary">
             <MandiPricePanel
               farm_id={farms[0]?.id || null}
               crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
             />
           </section>
 
-          <Link to="/assistant" className="assistant-strip fade-in">
+          <Link to="/assistant" className="assistant-strip is-field">
             <div>
               <strong>{t('assistant.title')}</strong>
               <span>{t('assistant.cta')}</span>

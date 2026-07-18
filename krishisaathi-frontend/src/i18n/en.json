@@ -55,7 +55,10 @@
     "today_actions_hint": "What needs attention right now",
     "farm_health": "Farm health",
     "farms_short": "farms",
-    "plots_short": "plots"
+    "plots_short": "plots",
+    "health_thriving": "Thriving",
+    "health_steady": "Steady",
+    "health_strain": "Needs care"
   },
   "assistant": {
     "title": "Farm Assistant",

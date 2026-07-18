@@ -55,7 +55,10 @@
     "today_actions_hint": "अभी किस पर ध्यान दें",
     "farm_health": "खेत की सेहत",
     "farms_short": "खेत",
-    "plots_short": "टुकड़े"
+    "plots_short": "टुकड़े",
+    "health_thriving": "फूल रहा",
+    "health_steady": "स्थिर",
+    "health_strain": "ध्यान चाहिए"
   },
   "assistant": {
     "title": "फार्म सहायक",
