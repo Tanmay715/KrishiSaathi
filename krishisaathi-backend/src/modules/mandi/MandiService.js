@@ -82,6 +82,8 @@ class MandiService {
           min: summary.min ?? null,
           modal: summary.modal_median ?? summary.modal_avg ?? null,
           max: summary.max ?? null,
+          change_pct: payload.change_pct ?? null,
+          trend: payload.trend?.points || [],
         });
       } catch (error) {
         rows.push({
@@ -94,6 +96,8 @@ class MandiService {
           min: null,
           modal: null,
           max: null,
+          change_pct: null,
+          trend: [],
         });
       }
     }
@@ -184,6 +188,8 @@ class MandiService {
         return null;
       }
 
+      const trend = this.#buildTrend(markets);
+
       return {
         commodity,
         unit: '₹/quintal',
@@ -194,6 +200,8 @@ class MandiService {
         district,
         markets: markets.slice(0, 8),
         summary: this.#summarizeMarkets(markets),
+        trend,
+        change_pct: trend.change_pct,
         disclaimer_key: 'mandi.disclaimer',
       };
     } catch (error) {
@@ -206,7 +214,7 @@ class MandiService {
     const url = new URL(`https://api.data.gov.in/resource/${DATA_GOV_RESOURCE_ID}`);
     url.searchParams.set('api-key', process.env.DATA_GOV_API_KEY);
     url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '40');
+    url.searchParams.set('limit', '100');
     url.searchParams.set('filters[commodity]', commodity);
 
     if (state) {
@@ -233,27 +241,101 @@ class MandiService {
   #normalizeRecords(records) {
     return records
       .map((row) => {
-        const modal = Number(row.modal_price ?? row.modal ?? 0);
-        const min = Number(row.min_price ?? row.min ?? modal);
-        const max = Number(row.max_price ?? row.max ?? modal);
+        const modal = Number(
+          row.modal_price ?? row['Modal Price'] ?? row.modal ?? 0,
+        );
+        const min = Number(
+          row.min_price ?? row['Min Price'] ?? row.min ?? modal,
+        );
+        const max = Number(
+          row.max_price ?? row['Max Price'] ?? row.max ?? modal,
+        );
 
         if (!modal && !min && !max) {
           return null;
         }
 
         return {
-          market: row.market || row.market_name || 'Market',
-          district: row.district || row.district_name || null,
-          state: row.state || row.state_name || null,
-          variety: row.variety || null,
+          market: row.market || row.Market || row.market_name || 'Market',
+          district: row.district || row.District || row.district_name || null,
+          state: row.state || row.State || row.state_name || null,
+          variety: row.variety || row.Variety || null,
           min,
           max,
           modal: modal || Math.round((min + max) / 2),
-          date: row.arrival_date || row.date || null,
+          date: this.#normalizeArrivalDate(
+            row.arrival_date || row.Arrival_Date || row.date || null,
+          ),
         };
       })
       .filter(Boolean)
       .sort((a, b) => b.modal - a.modal);
+  }
+
+  #normalizeArrivalDate(raw) {
+    if (!raw) {
+      return null;
+    }
+
+    const value = String(raw).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.slice(0, 10);
+    }
+
+    const matched = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (matched) {
+      return `${matched[3]}-${matched[2].padStart(2, '0')}-${matched[1].padStart(2, '0')}`;
+    }
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().slice(0, 10);
+    }
+
+    return null;
+  }
+
+  #median(values = []) {
+    if (!values.length) {
+      return null;
+    }
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[mid]
+      : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  }
+
+  #buildTrend(markets = []) {
+    const by_date = new Map();
+
+    markets.forEach((item) => {
+      if (!item.date || !(item.modal > 0)) {
+        return;
+      }
+      if (!by_date.has(item.date)) {
+        by_date.set(item.date, []);
+      }
+      by_date.get(item.date).push(item.modal);
+    });
+
+    const points = [...by_date.entries()]
+      .map(([date, values]) => ({ date, modal: this.#median(values) }))
+      .filter((point) => point.modal != null)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-7);
+
+    let change_pct = null;
+    if (points.length >= 2) {
+      const previous = points[points.length - 2].modal;
+      const current = points[points.length - 1].modal;
+      if (previous > 0) {
+        change_pct = Math.round(((current - previous) / previous) * 1000) / 10;
+      }
+    }
+
+    return { points, change_pct };
   }
 
   #summarizeMarkets(markets) {
@@ -314,6 +396,8 @@ class MandiService {
         modal_median: rate.modal,
         market_count: 1,
       },
+      trend: { points: [], change_pct: null },
+      change_pct: null,
       disclaimer_key: 'mandi.disclaimer_reference',
     };
   }

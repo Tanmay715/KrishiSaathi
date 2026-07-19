@@ -118,19 +118,19 @@ function resolveCropKey(crop_name = '') {
   return 'default';
 }
 
-function CropMark({ crop, size = 36 }) {
+function CropMark({ crop, size = 36, shape = 'soft' }) {
   const key = resolveCropKey(crop);
   const mark = CROP_MARKS[key] || CROP_MARKS.default;
 
   return (
     <span
-      className={`crop-mark tone-${mark.tone}`}
+      className={`crop-mark tone-${mark.tone}${shape === 'circle' ? ' is-circle' : ''}`}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
       <svg
-        width={Math.round(size * 0.58)}
-        height={Math.round(size * 0.58)}
+        width={Math.round(size * 0.55)}
+        height={Math.round(size * 0.55)}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

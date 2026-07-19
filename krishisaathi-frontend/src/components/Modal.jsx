@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 function Modal({
   title,
+  subtitle = null,
   children,
   on_close,
   footer,
@@ -10,6 +11,7 @@ function Modal({
   variant = 'dialog',
   trap_history = true,
   close_label = null,
+  header_style = 'default',
 }) {
   const is_closed_ref = useRef(false);
   const on_close_ref = useRef(on_close);
@@ -74,6 +76,8 @@ function Modal({
     on_close_ref.current?.();
   }
 
+  const show_header = title || close_label || subtitle;
+
   return createPortal(
     <div
       className={`modal-overlay${variant === 'sheet' ? ' is-sheet' : ''}`}
@@ -87,19 +91,23 @@ function Modal({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
       >
-        {(title || close_label) && (
-          <div className="modal-header">
+        {show_header && (
+          <div className={`modal-header${header_style === 'bar' ? ' is-bar' : ''}`}>
             {close_label && (
               <button
                 type="button"
-                className="modal-back-btn"
+                className={`modal-back-btn${header_style === 'bar' ? ' is-icon' : ''}`}
                 onClick={handleOverlayClose}
+                aria-label={close_label}
               >
                 <span aria-hidden="true">←</span>
-                {close_label}
+                {header_style !== 'bar' && close_label}
               </button>
             )}
-            {title && <h3 className="modal-title">{title}</h3>}
+            <div className="modal-header-copy">
+              {title && <h3 className="modal-title">{title}</h3>}
+              {subtitle && <p className="modal-subtitle">{subtitle}</p>}
+            </div>
           </div>
         )}
         <div className="modal-body">{children}</div>

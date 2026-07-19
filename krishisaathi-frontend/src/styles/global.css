@@ -483,6 +483,23 @@ textarea {
   margin-bottom: 16px;
 }
 
+.modal-header.is-bar {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-header-copy {
+  min-width: 0;
+}
+
+.modal-subtitle {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+  line-height: 1.35;
+}
+
 .modal-back-btn {
   align-self: flex-start;
   display: inline-flex;
@@ -498,6 +515,17 @@ textarea {
   font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
+}
+
+.modal-back-btn.is-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-radius: 14px;
+  justify-content: center;
+  font-size: 1.15rem;
 }
 
 .modal-back-btn span {
@@ -5946,6 +5974,11 @@ textarea {
   color: #1f3b2c;
 }
 
+.crop-mark.is-circle {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
 .crop-mark.tone-amber { background: linear-gradient(160deg, #f6dfb2, #edd49a); color: #7a4e12; }
 .crop-mark.tone-gold { background: linear-gradient(160deg, #f7e7a8, #ecd46b); color: #6d5310; }
 .crop-mark.tone-plum { background: linear-gradient(160deg, #efe0f3, #ddc3e8); color: #6b3b7a; }
@@ -5953,6 +5986,325 @@ textarea {
 .crop-mark.tone-tomato { background: linear-gradient(160deg, #ffd8cf, #f5b6a8); color: #9a3a2a; }
 .crop-mark.tone-sand { background: linear-gradient(160deg, #f0e4cf, #e2d0ae); color: #6a5230; }
 .crop-mark.tone-mist { background: linear-gradient(160deg, #e7eef2, #d5e1e8); color: #385566; }
+
+.mandi-market-section.is-premium {
+  padding: 16px 16px 12px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.mandi-glance-head.is-stack {
+  display: block;
+}
+
+.mandi-price-list.is-premium {
+  margin-top: 4px;
+}
+
+.mandi-price-row.is-premium {
+  padding: 12px 0;
+  gap: 12px;
+}
+
+.mandi-price-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.mandi-change-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mandi-change-pill.is-up {
+  background: #e7f7ee;
+  color: #18794a;
+}
+
+.mandi-change-pill.is-down {
+  background: #fdecea;
+  color: #b42318;
+}
+
+.mandi-change-pill.is-flat {
+  background: #f1f3f2;
+  color: #66756c;
+}
+
+.mandi-view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mandi-view-all-link span {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.mandi-board-sheet.is-premium {
+  gap: 16px;
+}
+
+.mandi-crop-picker.is-top {
+  margin: 0 -4px;
+}
+
+.mandi-crop-tile {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 72px;
+  padding: 10px 8px;
+  border: 1.5px solid rgba(30, 92, 64, 0.1);
+  border-radius: 18px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+.mandi-crop-tile strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mandi-crop-tile.is-active {
+  border-color: rgba(47, 158, 95, 0.55);
+  background: linear-gradient(180deg, #eef9f2, #fff);
+  box-shadow: 0 0 0 3px rgba(47, 158, 95, 0.12);
+}
+
+.mandi-hero-card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.7), transparent 40%),
+    linear-gradient(145deg, #edf8f1 0%, #f7fbf8 55%, #fff 100%);
+  border: 1px solid rgba(47, 158, 95, 0.16);
+}
+
+.mandi-hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mandi-hero-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--color-text-subtle);
+}
+
+.mandi-hero-price {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.mandi-hero-unit {
+  margin-left: 4px;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+  font-weight: 600;
+}
+
+.mandi-hero-range {
+  margin: 6px 0 8px;
+  font-size: 13px;
+  color: var(--color-text-subtle);
+}
+
+.mandi-calc-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+}
+
+.mandi-calc-card label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mandi-stepper {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.mandi-stepper button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(30, 92, 64, 0.16);
+  border-radius: 14px;
+  background: #eef7f1;
+  color: var(--color-primary-dark);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mandi-stepper input {
+  height: 48px;
+  border: 1.5px solid rgba(47, 158, 95, 0.35);
+  border-radius: 14px;
+  text-align: center;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: var(--color-text);
+  background: #fff;
+}
+
+.mandi-calc-result {
+  margin: 12px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+  line-height: 1.4;
+}
+
+.mandi-calc-result strong {
+  color: #166534;
+  font-size: 1.05rem;
+}
+
+.mandi-calc-idle {
+  margin: 12px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.mandi-other-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mandi-mini-card {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 168px;
+  padding: 12px;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+.mandi-mini-card span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mandi-mini-card strong {
+  font-size: var(--text-sm);
+}
+
+.mandi-mini-card em {
+  font-style: normal;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary-dark, #1e5c40);
+}
+
+.mandi-trend-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+}
+
+.mandi-trend-card strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--text-sm);
+}
+
+.mandi-sparkline {
+  width: 100%;
+  height: 88px;
+  display: block;
+}
+
+.mandi-sparkline-fill {
+  fill: rgba(47, 158, 95, 0.14);
+}
+
+.mandi-sparkline-line {
+  fill: none;
+  stroke: #2f9e5f;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mandi-sparkline circle {
+  fill: #2f9e5f;
+}
+
+.mandi-trend-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+}
+
+.mandi-disclaimer-box {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #eef8f1;
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  line-height: 1.45;
+}
 
 .modal.modal-lg {
   max-width: 560px;
