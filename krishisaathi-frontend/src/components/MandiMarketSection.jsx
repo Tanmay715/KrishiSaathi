@@ -91,7 +91,6 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
   const estimated_sale = modal_price != null && qty_value > 0
     ? Math.round(modal_price * qty_value)
     : null;
-  const more_count = Math.max(crop_rows.length - glance_rows.length, 0);
 
   function openBoard(crop_name) {
     if (crop_name) {
@@ -116,14 +115,16 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
               {board?.place_label || t('mandi.unit_note')}
             </p>
           </div>
-          <button
-            type="button"
-            className="mandi-glance-cta"
-            onClick={() => openBoard(selected_crop)}
-          >
-            {t('mandi.view_all')}
-            <span aria-hidden="true">→</span>
-          </button>
+          {!is_loading && !has_error && crop_rows.length > 0 && (
+            <button
+              type="button"
+              className="mandi-glance-cta"
+              onClick={() => openBoard(selected_crop)}
+            >
+              {t('mandi.view_all_count', { count: crop_rows.length })}
+              <span aria-hidden="true">→</span>
+            </button>
+          )}
         </div>
 
         {is_loading && (
@@ -135,35 +136,24 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
         )}
 
         {!is_loading && !has_error && (
-          <>
-            <ul className="mandi-price-list">
-              {glance_rows.map((row, index) => (
-                <li key={row.crop}>
-                  <button
-                    type="button"
-                    className="mandi-price-row is-button"
-                    style={{ animationDelay: `${index * 60}ms` }}
-                    onClick={() => openBoard(row.crop)}
-                  >
-                    <span className="mandi-price-identity">
-                      <CropMark crop={row.crop} size={36} />
-                      <span className="mandi-price-crop">{row.crop}</span>
-                    </span>
-                    <span className="mandi-price-value">{formatRate(row.modal)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {more_count > 0 && (
-              <button
-                type="button"
-                className="mandi-more-hint"
-                onClick={() => openBoard(selected_crop)}
-              >
-                {t('mandi.more_crops_hint', { count: more_count })}
-              </button>
-            )}
-          </>
+          <ul className="mandi-price-list">
+            {glance_rows.map((row, index) => (
+              <li key={row.crop}>
+                <button
+                  type="button"
+                  className="mandi-price-row is-button"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                  onClick={() => openBoard(row.crop)}
+                >
+                  <span className="mandi-price-identity">
+                    <CropMark crop={row.crop} size={36} />
+                    <span className="mandi-price-crop">{row.crop}</span>
+                  </span>
+                  <span className="mandi-price-value">{formatRate(row.modal)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
@@ -271,20 +261,6 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
                 ? t('mandi.disclaimer_reference')
                 : t('mandi.disclaimer')}
             </p>
-
-            <button
-              type="button"
-              className="btn btn-primary mandi-board-close"
-              onClick={() => {
-                if (window.history.state?.ks_modal) {
-                  window.history.back();
-                  return;
-                }
-                setIsBoardOpen(false);
-              }}
-            >
-              {t('mandi.back_to_dashboard')}
-            </button>
           </div>
         </Modal>
       )}
