@@ -374,7 +374,9 @@ function LoginPage() {
             </div>
             <h1>{t('auth.success_title')}</h1>
             <p className="subtitle">
-              {t('auth.success_body', { app: t('app.name') })}
+              {t(needs_onboarding ? 'auth.success_body' : 'auth.success_body_returning', {
+                app: t('app.name'),
+              })}
             </p>
             <div className="auth-redirect-banner">
               <span aria-hidden="true">🌿</span>

@@ -4,7 +4,7 @@
     "tagline": "आपका संपूर्ण खेत प्रबंधन साथी"
   },
   "auth": {
-    "login_title": "वापसी पर स्वागत है",
+    "login_title": "स्वागत है",
     "login_subtitle": "अपने मोबाइल नंबर से साइन इन करें",
     "phone_label": "मोबाइल नंबर",
     "phone_placeholder": "10 अंकों का मोबाइल नंबर",
@@ -31,8 +31,9 @@
     "resend_otp": "OTP फिर भेजें",
     "resend_in": "OTP फिर भेजें ({{seconds}} सेकंड)",
     "trouble_hint": "समस्या है? सहायता से संपर्क करें",
-    "success_title": "लॉगिन सफल!",
+    "success_title": "आप अंदर हैं!",
     "success_body": "{{app}} में आपका स्वागत है",
+    "success_body_returning": "{{app}} में वापसी पर स्वागत है",
     "redirecting_title": "आपको डैशबोर्ड पर ले जाया जा रहा है...",
     "redirecting_in": "{{seconds}} सेकंड में रीडायरेक्ट...",
     "onboarding_title": "अपना फार्म प्रोफ़ाइल सेट करें",

@@ -4,7 +4,7 @@
     "tagline": "Your complete farm companion"
   },
   "auth": {
-    "login_title": "Welcome back",
+    "login_title": "Welcome",
     "login_subtitle": "Sign in with your mobile number",
     "phone_label": "Mobile number",
     "phone_placeholder": "10-digit mobile number",
@@ -31,8 +31,9 @@
     "resend_otp": "Resend OTP",
     "resend_in": "Resend OTP ({{seconds}}s)",
     "trouble_hint": "Having trouble? Contact support",
-    "success_title": "Login successful!",
-    "success_body": "Welcome back to {{app}}",
+    "success_title": "You're in!",
+    "success_body": "Welcome to {{app}}",
+    "success_body_returning": "Welcome back to {{app}}",
     "redirecting_title": "Taking you to your dashboard...",
     "redirecting_in": "Redirecting in {{seconds}} seconds.",
     "onboarding_title": "Set up your farm profile",
