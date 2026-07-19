@@ -2,9 +2,12 @@ const redis = require('../../config/redis');
 const db = require('../../db/connection');
 const ApiError = require('../../utils/ApiError');
 const {
-  buildLocationParts,
-  hasDevanagari,
-  normalizeDistrictName,
+  buildSearchQueries,
+  cleanPlaceText,
+  detectQueryLanguages,
+  getStateMatchNames,
+  pickBestGeocodeResult,
+  resolveStateName,
 } = require('../../utils/location_names');
 
 const CACHE_TTL_SECONDS = 1800;
@@ -37,7 +40,6 @@ class WeatherService {
 
     try {
       const cached = await redis.get(cache_key);
-
       if (cached) {
         return JSON.parse(cached);
       }
@@ -72,11 +74,9 @@ class WeatherService {
   async #resolveFarm(user_id, farm_id) {
     if (farm_id) {
       const farm = await db('farms').where({ id: farm_id, user_id, is_active: true }).first();
-
       if (!farm) {
         throw ApiError.notFound('Farm not found');
       }
-
       return farm;
     }
 
@@ -84,69 +84,74 @@ class WeatherService {
   }
 
   #resolveLocation(farm, user) {
-    const profile_district = user?.district?.trim() || '';
-    const farm_district = farm?.district?.trim() || '';
-    const farm_state = farm?.state?.trim() || '';
+    const profile_district = cleanPlaceText(user?.district);
+    const farm_district = cleanPlaceText(farm?.district);
+    const farm_state = cleanPlaceText(farm?.state);
 
     return {
       district: profile_district || farm_district,
       state: farm_state,
-      state_code: user?.state_code || '',
+      state_code: cleanPlaceText(user?.state_code),
       source: profile_district ? 'profile' : (farm_district || farm_state ? 'farm' : 'fallback'),
     };
   }
 
   #cacheKey(user_id, farm, location) {
-    const district = normalizeDistrictName(location.district || 'none').toLowerCase().replace(/\s+/g, '_');
-    const state = String(location.state || location.state_code || 'none').toLowerCase().replace(/\s+/g, '_');
+    const district = cleanPlaceText(location.district || 'none').toLowerCase().replace(/\s+/g, '_');
+    const state = cleanPlaceText(location.state || location.state_code || 'none').toLowerCase().replace(/\s+/g, '_');
     return `weather:${user_id}:${farm?.id || 'profile'}:${district}:${state}`;
   }
 
-  #buildSearchNames(location) {
-    const parts = buildLocationParts(location);
-    const district = parts[0] || '';
-    const names = [];
-
-    if (district) {
-      names.push(district);
-    }
-
-    if (parts.length >= 2) {
-      names.push(`${parts[0]}, ${parts[1]}`);
-    }
-
-    return [...new Set(names.filter(Boolean))];
-  }
-
   async #geocode(location) {
-    const search_names = this.#buildSearchNames(location);
-    const preferred_state = buildLocationParts(location)[1] || '';
+    const queries = buildSearchQueries(location);
+    const state_names = getStateMatchNames(location.state, location.state_code);
+    const languages = detectQueryLanguages(location.district || location.state || '');
 
-    for (const name of search_names) {
-      const languages = hasDevanagari(name) ? ['hi', 'en'] : ['en', 'hi'];
-
+    for (const query of queries) {
       for (const language of languages) {
-        const place = await this.#geocodeOnce(name, language, preferred_state);
-        if (place) {
-          return place;
+        const results = await this.#searchPlaces(query, language);
+        const best = pickBestGeocodeResult(results, state_names);
+        if (best) {
+          return {
+            latitude: best.latitude,
+            longitude: best.longitude,
+            name: best.name,
+            admin1: best.admin1 || null,
+            unresolved: false,
+          };
         }
       }
     }
 
-    if (preferred_state) {
-      const state_place = await this.#geocodeOnce(preferred_state, 'en', preferred_state);
+    // Last resort: state centroid only (never pretend a wrong city is correct when district was given)
+    const state_en = resolveStateName(location.state || location.state_code, 'en');
+    if (state_en) {
+      const state_results = await this.#searchPlaces(state_en, 'en');
+      const state_place = pickBestGeocodeResult(state_results, state_names);
       if (state_place) {
-        return state_place;
+        return {
+          latitude: state_place.latitude,
+          longitude: state_place.longitude,
+          name: state_place.name,
+          admin1: state_place.admin1 || state_en,
+          unresolved: Boolean(location.district),
+        };
       }
     }
 
-    return { latitude: 28.6139, longitude: 77.209, name: 'Delhi', admin1: 'Delhi', unresolved: true };
+    return {
+      latitude: 28.6139,
+      longitude: 77.209,
+      name: 'Delhi',
+      admin1: 'Delhi',
+      unresolved: true,
+    };
   }
 
-  async #geocodeOnce(name, language, preferred_state = '') {
+  async #searchPlaces(name, language) {
     const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
     url.searchParams.set('name', name);
-    url.searchParams.set('count', '5');
+    url.searchParams.set('count', '10');
     url.searchParams.set('language', language);
     url.searchParams.set('countryCode', 'IN');
     url.searchParams.set('format', 'json');
@@ -154,33 +159,13 @@ class WeatherService {
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        return null;
+        return [];
       }
-
       const data = await response.json();
-      const results = data.results || [];
-      if (!results.length) {
-        return null;
-      }
-
-      const matched = preferred_state
-        ? results.find((item) => {
-          const admin = String(item.admin1 || '').toLowerCase();
-          return admin.includes(preferred_state.toLowerCase())
-            || preferred_state.toLowerCase().includes(admin);
-        })
-        : null;
-
-      const place = matched || results[0];
-      return {
-        latitude: place.latitude,
-        longitude: place.longitude,
-        name: place.name,
-        admin1: place.admin1 || null,
-      };
+      return data.results || [];
     } catch (error) {
       console.warn('[weather] geocode failed:', error.message);
-      return null;
+      return [];
     }
   }
 
@@ -194,7 +179,6 @@ class WeatherService {
     url.searchParams.set('timezone', 'Asia/Kolkata');
 
     const response = await fetch(url);
-
     if (!response.ok) {
       throw ApiError.serviceUnavailable('Weather service unavailable');
     }
