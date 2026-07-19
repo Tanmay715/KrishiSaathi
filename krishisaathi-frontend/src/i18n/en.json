@@ -603,7 +603,9 @@
     "est_sale": "You could get about",
     "est_sale_math": "{{qty}} qtl × {{price}}",
     "est_sale_idle": "Use + / − to set quantity — estimate shows here.",
-    "disclaimer": "Indicative AGMARKNET rates only. Confirm at your local mandi before selling.",
-    "disclaimer_reference": "Reference estimate only (live mandi feed not configured). Confirm at your local mandi before selling."
+    "disclaimer": "Indicative AGMARKNET rates for your district. Confirm at your local mandi before selling.",
+    "disclaimer_state": "No district mandi row found — showing latest AGMARKNET rates for your state. Confirm locally before selling.",
+    "disclaimer_reference": "Reference estimate only (live mandi feed not configured). Confirm at your local mandi before selling.",
+    "disclaimer_unavailable": "No AGMARKNET rate found for this crop in your selected location right now."
   }
 }

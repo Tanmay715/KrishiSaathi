@@ -2,10 +2,13 @@ const redis = require('../../config/redis');
 const db = require('../../db/connection');
 const ApiError = require('../../utils/ApiError');
 const { assertRateLimit } = require('../../utils/rate_limit');
+const { resolveStateName } = require('../../utils/location_names');
 const { resolveCommodity, listKnownCommodities } = require('./commodity_map');
 const { getReferenceRate } = require('./reference_rates');
+const { getAgmarknetStateQueries } = require('./agmarknet_aliases');
 
-const CACHE_TTL_SECONDS = 3600;
+const CACHE_TTL_SECONDS = 1800;
+const CACHE_VERSION = 'v3';
 const DATA_GOV_RESOURCE_ID = process.env.DATA_GOV_MANDI_RESOURCE_ID
   || '9ef84268-d588-465a-a308-a864a43d0070';
 
@@ -18,6 +21,11 @@ class MandiService {
     return listKnownCommodities();
   }
 
+  async clearUserCaches() {
+    // Cache keys are location+crop scoped (not user id). Version bump handles stale entries.
+    return true;
+  }
+
   async getRates(user_id, query = {}) {
     await assertRateLimit({
       key: `mandi_rates:${user_id}`,
@@ -26,7 +34,7 @@ class MandiService {
       message: 'Mandi rate lookup limit reached. Please try again later.',
     });
 
-    const farm = await this.#resolveFarm(user_id, query.farm_id || null);
+    const location = await this.#resolveLocation(user_id, query);
     const crop_name = query.crop || query.commodity || '';
     const commodity = resolveCommodity(crop_name);
 
@@ -34,16 +42,18 @@ class MandiService {
       throw ApiError.badRequest('Crop or commodity is required');
     }
 
-    const state = query.state || farm?.state || null;
-    const district = query.district || farm?.district || null;
-    const payload = await this.#loadCommodityRates(commodity, state, district);
+    const payload = await this.#loadCommodityRates(
+      commodity,
+      location.state,
+      location.district,
+    );
 
     const expense_total = Number(query.expense_total || 0);
     const quantity = Number(query.quantity || 0);
     payload.break_even = this.#buildBreakEven(payload.summary, expense_total, quantity);
-    payload.farm = farm
-      ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
-      : null;
+    payload.farm = location.farm;
+    payload.place = location.place;
+    payload.place_label = location.place_label;
     payload.requested_crop = crop_name || commodity;
 
     return payload;
@@ -57,9 +67,7 @@ class MandiService {
       message: 'Mandi board lookup limit reached. Please try again later.',
     });
 
-    const farm = await this.#resolveFarm(user_id, query.farm_id || null);
-    const state = query.state || farm?.state || null;
-    const district = query.district || farm?.district || null;
+    const location = await this.#resolveLocation(user_id, query);
     const crops = this.#parseCropList(query.crops);
 
     const rows = [];
@@ -70,7 +78,11 @@ class MandiService {
       }
 
       try {
-        const payload = await this.#loadCommodityRates(commodity, state, district);
+        const payload = await this.#loadCommodityRates(
+          commodity,
+          location.state,
+          location.district,
+        );
         const summary = payload.summary || {};
         rows.push({
           crop,
@@ -78,36 +90,39 @@ class MandiService {
           unit: payload.unit,
           source: payload.source,
           source_label: payload.source_label,
+          place_scope: payload.place_scope || null,
           as_of: payload.as_of,
           min: summary.min ?? null,
           modal: summary.modal_median ?? summary.modal_avg ?? null,
           max: summary.max ?? null,
           change_pct: payload.change_pct ?? null,
           trend: payload.trend?.points || [],
+          markets: (payload.markets || []).slice(0, 3),
         });
-      } catch (error) {
+      } catch (_error) {
         rows.push({
           crop,
           commodity,
           unit: '₹/quintal',
           source: 'unavailable',
           source_label: null,
+          place_scope: null,
           as_of: null,
           min: null,
           modal: null,
           max: null,
           change_pct: null,
           trend: [],
+          markets: [],
         });
       }
     }
 
     return {
       unit: '₹/quintal',
-      farm: farm
-        ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
-        : null,
-      place_label: [farm?.district, farm?.state].filter(Boolean).join(', ') || null,
+      farm: location.farm,
+      place: location.place,
+      place_label: location.place_label,
       crops: rows,
     };
   }
@@ -124,15 +139,47 @@ class MandiService {
     return [...DEFAULT_BOARD_CROPS];
   }
 
+  async #resolveLocation(user_id, query = {}) {
+    const user = await db('users').where({ id: user_id, is_active: true }).first();
+    const farm = await this.#resolveFarm(user_id, query.farm_id || null);
+
+    const profile_state = resolveStateName(user?.state_code || '', 'en') || null;
+    const profile_district = user?.district || null;
+    const farm_state = farm?.state || null;
+    const farm_district = farm?.district || null;
+
+    const state = query.state || profile_state || farm_state || null;
+    const district = query.district || profile_district || farm_district || null;
+    const place_label = [district, state].filter(Boolean).join(', ') || null;
+
+    return {
+      state,
+      district,
+      place_label,
+      place: { state, district, source: query.state || query.district
+        ? 'query'
+        : (profile_state || profile_district ? 'profile' : (farm ? 'farm' : null)) },
+      farm: farm
+        ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
+        : null,
+    };
+  }
+
   async #loadCommodityRates(commodity, state, district) {
-    const cache_key = `mandi:${commodity}:${state || 'all'}:${district || 'all'}`;
+    const cache_key = `${CACHE_VERSION}:mandi:${commodity}:${state || 'all'}:${district || 'all'}`;
     let payload = await this.#readCache(cache_key);
 
     if (!payload) {
       payload = await this.#fetchLiveRates(commodity, state, district);
 
       if (!payload) {
-        payload = this.#buildReferencePayload(commodity, state, district);
+        // Only use India-wide reference when live API is not configured.
+        // Never pretend a dummy rate is a district price when the API is live.
+        if (!process.env.DATA_GOV_API_KEY) {
+          payload = this.#buildReferencePayload(commodity, state, district);
+        } else {
+          payload = this.#buildUnavailablePayload(commodity, state, district);
+        }
       }
 
       await this.#writeCache(cache_key, payload);
@@ -181,29 +228,56 @@ class MandiService {
     }
 
     try {
-      const records = await this.#queryDataGov(commodity, state, district);
-      const markets = this.#normalizeRecords(records);
+      const state_queries = getAgmarknetStateQueries(state);
+      const attempts = [];
 
-      if (!markets.length) {
+      if (state_queries.length && district) {
+        state_queries.forEach((state_name) => {
+          attempts.push({ state: state_name, district, place_scope: 'district' });
+        });
+      }
+
+      if (state_queries.length) {
+        state_queries.forEach((state_name) => {
+          attempts.push({ state: state_name, district: null, place_scope: 'state' });
+        });
+      }
+
+      // No location on profile/farm — do not invent nationwide rates as "your mandi".
+      if (!attempts.length) {
         return null;
       }
 
-      const trend = this.#buildTrend(markets);
+      for (const attempt of attempts) {
+        const records = await this.#queryDataGov(commodity, attempt.state, attempt.district);
+        const markets = this.#normalizeRecords(records);
 
-      return {
-        commodity,
-        unit: '₹/quintal',
-        source: 'agmarknet',
-        source_label: 'AGMARKNET (data.gov.in)',
-        as_of: markets[0].date || new Date().toISOString().slice(0, 10),
-        state,
-        district,
-        markets: markets.slice(0, 8),
-        summary: this.#summarizeMarkets(markets),
-        trend,
-        change_pct: trend.change_pct,
-        disclaimer_key: 'mandi.disclaimer',
-      };
+        if (!markets.length) {
+          continue;
+        }
+
+        const trend = this.#buildTrend(markets);
+
+        return {
+          commodity,
+          unit: '₹/quintal',
+          source: 'agmarknet',
+          source_label: 'AGMARKNET (data.gov.in)',
+          place_scope: attempt.place_scope,
+          as_of: markets[0].date || new Date().toISOString().slice(0, 10),
+          state: attempt.state,
+          district: attempt.district || district,
+          markets: markets.slice(0, 8),
+          summary: this.#summarizeMarkets(markets),
+          trend,
+          change_pct: trend.change_pct,
+          disclaimer_key: attempt.place_scope === 'district'
+            ? 'mandi.disclaimer'
+            : 'mandi.disclaimer_state',
+        };
+      }
+
+      return null;
     } catch (error) {
       console.warn('[mandi] live fetch failed:', error.message);
       return null;
@@ -362,6 +436,24 @@ class MandiService {
     };
   }
 
+  #buildUnavailablePayload(commodity, state, district) {
+    return {
+      commodity,
+      unit: '₹/quintal',
+      source: 'unavailable',
+      source_label: null,
+      place_scope: district ? 'district' : (state ? 'state' : null),
+      as_of: null,
+      state,
+      district,
+      markets: [],
+      summary: null,
+      trend: { points: [], change_pct: null },
+      change_pct: null,
+      disclaimer_key: 'mandi.disclaimer_unavailable',
+    };
+  }
+
   #buildReferencePayload(commodity, state, district) {
     const rate = getReferenceRate(commodity);
 
@@ -374,6 +466,7 @@ class MandiService {
       unit: '₹/quintal',
       source: 'reference',
       source_label: 'Reference estimate',
+      place_scope: 'reference',
       as_of: new Date().toISOString().slice(0, 10),
       state,
       district,

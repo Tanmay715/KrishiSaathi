@@ -105,6 +105,7 @@ function ProfilePage() {
       localStorage.setItem('ks_language', normalizeLanguage(response.data.preferred_language));
       clearDashboardWeatherCache();
       markLocationUpdated();
+      window.dispatchEvent(new Event('ks-location-updated'));
       setMessage(t('profile.saved'));
       setOverview((prev) => (prev ? { ...prev, user: response.data } : prev));
       setForm((prev) => ({

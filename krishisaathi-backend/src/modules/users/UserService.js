@@ -70,6 +70,13 @@ class UserService {
       } catch (error) {
         console.warn('[users] weather cache clear failed:', error.message);
       }
+
+      try {
+        const MandiService = require('../mandi/MandiService');
+        await MandiService.clearUserCaches(user_id);
+      } catch (error) {
+        console.warn('[users] mandi cache clear failed:', error.message);
+      }
     }
 
     return this.getProfile(user_id);

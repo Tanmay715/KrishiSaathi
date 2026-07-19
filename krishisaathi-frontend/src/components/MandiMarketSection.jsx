@@ -191,7 +191,11 @@ function MandiBoardBody({
       <p className="mandi-disclaimer-box">
         {selected_row?.source === 'reference'
           ? t('mandi.disclaimer_reference')
-          : t('mandi.disclaimer')}
+          : selected_row?.source === 'unavailable'
+            ? t('mandi.disclaimer_unavailable')
+            : selected_row?.place_scope === 'state'
+              ? t('mandi.disclaimer_state')
+              : t('mandi.disclaimer')}
       </p>
     </div>
   );
@@ -211,6 +215,15 @@ function MandiMarketSection({
   const [has_error, setHasError] = useState(false);
   const [selected_crop, setSelectedCrop] = useState(initial_crop || 'Wheat');
   const [quantity, setQuantity] = useState('5');
+  const [location_tick, setLocationTick] = useState(0);
+
+  useEffect(() => {
+    function onLocationUpdated() {
+      setLocationTick((prev) => prev + 1);
+    }
+    window.addEventListener('ks-location-updated', onLocationUpdated);
+    return () => window.removeEventListener('ks-location-updated', onLocationUpdated);
+  }, []);
 
   useEffect(() => {
     let is_cancelled = false;
@@ -232,7 +245,10 @@ function MandiMarketSection({
         setBoard(data);
         const preferred = initial_crop
           && data?.crops?.find((row) => row.crop === initial_crop);
-        const first_priced = preferred || data?.crops?.find((row) => row.modal != null);
+        const first_live = data?.crops?.find((row) => (
+          row.source === 'agmarknet' && row.modal != null
+        ));
+        const first_priced = preferred || first_live || data?.crops?.find((row) => row.modal != null);
         if (first_priced) {
           setSelectedCrop(first_priced.crop);
         }
@@ -253,7 +269,7 @@ function MandiMarketSection({
     return () => {
       is_cancelled = true;
     };
-  }, [farm_id, initial_crop]);
+  }, [farm_id, initial_crop, location_tick]);
 
   const crop_rows = board?.crops || [];
   const glance_names = useMemo(
