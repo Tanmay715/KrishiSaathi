@@ -152,13 +152,46 @@ textarea {
 .home-weather-card {
   position: relative;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr 96px;
-  gap: 8px;
-  padding: 18px 16px 16px;
-  border-radius: 22px;
+  display: block;
+  min-height: 132px;
+  padding: 16px;
+  border-radius: 20px;
   background: linear-gradient(145deg, #fff8e8 0%, #f3fbf7 55%, #fff 100%);
   border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.home-weather-card.has-scene {
+  background: transparent;
+  border-color: rgba(30, 92, 64, 0.12);
+}
+
+.home-weather-scene {
+  border-radius: inherit;
+}
+
+.home-weather-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 68%;
+}
+
+.home-weather-card.has-scene .home-weather-place,
+.home-weather-card.has-scene .home-weather-main strong,
+.home-weather-card.has-scene .home-weather-main span,
+.home-weather-card.has-scene .home-weather-range {
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.65);
+}
+
+.home-weather-card.mood-rain .home-weather-place,
+.home-weather-card.mood-rain .home-weather-main strong,
+.home-weather-card.mood-rain .home-weather-main span,
+.home-weather-card.mood-rain .home-weather-range {
+  color: #f8fafc;
+  text-shadow: 0 1px 10px rgba(15, 23, 42, 0.45);
+}
+
+.home-weather-card.mood-rain .home-weather-place {
+  color: #bbf7d0;
 }
 
 .home-weather-place {
@@ -184,41 +217,20 @@ textarea {
 
 .home-weather-main span {
   font-size: var(--text-md);
-  font-weight: 650;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .home-weather-range {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: var(--text-sm);
   color: var(--color-text-subtle);
 }
 
-.home-weather-art {
-  position: relative;
-  min-height: 84px;
-}
-
-.home-weather-sun {
-  position: absolute;
-  right: 8px;
-  top: 4px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffe566, #f5b700 70%);
-  box-shadow: 0 0 0 8px rgba(245, 183, 0, 0.12);
-}
-
+.home-weather-art,
+.home-weather-sun,
 .home-weather-hill {
-  position: absolute;
-  left: -10px;
-  right: -20px;
-  bottom: 0;
-  height: 42px;
-  border-radius: 40px 40px 0 0;
-  background: linear-gradient(180deg, #d9f0df, #b7e0c3);
-  opacity: 0.85;
+  display: none !important;
 }
 
 .home-section-title {
@@ -2750,11 +2762,11 @@ textarea {
 
 @media (max-width: 768px) {
   .btn {
-    min-height: 44px;
+    min-height: 42px;
   }
 
   .btn-sm {
-    min-height: 36px;
+    min-height: 34px;
   }
 
   .modal-overlay {
@@ -2764,17 +2776,52 @@ textarea {
 
   .modal {
     max-width: none;
-    max-height: min(92vh, 92dvh);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    max-height: min(78vh, 78dvh);
+    border-radius: 18px 18px 0 0;
+    padding: 14px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal h3,
+  .modal-title {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .modal-header {
+    margin-bottom: 8px;
+  }
+
+  .modal .form-group {
+    margin-bottom: 10px;
+  }
+
+  .modal .form-group label {
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+  }
+
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 0.9375rem;
+  }
+
+  .modal .section-note {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
   }
 
   .modal-actions {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    gap: 8px;
   }
 
   .modal-actions .btn {
-    width: 100%;
+    flex: 1;
+    min-height: 42px;
+    width: auto;
   }
 
   .page-header {
@@ -6621,33 +6668,51 @@ textarea {
 
 .farm-detail-top {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
-  align-items: start;
+  align-items: center;
 }
 
 .farm-detail-back {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  border: 1px solid rgba(30, 92, 64, 0.12);
-  background: #fff;
-  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(30, 92, 64, 0.08);
+  color: var(--color-primary-dark);
   text-decoration: none;
-  font-size: 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.farm-detail-back em {
+  font-style: normal;
+}
+
+.farm-detail-heading h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.farm-detail-heading p {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-subtle);
 }
 
 .farm-detail-top h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
 }
 
 .farm-detail-top p {
   margin: 2px 0 0;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--color-text-subtle);
 }
 
@@ -6740,12 +6805,19 @@ textarea {
   color: #166534;
 }
 
+.plot-hub-title p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-subtle);
+  overflow-wrap: anywhere;
+}
+
 .plot-hub-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
+  gap: 8px 10px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid rgba(15, 55, 35, 0.06);
 }
 
@@ -7507,10 +7579,36 @@ textarea {
   display: flex;
   flex-direction: column;
   max-width: min(640px, 100%);
-  max-height: min(85vh, 85dvh);
-  border-radius: 22px 22px 0 0;
-  padding: 16px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  max-height: min(78vh, 78dvh);
+  border-radius: 18px 18px 0 0;
+  padding: 14px 14px calc(10px + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
+}
+
+.home-weather-card .weather-scene {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.home-weather-card .weather-sun {
+  right: 18px;
+  top: 18px;
+  width: 48px;
+  height: 48px;
+}
+
+.home-weather-card .weather-sun-core {
+  inset: 10px;
+}
+
+.home-weather-card .weather-field-line {
+  height: 42%;
+  bottom: 0;
+}
+
+.home-weather-card .weather-clouds .cloud {
+  transform: scale(0.85);
 }
 
 .modal.is-sheet .modal-header {

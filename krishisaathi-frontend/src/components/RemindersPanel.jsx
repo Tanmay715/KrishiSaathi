@@ -185,8 +185,22 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
       )}
 
       {show_modal && (
-        <Modal title={t('reminders.add')} on_close={() => setShowModal(false)}>
-          <form onSubmit={handleCreate}>
+        <Modal
+          title={t('reminders.add')}
+          on_close={() => setShowModal(false)}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                {t('common.cancel')}
+              </button>
+              <button type="submit" form="panel-reminder-form" className="btn btn-primary" disabled={is_working}>
+                {is_working ? t('common.loading') : t('reminders.add')}
+              </button>
+            </div>
+          )}
+        >
+          <form id="panel-reminder-form" className="form-compact" onSubmit={handleCreate}>
             <div className="form-group">
               <label>{t('reminders.reminder_title')}</label>
               <input
@@ -219,14 +233,6 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
                   required
                 />
               </div>
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                {t('common.cancel')}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={is_working}>
-                {is_working ? t('common.loading') : t('reminders.add')}
-              </button>
             </div>
           </form>
         </Modal>

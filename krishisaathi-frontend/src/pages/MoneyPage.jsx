@@ -290,8 +290,26 @@ function MoneyPage() {
             setShowIncomeModal(false);
             clearAddParam();
           }}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowIncomeModal(false);
+                  clearAddParam();
+                }}
+              >
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="income-form" className="btn btn-primary" disabled={is_saving_income}>
+                {is_saving_income ? t('common.loading') : t('incomes.add')}
+              </button>
+            </div>
+          )}
         >
-          <form onSubmit={handleSaveIncome}>
+          <form id="income-form" className="form-compact" onSubmit={handleSaveIncome}>
             {income_error && <div className="error-banner">{income_error}</div>}
             <div className="form-group">
               <label>{t('quick_log.where')}</label>
@@ -340,21 +358,6 @@ function MoneyPage() {
                   required
                 />
               </div>
-            </div>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowIncomeModal(false);
-                  clearAddParam();
-                }}
-              >
-                {t('farms.cancel')}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={is_saving_income}>
-                {is_saving_income ? t('common.loading') : t('incomes.add')}
-              </button>
             </div>
           </form>
         </Modal>

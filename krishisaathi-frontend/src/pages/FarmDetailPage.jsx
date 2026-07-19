@@ -309,10 +309,11 @@ function FarmDetailPage() {
   return (
     <div className="farm-detail-hub page-stack">
       <div className="farm-detail-top">
-        <Link to="/farms" className="farm-detail-back" aria-label={t('farms.title')}>
-          ←
+        <Link to="/farms" className="farm-detail-back">
+          <span aria-hidden="true">←</span>
+          <em>{t('farms.title')}</em>
         </Link>
-        <div>
+        <div className="farm-detail-heading">
           <h2>{t('farms.detail_title')}</h2>
           <p>{t('farms.detail_subtitle')}</p>
         </div>

@@ -8,6 +8,7 @@ import ErrorState from '../components/ErrorState';
 import MandiMarketSection from '../components/MandiMarketSection';
 import Modal from '../components/Modal';
 import SectionIcon from '../components/SectionIcon';
+import WeatherScene from '../components/illustrations/WeatherScene';
 import {
   createReminder,
   generateReminders,
@@ -20,6 +21,7 @@ import {
   updateReminder,
 } from '../services/farm_service';
 import { CACHE_KEYS, consumeLocationUpdated, loadOfflineData, saveOfflineData } from '../utils/offline_store';
+import { weatherMood } from '../utils/field_identity';
 import { normalizeLanguage } from '../utils/language';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
@@ -222,6 +224,7 @@ function DashboardPage() {
     ? Math.round(weather.current.temperature_c)
     : null;
   const forecast_day = weather?.forecast?.[0] || null;
+  const weather_mood = weatherMood(weather);
 
   if (is_loading) {
     return <LoadingState />;
@@ -253,7 +256,8 @@ function DashboardPage() {
         />
       ) : (
         <>
-          <section className="home-weather-card">
+          <section className={`home-weather-card has-scene mood-${weather_mood}`}>
+            <WeatherScene mood={weather_mood} className="home-weather-scene" />
             <div className="home-weather-copy">
               {weather_location && (
                 <p className="home-weather-place">{weather_location}</p>
@@ -267,10 +271,6 @@ function DashboardPage() {
                   Min {Math.round(forecast_day.temp_min)}° | Max {Math.round(forecast_day.temp_max)}°
                 </p>
               )}
-            </div>
-            <div className="home-weather-art" aria-hidden="true">
-              <span className="home-weather-sun" />
-              <span className="home-weather-hill" />
             </div>
           </section>
 
@@ -403,8 +403,22 @@ function DashboardPage() {
       )}
 
       {show_reminder_modal && (
-        <Modal title={t('reminders.add')} on_close={() => setShowReminderModal(false)}>
-          <form onSubmit={handleCreateReminder}>
+        <Modal
+          title={t('reminders.add')}
+          on_close={() => setShowReminderModal(false)}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowReminderModal(false)}>
+                {t('common.cancel')}
+              </button>
+              <button type="submit" form="reminder-form" className="btn btn-primary" disabled={is_working}>
+                {is_working ? t('common.loading') : t('reminders.add')}
+              </button>
+            </div>
+          )}
+        >
+          <form id="reminder-form" className="form-compact" onSubmit={handleCreateReminder}>
             <div className="form-group">
               <label>{t('reminders.reminder_title')}</label>
               <input
@@ -437,14 +451,6 @@ function DashboardPage() {
                   required
                 />
               </div>
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowReminderModal(false)}>
-                {t('common.cancel')}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={is_working}>
-                {is_working ? t('common.loading') : t('reminders.add')}
-              </button>
             </div>
           </form>
         </Modal>

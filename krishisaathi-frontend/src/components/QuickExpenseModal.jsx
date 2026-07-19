@@ -180,20 +180,35 @@ function QuickExpenseModal({ is_open, on_close, on_saved }) {
   const selected = targets.find((item) => item.target_key === target_key);
 
   return (
-    <Modal title={t('quick_log.title')} on_close={on_close}>
-      <p className="section-note">{t('quick_log.subtitle')}</p>
-
+    <Modal
+      title={t('quick_log.title')}
+      subtitle={t('quick_log.subtitle')}
+      on_close={on_close}
+      variant="sheet"
+      footer={!is_loading && targets.length > 0 ? (
+        <div className="modal-actions is-pinned">
+          <button type="button" className="btn btn-secondary" onClick={on_close}>
+            {t('farms.cancel')}
+          </button>
+          <button type="submit" form="quick-expense-form" className="btn btn-primary" disabled={is_saving || is_parsing}>
+            {is_saving
+              ? t('common.loading')
+              : (!is_online ? t('quick_log.save_offline') : t('quick_log.save'))}
+          </button>
+        </div>
+      ) : null}
+    >
       {error_message && <div className="error-banner">{error_message}</div>}
       {info_message && <div className="info-banner">{info_message}</div>}
 
       {is_loading ? (
         <LoadingState />
       ) : !targets.length ? (
-        <div className="empty-state" style={{ padding: '24px 0' }}>
+        <div className="empty-state" style={{ padding: '12px 0' }}>
           <p>{t('quick_log.no_farm')}</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <form id="quick-expense-form" className="form-compact" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>{t('quick_log.where')}</label>
             <select
@@ -306,17 +321,6 @@ function QuickExpenseModal({ is_open, on_close, on_saved }) {
                 required
               />
             </div>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={on_close}>
-              {t('farms.cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={is_saving || is_parsing}>
-              {is_saving
-                ? t('common.loading')
-                : (!is_online ? t('quick_log.save_offline') : t('quick_log.save'))}
-            </button>
           </div>
         </form>
       )}
