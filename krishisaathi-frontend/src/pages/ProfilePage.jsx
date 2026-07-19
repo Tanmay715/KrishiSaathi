@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { INDIAN_STATES } from '../config/indian_states';
+import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { useAuth } from '../hooks/useAuth';
 import { getProfileOverview, updateProfile } from '../services/auth_service';
 import LoadingState from '../components/LoadingState';
@@ -76,12 +77,13 @@ function ProfilePage() {
       const response = await getProfileOverview();
       const data = response.data;
       setOverview(data);
+      const state_code = data.user?.state_code || '';
       setForm({
         name: data.user?.name || '',
         preferred_language: data.user?.preferred_language || 'en',
         preferred_land_unit: data.user?.preferred_land_unit || 'acre',
-        state_code: data.user?.state_code || '',
-        district: data.user?.district || '',
+        state_code,
+        district: normalizeDistrictOption(state_code, data.user?.district || ''),
       });
     } catch (error) {
       setLoadError(error.response?.data?.message || t('common.error'));
@@ -139,6 +141,22 @@ function ProfilePage() {
   const net = Number(stats.net || 0);
   const app_language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const state_label_key = app_language === 'hi' ? 'label_hi' : 'label_en';
+  const district_options = getDistrictsForState(form.state_code);
+  const has_custom_district = Boolean(
+    form.district && !district_options.includes(form.district),
+  );
+
+  function handleStateChange(state_code) {
+    setForm((prev) => {
+      const next_district = normalizeDistrictOption(state_code, prev.district);
+      const options = getDistrictsForState(state_code);
+      return {
+        ...prev,
+        state_code,
+        district: options.includes(next_district) ? next_district : '',
+      };
+    });
+  }
 
   return (
     <div className="profile-page is-lively">
@@ -284,7 +302,7 @@ function ProfilePage() {
               <select
                 className="form-select"
                 value={form.state_code}
-                onChange={(event) => setForm((prev) => ({ ...prev, state_code: event.target.value }))}
+                onChange={(event) => handleStateChange(event.target.value)}
               >
                 <option value="">{t('profile.state_placeholder')}</option>
                 {INDIAN_STATES.map((state) => (
@@ -296,12 +314,24 @@ function ProfilePage() {
             </div>
             <div className="form-group">
               <label>{t('profile.district_label')}</label>
-              <input
-                className="form-input"
+              <select
+                className="form-select"
                 value={form.district}
-                placeholder={t('profile.district_placeholder')}
+                disabled={!form.state_code}
                 onChange={(event) => setForm((prev) => ({ ...prev, district: event.target.value }))}
-              />
+              >
+                <option value="">
+                  {form.state_code ? t('profile.district_placeholder') : t('profile.district_select_state')}
+                </option>
+                {has_custom_district && (
+                  <option value={form.district}>{form.district}</option>
+                )}
+                {district_options.map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <button type="submit" className="btn btn-primary" disabled={is_saving}>

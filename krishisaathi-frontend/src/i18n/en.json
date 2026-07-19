@@ -468,7 +468,8 @@
     "state_label": "State",
     "state_placeholder": "Select your state (optional)",
     "district_label": "District",
-    "district_placeholder": "e.g. Azamgarh",
+    "district_placeholder": "Select district",
+    "district_select_state": "Select state first",
     "save_changes": "Save changes",
     "saved": "Profile updated successfully"
   },

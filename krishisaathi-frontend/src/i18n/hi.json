@@ -468,7 +468,8 @@
     "state_label": "राज्य",
     "state_placeholder": "अपना राज्य चुनें (वैकल्पिक)",
     "district_label": "ज़िला",
-    "district_placeholder": "जैसे आज़मगढ़",
+    "district_placeholder": "ज़िला चुनें",
+    "district_select_state": "पहले राज्य चुनें",
     "save_changes": "बदलाव सहेजें",
     "saved": "प्रोफ़ाइल सफलतापूर्वक अपडेट हुई"
   },

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createFarm, deleteFarm, getFarms, updateFarm } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { INDIAN_STATES } from '../config/indian_states';
+import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import LoadingState from '../components/LoadingState';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -38,6 +39,10 @@ function FarmsPage() {
   const state_label_key = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'hi'
     ? 'label_hi'
     : 'label_en';
+  const farm_district_options = getDistrictsForState(form.state);
+  const has_custom_farm_district = Boolean(
+    form.district && !farm_district_options.includes(form.district),
+  );
 
   useEffect(() => {
     loadFarms();
@@ -83,7 +88,19 @@ function FarmsPage() {
   }
 
   function updateForm(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      if (field !== 'state') {
+        return { ...prev, [field]: value };
+      }
+
+      const next_district = normalizeDistrictOption(value, prev.district);
+      const options = getDistrictsForState(value);
+      return {
+        ...prev,
+        state: value,
+        district: options.includes(next_district) ? next_district : '',
+      };
+    });
   }
 
   function openCreateModal() {
@@ -103,10 +120,11 @@ function FarmsPage() {
     event.preventDefault();
     event.stopPropagation();
     setEditingFarm(farm);
+    const state = farm.state || '';
     setForm({
       name: farm.name || '',
-      state: farm.state || '',
-      district: farm.district || '',
+      state,
+      district: normalizeDistrictOption(state, farm.district || ''),
       village: farm.village || '',
       total_area: farm.total_area != null ? String(farm.total_area) : '',
       notes: farm.notes || '',
@@ -288,12 +306,23 @@ function FarmsPage() {
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="farm-district">{t('farms.district')}</label>
-                <input
+                <select
                   id="farm-district"
-                  className="form-input"
+                  className="form-select"
                   value={form.district}
+                  disabled={!form.state}
                   onChange={(e) => updateForm('district', e.target.value)}
-                />
+                >
+                  <option value="">
+                    {form.state ? t('profile.district_placeholder') : t('profile.district_select_state')}
+                  </option>
+                  {has_custom_farm_district && (
+                    <option value={form.district}>{form.district}</option>
+                  )}
+                  {farm_district_options.map((district) => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label htmlFor="farm-village">{t('farms.village')}</label>

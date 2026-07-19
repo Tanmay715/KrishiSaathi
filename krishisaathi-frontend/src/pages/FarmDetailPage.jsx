@@ -27,6 +27,7 @@ import RemindersPanel from '../components/RemindersPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import OverflowMenu from '../components/OverflowMenu';
 import { INDIAN_STATES } from '../config/indian_states';
+import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { normalizeLanguage } from '../utils/language';
 
 const EMPTY_PLOT = { name: '', area: '', soil_type: '', notes: '' };
@@ -62,7 +63,23 @@ function FarmDetailPage() {
   const [orphan_notice, setOrphanNotice] = useState('');
   const [is_cached_view, setIsCachedView] = useState(false);
 
+  const farm_district_options = getDistrictsForState(farm_form.state);
+  const has_custom_farm_district = Boolean(
+    farm_form.district && !farm_district_options.includes(farm_form.district),
+  );
   const land_unit_label = t(`common.${user?.preferred_land_unit || 'acre'}`);
+
+  function handleFarmStateChange(state) {
+    setFarmForm((prev) => {
+      const next_district = normalizeDistrictOption(state, prev.district);
+      const options = getDistrictsForState(state);
+      return {
+        ...prev,
+        state,
+        district: options.includes(next_district) ? next_district : '',
+      };
+    });
+  }
 
   useEffect(() => {
     loadFarmPage();
@@ -165,10 +182,11 @@ function FarmDetailPage() {
   }
 
   function openEditFarm() {
+    const state = farm.state || '';
     setFarmForm({
       name: farm.name || '',
-      state: farm.state || '',
-      district: farm.district || '',
+      state,
+      district: normalizeDistrictOption(state, farm.district || ''),
       village: farm.village || '',
       total_area: farm.total_area != null ? String(farm.total_area) : '',
       notes: farm.notes || '',
@@ -511,7 +529,7 @@ function FarmDetailPage() {
                   <select
                     className="form-select"
                     value={farm_form.state}
-                    onChange={(e) => setFarmForm((p) => ({ ...p, state: e.target.value }))}
+                    onChange={(e) => handleFarmStateChange(e.target.value)}
                   >
                     <option value="">—</option>
                     {INDIAN_STATES.map((state) => (
@@ -523,11 +541,24 @@ function FarmDetailPage() {
                 </div>
                 <div className="form-group">
                   <label>{t('farms.district')}</label>
-                  <input
-                    className="form-input"
+                  <select
+                    className="form-select"
                     value={farm_form.district}
+                    disabled={!farm_form.state}
                     onChange={(e) => setFarmForm((p) => ({ ...p, district: e.target.value }))}
-                  />
+                  >
+                    <option value="">
+                      {farm_form.state
+                        ? t('profile.district_placeholder')
+                        : t('profile.district_select_state')}
+                    </option>
+                    {has_custom_farm_district && (
+                      <option value={farm_form.district}>{farm_form.district}</option>
+                    )}
+                    {farm_district_options.map((district) => (
+                      <option key={district} value={district}>{district}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="form-row">
