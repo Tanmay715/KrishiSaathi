@@ -44,4 +44,40 @@ export function loadPlotDetail(farm_id, plot_id) {
   return loadOfflineData(`${CACHE_KEYS.plot_detail}${farm_id}_${plot_id}`);
 }
 
+export function clearDashboardWeatherCache() {
+  try {
+    const cached = loadOfflineData(CACHE_KEYS.dashboard);
+    if (!cached) {
+      return;
+    }
+    saveOfflineData(CACHE_KEYS.dashboard, {
+      ...cached,
+      weather: null,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export function markLocationUpdated() {
+  try {
+    sessionStorage.setItem('ks_location_updated_at', String(Date.now()));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export function consumeLocationUpdated() {
+  try {
+    const value = sessionStorage.getItem('ks_location_updated_at');
+    if (!value) {
+      return false;
+    }
+    sessionStorage.removeItem('ks_location_updated_at');
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export { CACHE_KEYS };

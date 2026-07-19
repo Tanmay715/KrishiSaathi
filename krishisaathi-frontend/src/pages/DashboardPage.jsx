@@ -21,7 +21,7 @@ import {
   getWeather,
   updateReminder,
 } from '../services/farm_service';
-import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
+import { CACHE_KEYS, consumeLocationUpdated, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { buildTodayRecommendations } from '../utils/dashboard_insights';
 import { farmHealthScore } from '../utils/field_identity';
 
@@ -51,6 +51,29 @@ function DashboardPage() {
     loadDashboard();
   }, []);
 
+  useEffect(() => {
+    if (consumeLocationUpdated()) {
+      refreshWeather();
+    }
+  }, []);
+
+  async function refreshWeather() {
+    try {
+      const weather_response = await getWeather();
+      setWeather(weather_response.data || null);
+      const cached = loadOfflineData(CACHE_KEYS.dashboard);
+      if (cached) {
+        saveOfflineData(CACHE_KEYS.dashboard, {
+          ...cached,
+          weather: weather_response.data || null,
+        });
+      }
+      setIsCachedView(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function loadDashboard() {
     setIsLoading(true);
     setErrorMessage('');
@@ -60,23 +83,31 @@ function DashboardPage() {
         farms_response,
         expense_response,
         income_response,
-        weather_response,
         pending_response,
         reminders_response,
       ] = await Promise.all([
         getFarms(),
         getExpenseSummary(),
         getIncomeSummary(),
-        getWeather(),
         getPendingIncomeCrops(),
         getReminders({ status: 'pending' }),
       ]);
+
+      let weather_data = null;
+      try {
+        const weather_response = await getWeather();
+        weather_data = weather_response.data || null;
+      } catch (weather_error) {
+        console.error(weather_error);
+        const cached = loadOfflineData(CACHE_KEYS.dashboard);
+        weather_data = cached?.weather || null;
+      }
 
       const dashboard_data = {
         farms: farms_response.data || [],
         expense_summary: expense_response.data || { total_spent: 0 },
         income_summary: income_response.data || { total_earned: 0 },
-        weather: weather_response.data || null,
+        weather: weather_data,
         pending_income_crops: pending_response.data || [],
         reminders: reminders_response.data || [],
       };

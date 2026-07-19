@@ -9,6 +9,7 @@ import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
 import SectionIcon from '../components/SectionIcon';
 import { normalizeLanguage } from '../utils/language';
+import { clearDashboardWeatherCache, markLocationUpdated } from '../utils/offline_store';
 
 function formatMemberSince(value, locale) {
   if (!value) {
@@ -100,8 +101,18 @@ function ProfilePage() {
       login(response.data, token);
       i18n.changeLanguage(normalizeLanguage(response.data.preferred_language));
       localStorage.setItem('ks_language', normalizeLanguage(response.data.preferred_language));
+      clearDashboardWeatherCache();
+      markLocationUpdated();
       setMessage(t('profile.saved'));
-      await loadOverview();
+      setOverview((prev) => (prev ? { ...prev, user: response.data } : prev));
+      setForm((prev) => ({
+        ...prev,
+        name: response.data?.name || '',
+        preferred_language: response.data?.preferred_language || 'en',
+        preferred_land_unit: response.data?.preferred_land_unit || 'acre',
+        state_code: response.data?.state_code || '',
+        district: response.data?.district || '',
+      }));
     } catch (error) {
       setMessage(error.response?.data?.message || t('common.error'));
     } finally {

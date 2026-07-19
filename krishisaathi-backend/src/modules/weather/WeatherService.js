@@ -101,10 +101,17 @@ class WeatherService {
     const profile_district = cleanPlaceText(user?.district);
     const farm_district = cleanPlaceText(farm?.district);
     const farm_state = cleanPlaceText(farm?.state);
+    const profile_state = resolveStateName(user?.state_code, 'en');
+
+    // Profile location wins when set, so changing district in Settings updates weather.
+    const district = profile_district || farm_district;
+    const state = profile_district
+      ? (profile_state || farm_state)
+      : (farm_state || profile_state);
 
     return {
-      district: profile_district || farm_district,
-      state: farm_state,
+      district,
+      state,
       state_code: cleanPlaceText(user?.state_code),
       source: profile_district ? 'profile' : (farm_district || farm_state ? 'farm' : 'fallback'),
     };

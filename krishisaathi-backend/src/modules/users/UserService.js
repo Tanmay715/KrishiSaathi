@@ -44,15 +44,32 @@ class UserService {
     }
 
     if (payload.district !== undefined || payload.state_code !== undefined) {
-      // Never block profile save on weather cache issues
-      Promise.resolve()
-        .then(() => {
-          const WeatherService = require('../weather/WeatherService');
-          return WeatherService.clearUserCache(user_id);
-        })
-        .catch((error) => {
-          console.warn('[users] weather cache clear failed:', error.message);
-        });
+      const farm_updates = {};
+      if (payload.district !== undefined) {
+        farm_updates.district = payload.district;
+      }
+      if (payload.state_code !== undefined) {
+        const { resolveStateName } = require('../../utils/location_names');
+        const state_name = resolveStateName(payload.state_code, 'en');
+        if (state_name) {
+          farm_updates.state = state_name;
+        }
+      }
+
+      if (Object.keys(farm_updates).length > 0) {
+        try {
+          await db('farms').where({ user_id, is_active: true }).update(farm_updates);
+        } catch (error) {
+          console.warn('[users] farm location sync failed:', error.message);
+        }
+      }
+
+      try {
+        const WeatherService = require('../weather/WeatherService');
+        await WeatherService.clearUserCache(user_id);
+      } catch (error) {
+        console.warn('[users] weather cache clear failed:', error.message);
+      }
     }
 
     return this.getProfile(user_id);
