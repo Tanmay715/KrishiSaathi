@@ -9,7 +9,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 const TAB_ITEMS = [
   { to: '/', end: true, key: 'dashboard', icon: 'home' },
   { to: '/farms', key: 'farms', icon: 'farms' },
-  { to: '/activity', key: 'activity', icon: 'list' },
+  { to: '/money', key: 'money', icon: 'list' },
   { to: '/market', key: 'market', icon: 'market' },
   { to: '/profile', key: 'profile', icon: 'user' },
 ];
@@ -72,7 +72,8 @@ function NavIcon({ name }) {
 function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
-  const show_fab = !location.pathname.startsWith('/assistant');
+  const show_fab = !location.pathname.startsWith('/assistant')
+    && !location.pathname.startsWith('/market');
 
   return (
     <div className="app-shell">

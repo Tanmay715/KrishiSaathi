@@ -9,7 +9,7 @@ import FarmDetailPage from './pages/FarmDetailPage';
 import PlotDetailPage from './pages/PlotDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import AssistantPage from './pages/AssistantPage';
-import ActivityPage from './pages/ActivityPage';
+import MoneyPage from './pages/MoneyPage';
 import MarketPage from './pages/MarketPage';
 
 function App() {
@@ -25,7 +25,8 @@ function App() {
               <Route path="farms" element={<FarmsPage />} />
               <Route path="farms/:farm_id" element={<FarmDetailPage />} />
               <Route path="farms/:farm_id/plots/:plot_id" element={<PlotDetailPage />} />
-              <Route path="activity" element={<ActivityPage />} />
+              <Route path="money" element={<MoneyPage />} />
+              <Route path="activity" element={<Navigate to="/money" replace />} />
               <Route path="market" element={<MarketPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>

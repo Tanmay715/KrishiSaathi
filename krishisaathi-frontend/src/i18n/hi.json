@@ -27,11 +27,20 @@
     "dashboard": "होम",
     "assistant": "फार्म सहायक",
     "farms": "खेत",
-    "activity": "खर्च / आय",
+    "activity": "गतिविधि",
+    "money": "पैसे",
     "market": "बाजार",
     "profile": "प्रोफाइल",
     "logout": "लॉग आउट",
     "menu": "मेनू"
+  },
+  "money": {
+    "subtitle": "खर्च, आय और मुनाफा",
+    "filters": "पैसे फ़िल्टर",
+    "filter_all": "सभी",
+    "filter_expense": "खर्च",
+    "filter_income": "आय",
+    "empty": "अभी कोई खर्च या आय नहीं। शुरू करने के लिए खर्च या आय जोड़ें।"
   },
   "dashboard": {
     "title": "डैशबोर्ड",

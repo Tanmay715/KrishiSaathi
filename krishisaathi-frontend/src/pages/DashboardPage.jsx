@@ -25,8 +25,8 @@ import { normalizeLanguage } from '../utils/language';
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
 const QUICK_ACTIONS = [
-  { to: '/activity?add=expense', icon: 'expense', label_key: 'dashboard.quick_expense', tone: 'warn' },
-  { to: '/activity?add=income', icon: 'income', label_key: 'dashboard.quick_income', tone: 'success' },
+  { to: '/money?add=expense', icon: 'expense', label_key: 'dashboard.quick_expense', tone: 'warn' },
+  { to: '/money?add=income', icon: 'income', label_key: 'dashboard.quick_income', tone: 'success' },
   { to: '/farms', icon: 'crop', label_key: 'dashboard.quick_farms', tone: 'accent' },
   { to: '/assistant', icon: 'crop', label_key: 'dashboard.quick_advice', tone: 'success' },
   { to: '/market', icon: 'mandi', label_key: 'dashboard.quick_mandi', tone: 'accent' },
@@ -56,6 +56,7 @@ function DashboardPage() {
   const [error_message, setErrorMessage] = useState('');
   const [is_working, setIsWorking] = useState(false);
   const [show_reminder_modal, setShowReminderModal] = useState(false);
+  const [show_all_reminders, setShowAllReminders] = useState(false);
   const [reminder_form, setReminderForm] = useState({
     title: '',
     type: 'custom',
@@ -210,7 +211,10 @@ function DashboardPage() {
     [...reminders].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
   ), [reminders]);
 
-  const preview_reminders = sorted_reminders.slice(0, 2);
+  const preview_reminders = show_all_reminders
+    ? sorted_reminders
+    : sorted_reminders.slice(0, 2);
+  const has_hidden_reminders = sorted_reminders.length > 2;
   const weather_location = [weather?.location?.name, weather?.location?.region]
     .filter(Boolean)
     .join(', ');
@@ -285,7 +289,7 @@ function DashboardPage() {
                 <strong>₹{total_earned.toLocaleString('en-IN')}</strong>
                 <small>{t('profile.entry_count', { count: income_count })}</small>
               </div>
-              <Link to="/activity" className="home-summary-card tone-profit">
+              <Link to="/money" className="home-summary-card tone-profit">
                 <SectionIcon name="mandi" tone="accent" />
                 <span>{t('dashboard.total_profit')}</span>
                 <strong>{net >= 0 ? '+' : '-'}₹{Math.abs(net).toLocaleString('en-IN')}</strong>
@@ -340,13 +344,15 @@ function DashboardPage() {
           <section className="home-section" id="reminders">
             <div className="home-section-head">
               <h3 className="home-section-title">{t('reminders.title')}</h3>
-              {sorted_reminders.length > 0 && (
+              {has_hidden_reminders && (
                 <button
                   type="button"
                   className="home-section-link"
-                  onClick={() => document.getElementById('reminders')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => setShowAllReminders((prev) => !prev)}
                 >
-                  {t('reminders.view_all', { count: sorted_reminders.length })} →
+                  {show_all_reminders
+                    ? t('common.show_less')
+                    : `${t('reminders.view_all', { count: sorted_reminders.length })} →`}
                 </button>
               )}
             </div>

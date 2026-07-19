@@ -83,6 +83,16 @@ export async function deleteCropCycle(farm_id, plot_id, cycle_id) {
   return response.data;
 }
 
+export async function getFarmExpenses(farm_id) {
+  const response = await api_client.get(`/farms/${farm_id}/expenses`);
+  return response.data;
+}
+
+export async function getFarmIncomes(farm_id) {
+  const response = await api_client.get(`/farms/${farm_id}/incomes`);
+  return response.data;
+}
+
 export async function createExpense(farm_id, payload) {
   const response = await api_client.post(`/farms/${farm_id}/expenses`, payload);
   return response.data;

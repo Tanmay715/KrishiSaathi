@@ -27,11 +27,20 @@
     "dashboard": "Home",
     "assistant": "Farm Assistant",
     "farms": "Farms",
-    "activity": "Money",
+    "activity": "Activity",
+    "money": "Money",
     "market": "Market",
     "profile": "Profile",
     "logout": "Logout",
     "menu": "Menu"
+  },
+  "money": {
+    "subtitle": "Expenses, incomes, and profit",
+    "filters": "Money filters",
+    "filter_all": "All",
+    "filter_expense": "Expenses",
+    "filter_income": "Incomes",
+    "empty": "No expenses or incomes yet. Tap Log Expense or Log Income to start."
   },
   "dashboard": {
     "title": "Dashboard",

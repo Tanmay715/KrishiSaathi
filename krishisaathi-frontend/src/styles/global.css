@@ -495,11 +495,14 @@ textarea {
 
 .app-topbar-brand p {
   margin: 2px 0 0;
-  font-size: 0.7rem;
+  max-width: 100%;
+  font-size: 0.68rem;
+  line-height: 1.25;
   opacity: 0.75;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .topbar-lang-btn {
@@ -6275,6 +6278,145 @@ textarea {
   box-shadow: var(--shadow-sm);
 }
 
+.money-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.money-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+}
+
+.money-summary-card span {
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+  font-weight: 600;
+}
+
+.money-summary-card strong {
+  font-size: clamp(0.95rem, 3.8vw, 1.1rem);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.money-summary-card.tone-spend strong {
+  color: #b45309;
+}
+
+.money-summary-card.tone-earn strong {
+  color: #166534;
+}
+
+.money-summary-card.tone-net strong {
+  color: var(--color-primary-dark);
+}
+
+.money-summary-card.tone-net.is-loss strong {
+  color: #b91c1c;
+}
+
+.money-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.money-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(30, 92, 64, 0.06);
+}
+
+.money-filter-btn {
+  border: none;
+  border-radius: 10px;
+  min-height: 36px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.money-filter-btn.is-active {
+  background: #fff;
+  color: var(--color-primary-dark);
+  box-shadow: 0 1px 3px rgba(15, 55, 35, 0.08);
+}
+
+.money-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.money-ledger-card {
+  padding: 4px 14px;
+}
+
+.money-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.money-ledger-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(15, 55, 35, 0.08);
+}
+
+.money-ledger-item:last-child {
+  border-bottom: none;
+}
+
+.money-ledger-item > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.money-ledger-item strong {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.money-ledger-item span {
+  font-size: 0.78rem;
+  color: var(--color-text-subtle);
+}
+
+.money-ledger-item em {
+  flex-shrink: 0;
+  font-style: normal;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-ledger-item.is-expense em {
+  color: #b45309;
+}
+
+.money-ledger-item.is-income em {
+  color: #166534;
+}
+
 .market-page .page-header h2 {
   font-size: var(--text-xl);
 }
@@ -6594,6 +6736,12 @@ textarea {
   background: #fff;
   border: 1px solid rgba(30, 92, 64, 0.1);
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.market-page {
+  padding-bottom: 8px;
 }
 
 .mandi-calc-card label {
@@ -6877,10 +7025,14 @@ textarea {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 2px 2px 10px;
+  padding: 2px;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
+  scrollbar-width: none;
+}
+
+.mandi-crop-scroller::-webkit-scrollbar {
+  display: none;
 }
 
 .mandi-crop-chip {
