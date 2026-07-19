@@ -12,19 +12,24 @@ function formatRate(value) {
   return `₹${Number(value).toLocaleString('en-IN')}`;
 }
 
-function buildBreakEven(summary, expense_total, quantity) {
-  if (!summary || !(expense_total > 0) || !(quantity > 0)) {
+function buildSaleEstimate(summary, expense_total, quantity) {
+  if (!summary || !(quantity > 0)) {
     return null;
   }
 
   const modal = summary.modal_median || summary.modal_avg;
-  const break_even_per_quintal = Math.round(expense_total / quantity);
+  if (!(modal > 0)) {
+    return null;
+  }
+
+  const estimated_revenue = Math.round(modal * quantity);
+  const has_expense = expense_total > 0;
 
   return {
-    break_even_per_quintal,
     modal_per_quintal: modal,
-    estimated_revenue: Math.round(modal * quantity),
-    estimated_profit: Math.round(modal * quantity - expense_total),
+    estimated_revenue,
+    break_even_per_quintal: has_expense ? Math.round(expense_total / quantity) : null,
+    estimated_profit: has_expense ? Math.round(estimated_revenue - expense_total) : null,
   };
 }
 
@@ -97,7 +102,11 @@ function MandiPricePanel({
   }, [is_open, selected_crop, farm_id, t]);
 
   const summary = rates?.summary;
-  const break_even = buildBreakEven(summary, Number(expense_total || 0), Number(quantity || 0));
+  const sale_estimate = buildSaleEstimate(
+    summary,
+    Number(expense_total || 0),
+    Number(quantity || 0),
+  );
   const disclaimer = rates?.source === 'reference'
     ? t('mandi.disclaimer_reference')
     : t('mandi.disclaimer');
@@ -160,6 +169,9 @@ function MandiPricePanel({
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
             />
+            <p className="section-note" style={{ marginTop: 6 }}>
+              {t('mandi.quantity_hint')}
+            </p>
           </div>
 
           {is_loading && <LoadingState />}
@@ -189,24 +201,32 @@ function MandiPricePanel({
                   : ''}
               </p>
 
-              {break_even && (
+              {sale_estimate && (
                 <div className="mandi-break-even">
-                  <strong>{t('mandi.break_even_title')}</strong>
+                  <strong>{t('mandi.est_sale')}</strong>
+                  <p className="mandi-estimate-big">
+                    ₹{sale_estimate.estimated_revenue.toLocaleString('en-IN')}
+                  </p>
                   <p className="section-note" style={{ margin: '4px 0 8px' }}>
-                    {t('mandi.break_even_hint', {
-                      cost: break_even.break_even_per_quintal.toLocaleString('en-IN'),
-                      modal: break_even.modal_per_quintal.toLocaleString('en-IN'),
+                    {t('mandi.est_sale_math', {
+                      qty: Number(quantity),
+                      price: formatRate(sale_estimate.modal_per_quintal),
                     })}
                   </p>
-                  <div className="farm-meta">
-                    <span>
-                      {t('mandi.est_revenue')}: ₹{break_even.estimated_revenue.toLocaleString('en-IN')}
-                    </span>
-                    <span className={break_even.estimated_profit >= 0 ? 'is-profit' : 'is-loss'}>
-                      {t('finance.profit')}: {break_even.estimated_profit >= 0 ? '+' : '-'}₹
-                      {Math.abs(break_even.estimated_profit).toLocaleString('en-IN')}
-                    </span>
-                  </div>
+                  {sale_estimate.estimated_profit != null && (
+                    <div className="farm-meta">
+                      <span>
+                        {t('mandi.break_even_hint', {
+                          cost: sale_estimate.break_even_per_quintal.toLocaleString('en-IN'),
+                          modal: sale_estimate.modal_per_quintal.toLocaleString('en-IN'),
+                        })}
+                      </span>
+                      <span className={sale_estimate.estimated_profit >= 0 ? 'is-profit' : 'is-loss'}>
+                        {t('finance.profit')}: {sale_estimate.estimated_profit >= 0 ? '+' : '-'}₹
+                        {Math.abs(sale_estimate.estimated_profit).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 

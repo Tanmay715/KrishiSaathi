@@ -19,6 +19,20 @@ class MandiController {
     }
   }
 
+  async getBoard(req, res, next) {
+    try {
+      const board = await MandiService.getBoard(req.user.id, {
+        farm_id: req.query.farm_id,
+        state: req.query.state,
+        district: req.query.district,
+        crops: req.query.crops,
+      });
+      return ApiResponse.success(res, board);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   async listCommodities(req, res, next) {
     try {
       return ApiResponse.success(res, MandiService.listCommodities());

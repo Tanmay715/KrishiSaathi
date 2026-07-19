@@ -5793,7 +5793,7 @@ textarea {
   border: 1px solid var(--color-border);
 }
 
-/* Dashboard mandi glance strip */
+/* Dashboard mandi market */
 .mandi-market-section {
   padding: var(--space-4);
 }
@@ -5844,11 +5844,6 @@ textarea {
   cursor: pointer;
 }
 
-.mandi-glance-cta span {
-  font-size: 1.05em;
-  line-height: 1;
-}
-
 .mandi-glance-status {
   margin: 0;
   font-size: var(--text-sm);
@@ -5862,58 +5857,228 @@ textarea {
 }
 
 .mandi-price-row {
-  display: grid;
-  grid-template-columns: 1fr auto 2.75rem;
-  align-items: baseline;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
-  padding: 10px 0;
+  width: 100%;
+  padding: 11px 0;
+  border: 0;
   border-top: 1px solid rgba(30, 92, 64, 0.08);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
-.mandi-price-row:first-child {
+.mandi-price-list > li:first-child .mandi-price-row {
   border-top: 0;
   padding-top: 2px;
 }
 
+.mandi-price-row.is-button {
+  cursor: pointer;
+  animation: mandi-row-in 0.35s ease both;
+}
+
+.mandi-price-row.is-button:active {
+  opacity: 0.82;
+}
+
+.mandi-price-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 .mandi-price-crop {
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: 650;
   color: var(--color-text);
   letter-spacing: -0.01em;
 }
 
 .mandi-price-value {
   font-variant-numeric: tabular-nums;
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 750;
   color: var(--color-text);
   letter-spacing: -0.02em;
 }
 
-.mandi-price-change {
-  font-variant-numeric: tabular-nums;
+.crop-mark {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #1f3b2c;
+}
+
+.crop-mark.tone-amber { background: linear-gradient(160deg, #f6dfb2, #edd49a); color: #7a4e12; }
+.crop-mark.tone-gold { background: linear-gradient(160deg, #f7e7a8, #ecd46b); color: #6d5310; }
+.crop-mark.tone-plum { background: linear-gradient(160deg, #efe0f3, #ddc3e8); color: #6b3b7a; }
+.crop-mark.tone-leaf { background: linear-gradient(160deg, #d9f0df, #b7e0c3); color: #1f6b3a; }
+.crop-mark.tone-tomato { background: linear-gradient(160deg, #ffd8cf, #f5b6a8); color: #9a3a2a; }
+.crop-mark.tone-sand { background: linear-gradient(160deg, #f0e4cf, #e2d0ae); color: #6a5230; }
+.crop-mark.tone-mist { background: linear-gradient(160deg, #e7eef2, #d5e1e8); color: #385566; }
+
+.modal.modal-lg {
+  max-width: 560px;
+}
+
+.mandi-board-subtitle {
+  margin: -8px 0 14px;
   font-size: var(--text-sm);
-  font-weight: 600;
-  text-align: right;
+  color: var(--color-text-subtle);
+  line-height: 1.4;
+}
+
+.mandi-board-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 42vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mandi-board-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.mandi-board-row strong {
+  display: block;
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
+}
+
+.mandi-board-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-subtle);
+  font-size: 12px;
+}
+
+.mandi-board-row.is-active {
+  border-color: rgba(47, 158, 95, 0.45);
+  background: linear-gradient(160deg, #f3fbf6, #fff);
+  transform: translateY(-1px);
+}
+
+.mandi-board-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.mandi-board-modal em {
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-text-subtle);
 }
 
-.mandi-price-change.is-up {
-  color: #1f7a45;
+.mandi-board-modal strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  color: var(--color-primary-dark, #1e5c40);
 }
 
-.mandi-price-change.is-down {
-  color: #b42318;
+.mandi-estimate-card {
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #edf8f1 0%, #f7fbf8 55%, #fff 100%);
+  border: 1px solid rgba(47, 158, 95, 0.18);
 }
 
-.mandi-panel.is-embedded {
-  margin: var(--space-3) 0 0;
-  padding: var(--space-3) 0 0;
-  border-top: 1px solid rgba(30, 92, 64, 0.1);
-  background: transparent;
+.mandi-estimate-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.mandi-panel.is-embedded .section-panel-body.is-embedded {
-  margin-top: 0;
-  padding-top: 0;
+.mandi-estimate-head strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.mandi-estimate-head p {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.mandi-estimate-result {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #163d2a;
+  color: #fff;
+}
+
+.mandi-estimate-result span {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.mandi-estimate-result strong {
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.mandi-estimate-result small {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.mandi-estimate-idle {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(30, 92, 64, 0.05);
+  color: var(--color-text-subtle);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.mandi-estimate-big {
+  margin: 6px 0 0;
+  font-size: 1.45rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--color-primary-dark, #1e5c40);
+}
+
+@keyframes mandi-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

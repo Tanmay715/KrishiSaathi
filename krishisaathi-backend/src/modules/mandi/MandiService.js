@@ -9,6 +9,10 @@ const CACHE_TTL_SECONDS = 3600;
 const DATA_GOV_RESOURCE_ID = process.env.DATA_GOV_MANDI_RESOURCE_ID
   || '9ef84268-d588-465a-a308-a864a43d0070';
 
+const DEFAULT_BOARD_CROPS = [
+  'Potato', 'Wheat', 'Onion', 'Rice', 'Tomato', 'Mustard', 'Moong', 'Chana', 'Cotton',
+];
+
 class MandiService {
   listCommodities() {
     return listKnownCommodities();
@@ -17,7 +21,7 @@ class MandiService {
   async getRates(user_id, query = {}) {
     await assertRateLimit({
       key: `mandi_rates:${user_id}`,
-      limit: 30,
+      limit: 40,
       window_seconds: 3600,
       message: 'Mandi rate lookup limit reached. Please try again later.',
     });
@@ -32,8 +36,92 @@ class MandiService {
 
     const state = query.state || farm?.state || null;
     const district = query.district || farm?.district || null;
-    const cache_key = `mandi:${commodity}:${state || 'all'}:${district || 'all'}`;
+    const payload = await this.#loadCommodityRates(commodity, state, district);
 
+    const expense_total = Number(query.expense_total || 0);
+    const quantity = Number(query.quantity || 0);
+    payload.break_even = this.#buildBreakEven(payload.summary, expense_total, quantity);
+    payload.farm = farm
+      ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
+      : null;
+    payload.requested_crop = crop_name || commodity;
+
+    return payload;
+  }
+
+  async getBoard(user_id, query = {}) {
+    await assertRateLimit({
+      key: `mandi_board:${user_id}`,
+      limit: 30,
+      window_seconds: 3600,
+      message: 'Mandi board lookup limit reached. Please try again later.',
+    });
+
+    const farm = await this.#resolveFarm(user_id, query.farm_id || null);
+    const state = query.state || farm?.state || null;
+    const district = query.district || farm?.district || null;
+    const crops = this.#parseCropList(query.crops);
+
+    const rows = [];
+    for (const crop of crops) {
+      const commodity = resolveCommodity(crop);
+      if (!commodity) {
+        continue;
+      }
+
+      try {
+        const payload = await this.#loadCommodityRates(commodity, state, district);
+        const summary = payload.summary || {};
+        rows.push({
+          crop,
+          commodity,
+          unit: payload.unit,
+          source: payload.source,
+          source_label: payload.source_label,
+          as_of: payload.as_of,
+          min: summary.min ?? null,
+          modal: summary.modal_median ?? summary.modal_avg ?? null,
+          max: summary.max ?? null,
+        });
+      } catch (error) {
+        rows.push({
+          crop,
+          commodity,
+          unit: '₹/quintal',
+          source: 'unavailable',
+          source_label: null,
+          as_of: null,
+          min: null,
+          modal: null,
+          max: null,
+        });
+      }
+    }
+
+    return {
+      unit: '₹/quintal',
+      farm: farm
+        ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
+        : null,
+      place_label: [farm?.district, farm?.state].filter(Boolean).join(', ') || null,
+      crops: rows,
+    };
+  }
+
+  #parseCropList(raw) {
+    if (Array.isArray(raw)) {
+      return raw.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 12);
+    }
+
+    if (typeof raw === 'string' && raw.trim()) {
+      return raw.split(',').map((item) => item.trim()).filter(Boolean).slice(0, 12);
+    }
+
+    return [...DEFAULT_BOARD_CROPS];
+  }
+
+  async #loadCommodityRates(commodity, state, district) {
+    const cache_key = `mandi:${commodity}:${state || 'all'}:${district || 'all'}`;
     let payload = await this.#readCache(cache_key);
 
     if (!payload) {
@@ -46,15 +134,7 @@ class MandiService {
       await this.#writeCache(cache_key, payload);
     }
 
-    const expense_total = Number(query.expense_total || 0);
-    const quantity = Number(query.quantity || 0);
-    payload.break_even = this.#buildBreakEven(payload.summary, expense_total, quantity);
-    payload.farm = farm
-      ? { id: farm.id, name: farm.name, state: farm.state, district: farm.district }
-      : null;
-    payload.requested_crop = crop_name || commodity;
-
-    return payload;
+    return { ...payload };
   }
 
   async #resolveFarm(user_id, farm_id) {

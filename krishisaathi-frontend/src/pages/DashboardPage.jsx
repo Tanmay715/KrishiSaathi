@@ -8,8 +8,7 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import TodayFieldScene from '../components/TodayFieldScene';
 import PulseRail from '../components/PulseRail';
-import MandiGlanceStrip from '../components/MandiGlanceStrip';
-import MandiPricePanel from '../components/MandiPricePanel';
+import MandiMarketSection from '../components/MandiMarketSection';
 import Modal from '../components/Modal';
 import {
   createReminder,
@@ -42,7 +41,6 @@ function DashboardPage() {
   const [error_message, setErrorMessage] = useState('');
   const [is_working, setIsWorking] = useState(false);
   const [show_reminder_modal, setShowReminderModal] = useState(false);
-  const [is_mandi_open, setIsMandiOpen] = useState(false);
   const [reminder_form, setReminderForm] = useState({
     title: '',
     type: 'custom',
@@ -271,23 +269,10 @@ function DashboardPage() {
             <PendingIncomeSection crops={pending_income_crops} show_location />
           )}
 
-          <section className="field-secondary surface-panel is-muted mandi-market-section">
-            <MandiGlanceStrip
-              farm_id={farms[0]?.id || null}
-              preferred_crops={pending_income_crops.map((crop) => crop.crop_name || crop.name)}
-              is_expanded={is_mandi_open}
-              on_view_all={() => setIsMandiOpen((prev) => !prev)}
-            />
-            {is_mandi_open && (
-              <MandiPricePanel
-                farm_id={farms[0]?.id || null}
-                crop_options={['Wheat', 'Rice', 'Cotton', 'Mustard', 'Potato', 'Moong', 'Chana', 'Onion', 'Tomato']}
-                default_open
-                compact
-                embedded
-              />
-            )}
-          </section>
+          <MandiMarketSection
+            farm_id={farms[0]?.id || null}
+            preferred_crops={pending_income_crops.map((crop) => crop.crop_name || crop.name)}
+          />
 
           <Link to="/assistant" className="assistant-strip is-field is-quiet">
             <div>

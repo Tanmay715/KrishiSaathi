@@ -215,6 +215,18 @@ export async function getMandiRates({
   return response.data;
 }
 
+export async function getMandiBoard({ farm_id, state, district, crops } = {}) {
+  const response = await api_client.get('/mandi/board', {
+    params: {
+      ...(farm_id ? { farm_id } : {}),
+      ...(state ? { state } : {}),
+      ...(district ? { district } : {}),
+      ...(crops?.length ? { crops: crops.join(',') } : {}),
+    },
+  });
+  return response.data;
+}
+
 export async function getMandiCommodities() {
   const response = await api_client.get('/mandi/commodities');
   return response.data;
