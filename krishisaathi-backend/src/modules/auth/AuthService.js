@@ -101,18 +101,20 @@ class AuthService {
 
     await this.#runRedis(() => redis.del(otp_key));
 
-    const user = await this.#findOrCreateUser(phone, profile);
+    const { user, is_new_user } = await this.#findOrCreateUser(phone, profile);
     const token = this.#generateToken(user.id);
 
     await ActivityService.logActivity(user.id, 'login', 'User logged in', 'user', user.id);
 
-    return { user: this.#sanitizeUser(user), token };
+    return { user: this.#sanitizeUser(user), token, is_new_user };
   }
 
   async #findOrCreateUser(phone, profile) {
     let user = await db('users').where({ phone }).first();
+    let is_new_user = false;
 
     if (!user) {
+      is_new_user = true;
       const user_id = uuidv4();
       await db('users').insert({
         id: user_id,
@@ -129,7 +131,7 @@ class AuthService {
       user = await db('users').where({ id: user.id }).first();
     }
 
-    return user;
+    return { user, is_new_user };
   }
 
   #generateToken(user_id) {

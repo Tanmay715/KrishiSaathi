@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import OfflineBanner from '../components/OfflineBanner';
 import PwaInstallPrompt from '../components/PwaInstallPrompt';
@@ -74,6 +74,10 @@ function AppLayout() {
   const location = useLocation();
   const show_fab = !location.pathname.startsWith('/assistant')
     && !location.pathname.startsWith('/market');
+
+  if (localStorage.getItem('ks_needs_onboarding') === '1') {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div className="app-shell">

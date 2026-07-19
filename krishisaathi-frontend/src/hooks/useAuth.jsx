@@ -17,9 +17,15 @@ export function AuthProvider({ children }) {
     setToken(auth_token);
   }, []);
 
+  const updateUser = useCallback((user_data) => {
+    localStorage.setItem('ks_user', JSON.stringify(user_data));
+    setUser(user_data);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('ks_user');
     localStorage.removeItem('ks_token');
+    localStorage.removeItem('ks_needs_onboarding');
     setUser(null);
     setToken(null);
   }, []);
@@ -30,9 +36,10 @@ export function AuthProvider({ children }) {
       token,
       is_authenticated: Boolean(token),
       login,
+      updateUser,
       logout,
     }),
-    [user, token, login, logout],
+    [user, token, login, updateUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
