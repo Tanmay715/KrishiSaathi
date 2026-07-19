@@ -8611,6 +8611,93 @@ html:has(.auth-page) #root {
   }
 }
 
+.mandi-markets-card {
+  padding: 14px 16px 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  background: linear-gradient(180deg, #f7fbf8 0%, #fff 70%);
+}
+
+.mandi-markets-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.mandi-markets-head strong {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #14271d;
+}
+
+.mandi-markets-head span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.mandi-markets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mandi-markets-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.mandi-markets-list > li:first-child {
+  border-top: none;
+}
+
+.mandi-markets-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mandi-markets-identity strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #14271d;
+  line-height: 1.25;
+}
+
+.mandi-markets-identity span {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+.mandi-markets-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mandi-markets-price strong {
+  font-size: 1rem;
+  font-weight: 750;
+  color: #14271d;
+  font-variant-numeric: tabular-nums;
+}
+
+.mandi-markets-price span {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .mandi-location-card {
   margin-bottom: 14px;
   padding: 16px;

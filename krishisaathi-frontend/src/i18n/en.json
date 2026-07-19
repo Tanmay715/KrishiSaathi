@@ -600,6 +600,8 @@
     "today_rate": "Today’s rate",
     "quintal": "quintal",
     "from_yesterday": "vs last day",
+    "markets_title": "Markets in this place",
+    "markets_as_of": "As of {{date}}",
     "modal_rate_line": "Today’s rate {{price}} / quintal",
     "range_line": "Range {{min}} – {{max}}",
     "trend_title": "Price trend (available days)",

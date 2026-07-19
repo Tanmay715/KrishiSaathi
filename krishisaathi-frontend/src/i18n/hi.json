@@ -600,6 +600,8 @@
     "today_rate": "आज का भाव",
     "quintal": "क्विंटल",
     "from_yesterday": "पिछले दिन से",
+    "markets_title": "इस जगह की मंडियाँ",
+    "markets_as_of": "{{date}} तक",
     "modal_rate_line": "आज का भाव {{price}} / क्विंटल",
     "range_line": "रेंज {{min}} – {{max}}",
     "trend_title": "भाव का रुझान (उपलब्ध दिन)",

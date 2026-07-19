@@ -61,6 +61,28 @@ function formatChange(change_pct) {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+function isUsefulLabel(value) {
+  const text = String(value || '').trim();
+  if (!text) {
+    return false;
+  }
+  const lowered = text.toLowerCase();
+  return lowered !== 'other' && lowered !== 'faq' && lowered !== '-' && lowered !== 'n/a';
+}
+
+function formatMarketMeta(market) {
+  const parts = [];
+  if (market.district) {
+    parts.push(market.district);
+  }
+  if (isUsefulLabel(market.variety)) {
+    parts.push(market.variety);
+  } else if (isUsefulLabel(market.grade)) {
+    parts.push(market.grade);
+  }
+  return parts.join(' · ');
+}
+
 function pickGlanceCrops(preferred_crops = [], board_rows = []) {
   const preferred = preferred_crops
     .map((name) => String(name || '').trim())
@@ -118,6 +140,45 @@ function PriceSparkline({ points = [] }) {
   );
 }
 
+function MandiMarketsList({ markets = [], as_of = null, t }) {
+  if (!markets.length) {
+    return null;
+  }
+
+  return (
+    <div className="mandi-markets-card">
+      <div className="mandi-markets-head">
+        <strong>{t('mandi.markets_title')}</strong>
+        {as_of && (
+          <span>{t('mandi.markets_as_of', { date: as_of })}</span>
+        )}
+      </div>
+      <ul className="mandi-markets-list">
+        {markets.map((market, index) => {
+          const meta = formatMarketMeta(market);
+          const key = `${market.market}-${market.district || ''}-${market.modal}-${index}`;
+          return (
+            <li key={key} className="mandi-markets-row">
+              <div className="mandi-markets-identity">
+                <strong>{market.market}</strong>
+                {meta ? <span>{meta}</span> : null}
+              </div>
+              <div className="mandi-markets-price">
+                <strong>{formatRate(market.modal)}</strong>
+                {market.min != null && market.max != null && (
+                  <span>
+                    {formatRate(market.min)}–{formatRate(market.max)}
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function MandiBoardBody({
   board,
   crop_rows,
@@ -133,6 +194,8 @@ function MandiBoardBody({
   on_step_quantity,
   t,
 }) {
+  const markets = selected_row?.markets || [];
+
   return (
     <div className="mandi-board-sheet is-premium is-vertical">
       <p className="mandi-board-subtitle">
@@ -183,6 +246,12 @@ function MandiBoardBody({
           />
         </div>
       </div>
+
+      <MandiMarketsList
+        markets={markets}
+        as_of={selected_row?.as_of}
+        t={t}
+      />
 
       <div className="mandi-calc-card">
         <label htmlFor="mandi-board-qty">{t('mandi.quantity_label')}</label>

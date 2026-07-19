@@ -8,7 +8,7 @@ const { getReferenceRate } = require('./reference_rates');
 const { getAgmarknetStateQueries } = require('./agmarknet_aliases');
 
 const CACHE_TTL_SECONDS = 1800;
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const DATA_GOV_RESOURCE_ID = process.env.DATA_GOV_MANDI_RESOURCE_ID
   || '9ef84268-d588-465a-a308-a864a43d0070';
 
@@ -97,7 +97,7 @@ class MandiService {
           max: summary.max ?? null,
           change_pct: payload.change_pct ?? null,
           trend: payload.trend?.points || [],
-          markets: (payload.markets || []).slice(0, 3),
+          markets: (payload.markets || []).slice(0, 8),
         });
       } catch (_error) {
         rows.push({
@@ -334,6 +334,7 @@ class MandiService {
           district: row.district || row.District || row.district_name || null,
           state: row.state || row.State || row.state_name || null,
           variety: row.variety || row.Variety || null,
+          grade: row.grade || row.Grade || null,
           min,
           max,
           modal: modal || Math.round((min + max) / 2),
