@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getAssistantThread, sendAssistantMessage } from '../services/assistant_service';
 import { getFarms, getFarm } from '../services/farm_service';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
-import PageHeader from '../components/PageHeader';
 
 const SCOPE_STORAGE_KEY = 'ks_assistant_scope';
 
@@ -68,7 +68,9 @@ function AssistantPage() {
   const [plots, setPlots] = useState([]);
   const [farm_id, setFarmId] = useState('');
   const [plot_id, setPlotId] = useState('');
+  const [is_scope_open, setIsScopeOpen] = useState(false);
   const bottom_ref = useRef(null);
+  const input_ref = useRef(null);
 
   useEffect(() => {
     loadInitial();
@@ -169,27 +171,51 @@ function AssistantPage() {
       setErrorMessage(error.response?.data?.message || t('common.error'));
     } finally {
       setIsSending(false);
+      input_ref.current?.focus();
     }
   }
 
   if (is_loading) {
-    return <LoadingState />;
+    return (
+      <div className="assistant-page">
+        <LoadingState />
+      </div>
+    );
   }
 
   if (load_error) {
-    return <ErrorState message={load_error} on_retry={loadInitial} />;
+    return (
+      <div className="assistant-page">
+        <ErrorState message={load_error} on_retry={loadInitial} />
+      </div>
+    );
   }
 
   const selected_farm = farms.find((farm) => farm.id === farm_id);
   const selected_plot = plots.find((plot) => plot.id === plot_id);
+  const scope_label = [selected_farm?.name, selected_plot?.name].filter(Boolean).join(' · ')
+    || t('assistant.all_farms');
 
   return (
     <div className="assistant-page">
-      <PageHeader title={t('assistant.title')} subtitle={t('assistant.subtitle')} />
+      <header className="assistant-chat-header">
+        <Link to="/" className="assistant-back" aria-label={t('assistant.back')}>
+          ←
+        </Link>
+        <div className="assistant-chat-titles">
+          <strong>{t('assistant.title')}</strong>
+          <button
+            type="button"
+            className="assistant-scope-chip"
+            onClick={() => setIsScopeOpen((prev) => !prev)}
+          >
+            {scope_label}
+            <span aria-hidden="true">{is_scope_open ? '▴' : '▾'}</span>
+          </button>
+        </div>
+      </header>
 
-      {error_message && <div className="error-banner">{error_message}</div>}
-
-      <div className="card assistant-card">
+      {is_scope_open && (
         <div className="assistant-scope">
           <div className="assistant-scope-field">
             <label htmlFor="assistant-farm">{t('nav.farms')}</label>
@@ -220,79 +246,74 @@ function AssistantPage() {
               ))}
             </select>
           </div>
-          {(selected_farm || selected_plot) && (
-            <p className="assistant-scope-hint">
-              {t('assistant.answers_for')}{' '}
-              <strong>
-                {[selected_farm?.name, selected_plot?.name].filter(Boolean).join(' · ')}
-              </strong>
-            </p>
-          )}
         </div>
+      )}
 
-        <div className="assistant-messages">
-          {messages.length === 0 && (
-            <div className="assistant-empty">
-              <p>{t('assistant.empty')}</p>
-              <div className="assistant-suggestions">
-                {[t('assistant.suggestion_1'), t('assistant.suggestion_2'), t('assistant.suggestion_3')].map(
-                  (suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => setInput(suggestion)}
-                    >
-                      {suggestion}
-                    </button>
-                  ),
-                )}
-              </div>
+      {error_message && <div className="error-banner assistant-error">{error_message}</div>}
+
+      <div className="assistant-messages">
+        {messages.length === 0 && (
+          <div className="assistant-empty">
+            <p>{t('assistant.empty')}</p>
+            <div className="assistant-suggestions">
+              {[t('assistant.suggestion_1'), t('assistant.suggestion_2'), t('assistant.suggestion_3')].map(
+                (suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="assistant-suggestion-chip"
+                    onClick={() => {
+                      setInput(suggestion);
+                      input_ref.current?.focus();
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ),
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {messages.map((message) => {
-            const metadata = parseMetadata(message.metadata);
-            const government = metadata?.government_recommendation || null;
+        {messages.map((message) => {
+          const metadata = parseMetadata(message.metadata);
+          const government = metadata?.government_recommendation || null;
 
-            return (
-              <div
-                key={message.id}
-                className={`assistant-bubble ${message.role === 'user' ? 'assistant-bubble-user' : 'assistant-bubble-bot'}`}
-              >
-                <div className="assistant-role">
-                  {message.role === 'user' ? t('assistant.you') : t('assistant.bot')}
-                </div>
-                {message.role === 'assistant' && (
-                  <GovernmentRecommendation recommendation={government} t={t} />
-                )}
-                <div className="assistant-content">{message.content}</div>
-              </div>
-            );
-          })}
-
-          {is_sending && (
-            <div className="assistant-bubble assistant-bubble-bot">
-              <div className="assistant-role">{t('assistant.bot')}</div>
-              <div className="assistant-content">{t('assistant.thinking')}</div>
+          return (
+            <div
+              key={message.id}
+              className={`assistant-bubble ${message.role === 'user' ? 'assistant-bubble-user' : 'assistant-bubble-bot'}`}
+            >
+              {message.role === 'assistant' && (
+                <GovernmentRecommendation recommendation={government} t={t} />
+              )}
+              <div className="assistant-content">{message.content}</div>
             </div>
-          )}
-          <div ref={bottom_ref} />
-        </div>
+          );
+        })}
 
-        <form className="assistant-composer" onSubmit={handleSend}>
-          <input
-            className="form-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t('assistant.placeholder')}
-            disabled={is_sending}
-          />
-          <button type="submit" className="btn btn-primary" disabled={is_sending || !input.trim()}>
-            {t('assistant.send')}
-          </button>
-        </form>
+        {is_sending && (
+          <div className="assistant-bubble assistant-bubble-bot is-thinking">
+            <div className="assistant-content">{t('assistant.thinking')}</div>
+          </div>
+        )}
+        <div ref={bottom_ref} />
       </div>
+
+      <form className="assistant-composer" onSubmit={handleSend}>
+        <input
+          ref={input_ref}
+          className="form-input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={t('assistant.placeholder')}
+          disabled={is_sending}
+          enterKeyHint="send"
+        />
+        <button type="submit" className="btn btn-primary" disabled={is_sending || !input.trim()}>
+          {t('assistant.send')}
+        </button>
+      </form>
     </div>
   );
 }

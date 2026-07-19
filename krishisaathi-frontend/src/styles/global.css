@@ -789,15 +789,23 @@ textarea {
   text-align: center;
 }
 
-.main-content:has(.assistant-page) {
+.main-content:has(.assistant-page),
+.main-content.is-assistant {
   display: flex;
   flex-direction: column;
-  padding-bottom: 12px;
+  padding: 0;
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
-.main-content:has(.assistant-page) > .assistant-page {
+.main-content:has(.assistant-page) > .assistant-page,
+.main-content.is-assistant > .assistant-page {
   flex: 1;
   min-height: 0;
+}
+
+.app-frame.is-assistant-mode {
+  background: #f3f6f4;
 }
 
 /* Legacy sidebar / tabs kept unused */
@@ -1233,10 +1241,11 @@ textarea {
 .assistant-scope {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(180deg, #f4faf6 0%, #fff 100%);
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid rgba(30, 92, 64, 0.1);
+  background: #fff;
 }
 
 .assistant-scope-field {
@@ -1245,23 +1254,25 @@ textarea {
 
 .assistant-scope-field label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+}
+
+.assistant-scope-field .form-select {
+  min-height: 42px;
+  border-radius: 12px;
 }
 
 .assistant-scope-hint {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
+  display: none;
 }
 
-.assistant-scope-hint strong {
-  color: var(--color-primary-dark);
+@media (max-width: 768px) {
+  .assistant-scope {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1962,91 +1973,165 @@ textarea {
 
 .assistant-page {
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  background:
+    linear-gradient(180deg, #eef5f0 0%, #f5f8f6 42%, #f7faf8 100%);
+}
+
+.assistant-chat-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
   gap: 10px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) 12px 10px;
+  background: var(--color-primary-dark);
+  color: #fff;
+  z-index: 5;
 }
 
-.assistant-page .page-header {
-  margin-bottom: 0;
+.assistant-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.assistant-page .page-header p {
-  display: none;
-}
-
-.assistant-card {
+.assistant-chat-titles {
+  min-width: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  gap: 2px;
+}
+
+.assistant-chat-titles strong {
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.assistant-scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin: 0;
   padding: 0;
-  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-scope-chip span {
+  opacity: 0.85;
+}
+
+.assistant-error {
+  flex-shrink: 0;
+  margin: 0;
+  border-radius: 0;
 }
 
 .assistant-messages {
   flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px;
+  overscroll-behavior: contain;
+  padding: 14px 12px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 0;
+  gap: 10px;
 }
 
 .assistant-empty {
-  text-align: center;
-  color: var(--color-text-muted);
   margin: auto 0;
-  padding-bottom: 8px;
+  padding: 8px 4px 16px;
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+.assistant-empty p {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #3d5247;
 }
 
 .assistant-suggestions {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 14px;
 }
 
-.assistant-suggestions .btn {
+.assistant-suggestion-chip {
   width: 100%;
-  white-space: normal;
-  text-align: left;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(30, 92, 64, 0.14);
+  border-radius: 16px;
+  background: #fff;
+  color: #153325;
+  font-size: 0.9rem;
+  font-weight: 600;
   line-height: 1.35;
-  min-height: 44px;
-  justify-content: flex-start;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-suggestion-chip:active {
+  transform: scale(0.99);
 }
 
 .assistant-bubble {
-  max-width: 85%;
+  max-width: min(94%, 440px);
   padding: 12px 14px;
-  border-radius: var(--radius-md);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(15, 40, 28, 0.05);
 }
 
 .assistant-bubble-user {
   align-self: flex-end;
   background: var(--color-primary);
   color: #fff;
+  border-bottom-right-radius: 6px;
 }
 
 .assistant-bubble-bot {
   align-self: flex-start;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  border-bottom-left-radius: 6px;
+  color: #14271d;
+}
+
+.assistant-bubble.is-thinking {
+  opacity: 0.8;
 }
 
 .assistant-role {
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-  opacity: 0.8;
+  display: none;
 }
 
 .assistant-content {
   white-space: pre-wrap;
   line-height: 1.45;
+  font-size: 0.95rem;
 }
 
 .assistant-gov {
@@ -2116,23 +2201,28 @@ textarea {
 
 .assistant-composer {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
-  padding: 12px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
-  position: relative;
-  z-index: 2;
+  align-items: center;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(30, 92, 64, 0.1);
+  background: #fff;
+  z-index: 4;
 }
 
 .assistant-composer .form-input {
   flex: 1;
   min-width: 0;
+  min-height: 48px;
+  border-radius: 16px;
+  background: #f4f7f5;
 }
 
 .assistant-composer .btn {
   flex-shrink: 0;
+  min-height: 48px;
+  min-width: 76px;
+  border-radius: 16px;
 }
 
 .profile-logout-card {

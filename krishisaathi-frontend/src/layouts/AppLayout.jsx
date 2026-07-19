@@ -72,8 +72,8 @@ function NavIcon({ name }) {
 function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
-  const show_fab = !location.pathname.startsWith('/assistant')
-    && !location.pathname.startsWith('/market');
+  const is_assistant = location.pathname.startsWith('/assistant');
+  const show_fab = !is_assistant && !location.pathname.startsWith('/market');
 
   if (localStorage.getItem('ks_needs_onboarding') === '1') {
     return <Navigate to="/onboarding" replace />;
@@ -81,18 +81,20 @@ function AppLayout() {
 
   return (
     <div className="app-shell">
-      <div className="app-frame has-bottom-nav no-drawer">
-        <header className="app-topbar is-centered">
-          <div className="app-topbar-brand">
-            <h1>{t('app.name')}</h1>
-            <p>{t('app.tagline')}</p>
-          </div>
-          <LanguageSwitcher variant="topbar" />
-        </header>
+      <div className={`app-frame no-drawer${is_assistant ? ' is-assistant-mode' : ' has-bottom-nav'}`}>
+        {!is_assistant && (
+          <header className="app-topbar is-centered">
+            <div className="app-topbar-brand">
+              <h1>{t('app.name')}</h1>
+              <p>{t('app.tagline')}</p>
+            </div>
+            <LanguageSwitcher variant="topbar" />
+          </header>
+        )}
 
-        <main className="main-content">
-          <OfflineBanner />
-          <PwaInstallPrompt />
+        <main className={`main-content${is_assistant ? ' is-assistant' : ''}`}>
+          {!is_assistant && <OfflineBanner />}
+          {!is_assistant && <PwaInstallPrompt />}
           <ErrorBoundary fallback_message={t('common.error')}>
             <Outlet />
           </ErrorBoundary>
@@ -100,21 +102,23 @@ function AppLayout() {
 
         {show_fab && <QuickLogFab />}
 
-        <nav className="app-bottom-nav" aria-label="Main">
-          {TAB_ITEMS.map((item) => (
-            <NavLink
-              key={item.key}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => `bottom-nav-link${isActive ? ' is-active' : ''}`}
-            >
-              <span className="bottom-nav-icon" aria-hidden="true">
-                <NavIcon name={item.icon} />
-              </span>
-              <span className="bottom-nav-label">{t(`nav.${item.key}`)}</span>
-            </NavLink>
-          ))}
-        </nav>
+        {!is_assistant && (
+          <nav className="app-bottom-nav" aria-label="Main">
+            {TAB_ITEMS.map((item) => (
+              <NavLink
+                key={item.key}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `bottom-nav-link${isActive ? ' is-active' : ''}`}
+              >
+                <span className="bottom-nav-icon" aria-hidden="true">
+                  <NavIcon name={item.icon} />
+                </span>
+                <span className="bottom-nav-label">{t(`nav.${item.key}`)}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
       </div>
     </div>
   );
