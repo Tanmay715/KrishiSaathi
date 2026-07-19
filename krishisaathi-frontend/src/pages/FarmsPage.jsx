@@ -12,6 +12,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { normalizeLanguage } from '../utils/language';
+import { formatArea } from '../utils/format_date';
 
 const EMPTY_FORM = {
   name: '',
@@ -205,7 +206,7 @@ function FarmsPage() {
         <>
           <div className="farms-hub-list">
             {farms.map((farm) => (
-              <article key={farm.id} className="farm-hub-card">
+              <Link key={farm.id} to={`/farms/${farm.id}`} className="farm-hub-card is-link">
                 <div className="farm-hub-card-main">
                   <span className="farm-hub-mark" aria-hidden="true">
                     {(farm.name || '?').trim().charAt(0).toUpperCase()}
@@ -217,20 +218,18 @@ function FarmsPage() {
                         {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')}
                       </p>
                     )}
-                    <Link to={`/farms/${farm.id}`} className="farm-hub-manage">
-                      {t('farms.manage_farm')} →
-                    </Link>
                   </div>
+                  <span className="farm-hub-chevron" aria-hidden="true">›</span>
                 </div>
                 <div className="farm-hub-chips">
                   <span>{t('farms.plot_count', { count: farm.plot_count || 0 })}</span>
                   {Number(farm.total_area) > 0 && (
                     <span>
-                      {Number(farm.total_area).toFixed(4)} {land_unit}
+                      {formatArea(farm.total_area)} {land_unit}
                     </span>
                   )}
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
 
@@ -245,11 +244,11 @@ function FarmsPage() {
               </div>
               <div className="farms-summary-tile tone-blue">
                 <span className="farms-summary-icon" aria-hidden="true">▣</span>
-                <strong>{totals.area.toFixed(4)}</strong>
+                <strong>{formatArea(totals.area)}</strong>
                 <em>{t('farms.summary_area')}</em>
                 <small>{land_unit}</small>
               </div>
-              <div className="farms-summary-tile tone-orange">
+              <div className="farms-summary-tile tone-orange is-wide">
                 <span className="farms-summary-icon" aria-hidden="true">₹</span>
                 <strong>₹{formatAmount(spent)}</strong>
                 <em>{t('farms.summary_value')}</em>
@@ -322,9 +321,20 @@ function FarmsPage() {
         <Modal
           title={editing_farm ? t('farms.edit_farm') : t('farms.add_farm')}
           on_close={closeModal}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="farm-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
         >
           {error_message && <div className="error-banner">{error_message}</div>}
-          <form onSubmit={handleSaveFarm}>
+          <form id="farm-form" className="form-compact" onSubmit={handleSaveFarm}>
             <div className="form-group">
               <label htmlFor="farm-name">{t('farms.name')}</label>
               <input
@@ -336,23 +346,23 @@ function FarmsPage() {
                 autoFocus
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="farm-state">{t('farms.state')}</label>
-              <select
-                id="farm-state"
-                className="form-select"
-                value={form.state}
-                onChange={(e) => updateForm('state', e.target.value)}
-              >
-                <option value="">—</option>
-                {INDIAN_STATES.map((state) => (
-                  <option key={state.code} value={state.label_en}>
-                    {state[state_label_key]}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="farm-state">{t('farms.state')}</label>
+                <select
+                  id="farm-state"
+                  className="form-select"
+                  value={form.state}
+                  onChange={(e) => updateForm('state', e.target.value)}
+                >
+                  <option value="">—</option>
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state.code} value={state.label_en}>
+                      {state[state_label_key]}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="form-group">
                 <label htmlFor="farm-district">{t('farms.district')}</label>
                 <select
@@ -373,6 +383,8 @@ function FarmsPage() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="farm-village">{t('farms.village')}</label>
                 <input
@@ -382,18 +394,18 @@ function FarmsPage() {
                   onChange={(e) => updateForm('village', e.target.value)}
                 />
               </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="farm-area">{t('farms.total_area')}</label>
-              <input
-                id="farm-area"
-                className="form-input"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.total_area}
-                onChange={(e) => updateForm('total_area', e.target.value)}
-              />
+              <div className="form-group">
+                <label htmlFor="farm-area">{t('farms.total_area')}</label>
+                <input
+                  id="farm-area"
+                  className="form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.total_area}
+                  onChange={(e) => updateForm('total_area', e.target.value)}
+                />
+              </div>
             </div>
             <div className="form-group">
               <label htmlFor="farm-notes">{t('farms.notes')}</label>
@@ -402,16 +414,8 @@ function FarmsPage() {
                 className="form-textarea"
                 value={form.notes}
                 onChange={(e) => updateForm('notes', e.target.value)}
-                rows={3}
+                rows={2}
               />
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                {t('farms.cancel')}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                {is_saving ? t('common.loading') : t('farms.save')}
-              </button>
             </div>
           </form>
         </Modal>

@@ -27,7 +27,7 @@ import OverflowMenu from '../components/OverflowMenu';
 import { INDIAN_STATES } from '../config/indian_states';
 import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { normalizeLanguage } from '../utils/language';
-import { formatShortDate } from '../utils/format_date';
+import { formatArea, formatShortDate } from '../utils/format_date';
 
 const EMPTY_PLOT = { name: '', area: '', soil_type: '', notes: '' };
 
@@ -362,7 +362,7 @@ function FarmDetailPage() {
       <div className="farm-detail-stats">
         <div className="farm-detail-stat">
           <span>{t('farms.stat_area')}</span>
-          <strong>{stats.area.toFixed(4)}</strong>
+          <strong>{formatArea(stats.area)}</strong>
           <small>{land_unit_label}</small>
         </div>
         <div className="farm-detail-stat">
@@ -420,7 +420,7 @@ function FarmDetailPage() {
                         </span>
                       </div>
                       <p>
-                        {Number(plot.area || 0).toFixed(4)} {land_unit_label}
+                        {formatArea(plot.area)} {land_unit_label}
                         {plot.soil_type ? ` · ${plot.soil_type}` : ''}
                       </p>
                     </div>
@@ -546,20 +546,33 @@ function FarmDetailPage() {
       )}
 
       {show_plot_modal && (
-        <div className="modal-overlay" onClick={() => setShowPlotModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editing_plot ? t('farms.edit_plot') : t('farms.add_plot')}</h3>
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleSavePlot}>
-              <div className="form-group">
-                <label>{t('farms.plot_name')}</label>
-                <input
-                  className="form-input"
-                  value={plot_form.name}
-                  onChange={(e) => setPlotForm((p) => ({ ...p, name: e.target.value }))}
-                  required
-                />
-              </div>
+        <Modal
+          title={editing_plot ? t('farms.edit_plot') : t('farms.add_plot')}
+          on_close={() => setShowPlotModal(false)}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowPlotModal(false)}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="plot-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
+        >
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="plot-form" className="form-compact" onSubmit={handleSavePlot}>
+            <div className="form-group">
+              <label>{t('farms.plot_name')}</label>
+              <input
+                className="form-input"
+                value={plot_form.name}
+                onChange={(e) => setPlotForm((p) => ({ ...p, name: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label>
                   {t('farms.plot_area')} ({land_unit_label})
@@ -582,113 +595,108 @@ function FarmDetailPage() {
                   onChange={(e) => setPlotForm((p) => ({ ...p, soil_type: e.target.value }))}
                 />
               </div>
-              <div className="form-group">
-                <label>{t('farms.notes')}</label>
-                <textarea
-                  className="form-textarea"
-                  rows={2}
-                  value={plot_form.notes}
-                  onChange={(e) => setPlotForm((p) => ({ ...p, notes: e.target.value }))}
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowPlotModal(false)}>
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <div className="form-group">
+              <label>{t('farms.notes')}</label>
+              <textarea
+                className="form-textarea"
+                rows={2}
+                value={plot_form.notes}
+                onChange={(e) => setPlotForm((p) => ({ ...p, notes: e.target.value }))}
+              />
+            </div>
+          </form>
+        </Modal>
       )}
 
       {show_farm_modal && (
-        <div className="modal-overlay" onClick={() => setShowFarmModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('farms.edit_farm')}</h3>
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleSaveFarm}>
+        <Modal
+          title={t('farms.edit_farm')}
+          on_close={() => setShowFarmModal(false)}
+          variant="sheet"
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowFarmModal(false)}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="edit-farm-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
+        >
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="edit-farm-form" className="form-compact" onSubmit={handleSaveFarm}>
+            <div className="form-group">
+              <label>{t('farms.name')}</label>
+              <input
+                className="form-input"
+                value={farm_form.name}
+                onChange={(e) => setFarmForm((p) => ({ ...p, name: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-row">
               <div className="form-group">
-                <label>{t('farms.name')}</label>
+                <label>{t('farms.state')}</label>
+                <select
+                  className="form-select"
+                  value={farm_form.state}
+                  onChange={(e) => handleFarmStateChange(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state.code} value={state.label_en}>
+                      {state[state_label_key]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>{t('farms.district')}</label>
+                <select
+                  className="form-select"
+                  value={farm_form.district}
+                  disabled={!farm_form.state}
+                  onChange={(e) => setFarmForm((p) => ({ ...p, district: e.target.value }))}
+                >
+                  <option value="">
+                    {farm_form.state
+                      ? t('profile.district_placeholder')
+                      : t('profile.district_select_state')}
+                  </option>
+                  {has_custom_farm_district && (
+                    <option value={farm_form.district}>{farm_form.district}</option>
+                  )}
+                  {farm_district_options.map((district) => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('farms.village')}</label>
                 <input
                   className="form-input"
-                  value={farm_form.name}
-                  onChange={(e) => setFarmForm((p) => ({ ...p, name: e.target.value }))}
-                  required
+                  value={farm_form.village}
+                  onChange={(e) => setFarmForm((p) => ({ ...p, village: e.target.value }))}
                 />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('farms.state')}</label>
-                  <select
-                    className="form-select"
-                    value={farm_form.state}
-                    onChange={(e) => handleFarmStateChange(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {INDIAN_STATES.map((state) => (
-                      <option key={state.code} value={state.label_en}>
-                        {state[state_label_key]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>{t('farms.district')}</label>
-                  <select
-                    className="form-select"
-                    value={farm_form.district}
-                    disabled={!farm_form.state}
-                    onChange={(e) => setFarmForm((p) => ({ ...p, district: e.target.value }))}
-                  >
-                    <option value="">
-                      {farm_form.state
-                        ? t('profile.district_placeholder')
-                        : t('profile.district_select_state')}
-                    </option>
-                    {has_custom_farm_district && (
-                      <option value={farm_form.district}>{farm_form.district}</option>
-                    )}
-                    {farm_district_options.map((district) => (
-                      <option key={district} value={district}>{district}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>{t('farms.total_area')}</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={farm_form.total_area}
+                  onChange={(e) => setFarmForm((p) => ({ ...p, total_area: e.target.value }))}
+                />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('farms.village')}</label>
-                  <input
-                    className="form-input"
-                    value={farm_form.village}
-                    onChange={(e) => setFarmForm((p) => ({ ...p, village: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>{t('farms.total_area')}</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={farm_form.total_area}
-                    onChange={(e) => setFarmForm((p) => ({ ...p, total_area: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowFarmModal(false)}>
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {confirm_action && (
