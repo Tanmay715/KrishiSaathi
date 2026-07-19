@@ -1,6 +1,11 @@
 const redis = require('../../config/redis');
 const db = require('../../db/connection');
 const ApiError = require('../../utils/ApiError');
+const {
+  buildLocationParts,
+  hasDevanagari,
+  normalizeDistrictName,
+} = require('../../utils/location_names');
 
 const CACHE_TTL_SECONDS = 1800;
 const WEATHER_CODE_MAP = {
@@ -26,8 +31,9 @@ const WEATHER_CODE_MAP = {
 class WeatherService {
   async getWeatherForUser(user_id, farm_id = null) {
     const farm = await this.#resolveFarm(user_id, farm_id);
-    const location_query = this.#buildLocationQuery(farm);
-    const cache_key = `weather:${user_id}:${farm?.id || 'default'}`;
+    const user = await db('users').where({ id: user_id, is_active: true }).first();
+    const location = this.#resolveLocation(farm, user);
+    const cache_key = this.#cacheKey(user_id, farm, location);
 
     try {
       const cached = await redis.get(cache_key);
@@ -39,7 +45,7 @@ class WeatherService {
       console.warn('[weather] cache read failed:', error.message);
     }
 
-    const coords = await this.#geocode(location_query);
+    const coords = await this.#geocode(location);
     const forecast = await this.#fetchForecast(coords.latitude, coords.longitude);
     const payload = this.#formatPayload(farm, coords, forecast);
 
@@ -50,6 +56,17 @@ class WeatherService {
     }
 
     return payload;
+  }
+
+  async clearUserCache(user_id) {
+    try {
+      const keys = await redis.keys(`weather:${user_id}:*`);
+      if (keys.length) {
+        await redis.del(...keys);
+      }
+    } catch (error) {
+      console.warn('[weather] cache clear failed:', error.message);
+    }
   }
 
   async #resolveFarm(user_id, farm_id) {
@@ -66,36 +83,105 @@ class WeatherService {
     return db('farms').where({ user_id, is_active: true }).orderBy('created_at', 'desc').first();
   }
 
-  #buildLocationQuery(farm) {
-    if (!farm) {
-      return 'Delhi, India';
-    }
-
-    const parts = [farm.district, farm.state, 'India'].filter(Boolean);
-    return parts.length > 1 ? parts.join(', ') : 'Delhi, India';
-  }
-
-  async #geocode(query) {
-    const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
-    url.searchParams.set('name', query.split(',')[0].trim());
-    url.searchParams.set('count', '1');
-    url.searchParams.set('language', 'en');
-    url.searchParams.set('format', 'json');
-
-    const response = await fetch(url);
-    const data = await response.json();
-    const place = data.results?.[0];
-
-    if (!place) {
-      return { latitude: 28.6139, longitude: 77.209, name: 'Delhi', admin1: 'Delhi' };
-    }
+  #resolveLocation(farm, user) {
+    const profile_district = user?.district?.trim() || '';
+    const farm_district = farm?.district?.trim() || '';
+    const farm_state = farm?.state?.trim() || '';
 
     return {
-      latitude: place.latitude,
-      longitude: place.longitude,
-      name: place.name,
-      admin1: place.admin1 || null,
+      district: profile_district || farm_district,
+      state: farm_state,
+      state_code: user?.state_code || '',
+      source: profile_district ? 'profile' : (farm_district || farm_state ? 'farm' : 'fallback'),
     };
+  }
+
+  #cacheKey(user_id, farm, location) {
+    const district = normalizeDistrictName(location.district || 'none').toLowerCase().replace(/\s+/g, '_');
+    const state = String(location.state || location.state_code || 'none').toLowerCase().replace(/\s+/g, '_');
+    return `weather:${user_id}:${farm?.id || 'profile'}:${district}:${state}`;
+  }
+
+  #buildSearchNames(location) {
+    const parts = buildLocationParts(location);
+    const district = parts[0] || '';
+    const names = [];
+
+    if (district) {
+      names.push(district);
+    }
+
+    if (parts.length >= 2) {
+      names.push(`${parts[0]}, ${parts[1]}`);
+    }
+
+    return [...new Set(names.filter(Boolean))];
+  }
+
+  async #geocode(location) {
+    const search_names = this.#buildSearchNames(location);
+    const preferred_state = buildLocationParts(location)[1] || '';
+
+    for (const name of search_names) {
+      const languages = hasDevanagari(name) ? ['hi', 'en'] : ['en', 'hi'];
+
+      for (const language of languages) {
+        const place = await this.#geocodeOnce(name, language, preferred_state);
+        if (place) {
+          return place;
+        }
+      }
+    }
+
+    if (preferred_state) {
+      const state_place = await this.#geocodeOnce(preferred_state, 'en', preferred_state);
+      if (state_place) {
+        return state_place;
+      }
+    }
+
+    return { latitude: 28.6139, longitude: 77.209, name: 'Delhi', admin1: 'Delhi', unresolved: true };
+  }
+
+  async #geocodeOnce(name, language, preferred_state = '') {
+    const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
+    url.searchParams.set('name', name);
+    url.searchParams.set('count', '5');
+    url.searchParams.set('language', language);
+    url.searchParams.set('countryCode', 'IN');
+    url.searchParams.set('format', 'json');
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const results = data.results || [];
+      if (!results.length) {
+        return null;
+      }
+
+      const matched = preferred_state
+        ? results.find((item) => {
+          const admin = String(item.admin1 || '').toLowerCase();
+          return admin.includes(preferred_state.toLowerCase())
+            || preferred_state.toLowerCase().includes(admin);
+        })
+        : null;
+
+      const place = matched || results[0];
+      return {
+        latitude: place.latitude,
+        longitude: place.longitude,
+        name: place.name,
+        admin1: place.admin1 || null,
+      };
+    } catch (error) {
+      console.warn('[weather] geocode failed:', error.message);
+      return null;
+    }
   }
 
   async #fetchForecast(latitude, longitude) {
@@ -137,6 +223,7 @@ class WeatherService {
         region: coords.admin1,
         latitude: coords.latitude,
         longitude: coords.longitude,
+        unresolved: Boolean(coords.unresolved),
       },
       current: {
         temperature_c: forecast.current?.temperature_2m ?? null,

@@ -57,6 +57,7 @@ function ProfilePage() {
     preferred_language: user?.preferred_language || 'en',
     preferred_land_unit: user?.preferred_land_unit || 'acre',
     state_code: user?.state_code || '',
+    district: user?.district || '',
   });
   const [is_saving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -79,6 +80,7 @@ function ProfilePage() {
         preferred_language: data.user?.preferred_language || 'en',
         preferred_land_unit: data.user?.preferred_land_unit || 'acre',
         state_code: data.user?.state_code || '',
+        district: data.user?.district || '',
       });
     } catch (error) {
       setLoadError(error.response?.data?.message || t('common.error'));
@@ -140,6 +142,7 @@ function ProfilePage() {
           <p className="profile-phone">{profile_user?.phone}</p>
           <div className="profile-meta">
             <span>{t('profile.member_since', { date: formatMemberSince(profile_user?.created_at, app_language) })}</span>
+            {profile_user?.district && <span>{profile_user.district}</span>}
             <span>{t(`common.${profile_user?.preferred_land_unit || 'acre'}`)}</span>
             <span>{normalizeLanguage(profile_user?.preferred_language) === 'hi' ? t('common.hindi') : t('common.english')}</span>
           </div>
@@ -264,20 +267,31 @@ function ProfilePage() {
               </select>
             </div>
           </div>
-          <div className="form-group">
-            <label>{t('profile.state_label')}</label>
-            <select
-              className="form-select"
-              value={form.state_code}
-              onChange={(event) => setForm((prev) => ({ ...prev, state_code: event.target.value }))}
-            >
-              <option value="">{t('profile.state_placeholder')}</option>
-              {INDIAN_STATES.map((state) => (
-                <option key={state.code} value={state.code}>
-                  {state[state_label_key]}
-                </option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="form-group">
+              <label>{t('profile.state_label')}</label>
+              <select
+                className="form-select"
+                value={form.state_code}
+                onChange={(event) => setForm((prev) => ({ ...prev, state_code: event.target.value }))}
+              >
+                <option value="">{t('profile.state_placeholder')}</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state.code} value={state.code}>
+                    {state[state_label_key]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>{t('profile.district_label')}</label>
+              <input
+                className="form-input"
+                value={form.district}
+                placeholder={t('profile.district_placeholder')}
+                onChange={(event) => setForm((prev) => ({ ...prev, district: event.target.value }))}
+              />
+            </div>
           </div>
           <button type="submit" className="btn btn-primary" disabled={is_saving}>
             {is_saving ? t('common.loading') : t('profile.save_changes')}

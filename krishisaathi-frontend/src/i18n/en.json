@@ -467,6 +467,8 @@
     "settings": "Settings",
     "state_label": "State",
     "state_placeholder": "Select your state (optional)",
+    "district_label": "District",
+    "district_placeholder": "e.g. Azamgarh",
     "save_changes": "Save changes",
     "saved": "Profile updated successfully"
   },

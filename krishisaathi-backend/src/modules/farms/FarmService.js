@@ -218,6 +218,15 @@ class FarmService {
 
     await db('farms').where({ id: farm_id }).update(updates);
 
+    if (updates.district !== undefined || updates.state !== undefined) {
+      try {
+        const WeatherService = require('../weather/WeatherService');
+        await WeatherService.clearUserCache(user_id);
+      } catch (error) {
+        console.warn('[farms] weather cache clear failed:', error.message);
+      }
+    }
+
     await ActivityService.logActivity(
       user_id,
       'farm_updated',

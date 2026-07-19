@@ -17,7 +17,7 @@ class UserService {
   }
 
   async updateProfile(user_id, updates) {
-    const allowed_fields = ['name', 'preferred_language', 'preferred_land_unit', 'state_code'];
+    const allowed_fields = ['name', 'preferred_language', 'preferred_land_unit', 'state_code', 'district'];
     const payload = {};
 
     allowed_fields.forEach((field) => {
@@ -30,7 +30,21 @@ class UserService {
       throw ApiError.badRequest('No valid fields to update');
     }
 
+    if (payload.district !== undefined) {
+      payload.district = String(payload.district || '').trim() || null;
+    }
+
     await db('users').where({ id: user_id }).update(payload);
+
+    if (payload.district !== undefined || payload.state_code !== undefined) {
+      try {
+        const WeatherService = require('../weather/WeatherService');
+        await WeatherService.clearUserCache(user_id);
+      } catch (error) {
+        console.warn('[users] weather cache clear failed:', error.message);
+      }
+    }
+
     return this.getProfile(user_id);
   }
 
@@ -106,6 +120,7 @@ class UserService {
       preferred_language: user.preferred_language,
       preferred_land_unit: user.preferred_land_unit,
       state_code: user.state_code,
+      district: user.district || null,
       created_at: user.created_at,
     };
   }

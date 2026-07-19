@@ -144,6 +144,8 @@ class AuthService {
       preferred_language: user.preferred_language,
       preferred_land_unit: user.preferred_land_unit,
       state_code: user.state_code,
+      district: user.district || null,
+      created_at: user.created_at,
     };
   }
 }

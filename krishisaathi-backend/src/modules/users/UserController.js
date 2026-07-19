@@ -41,10 +41,11 @@ class UserController {
 }
 
 const update_profile_schema = Joi.object({
-  name: Joi.string().max(120).optional(),
+  name: Joi.string().max(120).optional().allow(''),
   preferred_language: Joi.string().valid('en', 'hi').optional(),
   preferred_land_unit: Joi.string().valid('acre', 'hectare', 'bigha').optional(),
-  state_code: Joi.string().max(10).optional(),
+  state_code: Joi.string().max(10).optional().allow(''),
+  district: Joi.string().max(120).optional().allow('', null),
 }).min(1);
 
 module.exports = {
