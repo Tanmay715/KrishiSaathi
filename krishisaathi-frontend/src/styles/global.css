@@ -116,6 +116,330 @@ textarea {
   z-index: 30;
 }
 
+.app-topbar.is-centered {
+  justify-content: center;
+  position: relative;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.app-topbar.is-centered .app-topbar-brand {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+  padding: 0 72px 0 8px;
+}
+
+.app-topbar.is-centered .language-switcher {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.app-frame.no-drawer .menu-toggle,
+.app-frame.no-drawer .app-drawer,
+.app-frame.no-drawer .drawer-backdrop {
+  display: none !important;
+}
+
+.dashboard-page.is-home {
+  gap: 14px;
+}
+
+.home-weather-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  gap: 8px;
+  padding: 18px 16px 16px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #fff8e8 0%, #f3fbf7 55%, #fff 100%);
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.home-weather-place {
+  margin: 0 0 8px;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--color-primary-dark);
+}
+
+.home-weather-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
+}
+
+.home-weather-main strong {
+  font-size: clamp(1.8rem, 8vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.home-weather-main span {
+  font-size: var(--text-md);
+  font-weight: 650;
+  color: var(--color-text-muted);
+}
+
+.home-weather-range {
+  margin: 10px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.home-weather-art {
+  position: relative;
+  min-height: 84px;
+}
+
+.home-weather-sun {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe566, #f5b700 70%);
+  box-shadow: 0 0 0 8px rgba(245, 183, 0, 0.12);
+}
+
+.home-weather-hill {
+  position: absolute;
+  left: -10px;
+  right: -20px;
+  bottom: 0;
+  height: 42px;
+  border-radius: 40px 40px 0 0;
+  background: linear-gradient(180deg, #d9f0df, #b7e0c3);
+  opacity: 0.85;
+}
+
+.home-section-title {
+  margin: 0 0 10px;
+  font-size: var(--text-lg);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.home-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.home-section-head .home-section-title {
+  margin: 0;
+}
+
+.home-section-link {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-section-link.is-muted {
+  color: var(--color-text-subtle);
+}
+
+.home-summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-summary-card span {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--color-text-subtle);
+}
+
+.home-summary-card strong {
+  font-size: clamp(0.95rem, 3.8vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.home-summary-card small {
+  font-size: 10px;
+  color: var(--color-text-subtle);
+}
+
+.home-split {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.home-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-quick-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 78px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.home-quick-tile span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.home-assistant-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 100%;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(165deg, #1e5c40, #2f9e5f);
+  color: #fff;
+  text-decoration: none;
+}
+
+.home-assistant-card strong {
+  display: block;
+  font-size: var(--text-md);
+  margin-bottom: 6px;
+}
+
+.home-assistant-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+.home-assistant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.home-reminder-card {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.home-reminder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-reminder-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.home-reminder-list li:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.home-reminder-list strong {
+  display: block;
+  font-size: var(--text-sm);
+}
+
+.home-reminder-list span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.home-reminder-done {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(30, 92, 64, 0.16);
+  background: #eef7f1;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-reminder-empty {
+  margin: 0 0 8px;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.home-reminder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(30, 92, 64, 0.14);
+}
+
+@media (max-width: 380px) {
+  .home-split {
+    grid-template-columns: 1fr;
+  }
+
+  .home-assistant-card {
+    min-height: auto;
+  }
+}
+
 .menu-toggle {
   width: 42px;
   height: 42px;

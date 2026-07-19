@@ -1,21 +1,10 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../hooks/useAuth';
 import OfflineBanner from '../components/OfflineBanner';
 import PwaInstallPrompt from '../components/PwaInstallPrompt';
 import QuickLogFab from '../components/QuickLogFab';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-
-const DRAWER_ITEMS = [
-  { to: '/', end: true, key: 'dashboard', icon: 'home', tone: 'home' },
-  { to: '/farms', key: 'farms', icon: 'farms', tone: 'farms' },
-  { to: '/market', key: 'market', icon: 'market', tone: 'list' },
-  { to: '/activity', key: 'activity', icon: 'list', tone: 'list' },
-  { to: '/assistant', key: 'assistant', icon: 'chat', tone: 'chat' },
-  { to: '/profile', key: 'profile', icon: 'user', tone: 'user' },
-];
 
 const TAB_ITEMS = [
   { to: '/', end: true, key: 'dashboard', icon: 'home' },
@@ -51,13 +40,6 @@ function NavIcon({ name }) {
       </svg>
     );
   }
-  if (name === 'chat') {
-    return (
-      <svg {...frame}>
-        <path fill="currentColor" d="M4.2 6.2h15.6A1.8 1.8 0 0 1 21.6 8v7.2a1.8 1.8 0 0 1-1.8 1.8H9.4L4.2 20.8V6.2z" />
-      </svg>
-    );
-  }
   if (name === 'market') {
     return (
       <svg {...frame}>
@@ -89,108 +71,19 @@ function NavIcon({ name }) {
 
 function AppLayout() {
   const { t } = useTranslation();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const [is_menu_open, setIsMenuOpen] = useState(false);
   const show_fab = !location.pathname.startsWith('/assistant');
-
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!is_menu_open) {
-      return undefined;
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [is_menu_open]);
-
-  function handleLogout() {
-    setIsMenuOpen(false);
-    logout();
-    navigate('/login');
-  }
 
   return (
     <div className="app-shell">
-      <div className="app-frame has-bottom-nav">
-        <header className="app-topbar">
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setIsMenuOpen(true)}
-            aria-label={t('nav.menu')}
-            aria-expanded={is_menu_open}
-          >
-            <span className="menu-toggle-bars" aria-hidden="true" />
-          </button>
-
+      <div className="app-frame has-bottom-nav no-drawer">
+        <header className="app-topbar is-centered">
           <div className="app-topbar-brand">
             <h1>{t('app.name')}</h1>
             <p>{t('app.tagline')}</p>
           </div>
-
           <LanguageSwitcher variant="topbar" />
         </header>
-
-        {is_menu_open && (
-          <button
-            type="button"
-            className="drawer-backdrop"
-            aria-label={t('common.close')}
-            onClick={() => setIsMenuOpen(false)}
-          />
-        )}
-
-        <aside className={`app-drawer${is_menu_open ? ' is-open' : ''}`} aria-hidden={!is_menu_open}>
-          <div className="app-drawer-header">
-            <div>
-              <h2>{t('app.name')}</h2>
-              <p>{t('app.tagline')}</p>
-            </div>
-            <button
-              type="button"
-              className="drawer-close"
-              onClick={() => setIsMenuOpen(false)}
-              aria-label={t('common.close')}
-            >
-              ×
-            </button>
-          </div>
-
-          <nav className="app-drawer-nav" aria-label="Primary">
-            {DRAWER_ITEMS.map((item) => (
-              <NavLink
-                key={item.key}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => `drawer-link${isActive ? ' active' : ''}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <span className={`drawer-link-icon tone-${item.tone}`} aria-hidden="true">
-                  <NavIcon name={item.icon} />
-                </span>
-                <span>{t(`nav.${item.key}`)}</span>
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="app-drawer-footer">
-            <LanguageSwitcher variant="drawer" />
-            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
-              {t('nav.logout')}
-            </button>
-          </div>
-        </aside>
 
         <main className="main-content">
           <OfflineBanner />

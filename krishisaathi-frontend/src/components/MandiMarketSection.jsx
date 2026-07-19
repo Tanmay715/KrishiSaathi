@@ -352,11 +352,10 @@ function MandiMarketSection({
         <div className="mandi-glance-head is-stack">
           <div className="mandi-glance-title-row">
             <div>
-              <p className="surface-kicker">{t('dashboard.market_insights')}</p>
-              <h3 className="mandi-glance-title">{t('mandi.nearby_rates')}</h3>
-              <p className="mandi-glance-place">
-                {board?.place_label || t('mandi.unit_note')}
-              </p>
+            <p className="surface-kicker">
+              {t('dashboard.market_insights')} ({t('mandi.nearby_rates')})
+            </p>
+            <h3 className="mandi-glance-title">{board?.place_label || t('mandi.unit_note')}</h3>
             </div>
             {!is_loading && !has_error && crop_rows.length > 0 && (
               <Link to="/market" className="mandi-glance-cta">

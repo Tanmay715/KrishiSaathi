@@ -60,7 +60,18 @@
     "health_thriving": "Thriving",
     "health_steady": "Steady",
     "health_strain": "Needs care",
-    "market_insights": "Market"
+    "market_insights": "Market",
+    "today_summary": "Today's summary",
+    "total_profit": "Total profit",
+    "from_farm": "From your farm",
+    "quick_do": "Do quickly",
+    "quick_expense": "Add expense",
+    "quick_income": "Add income",
+    "quick_farms": "Farm details",
+    "quick_advice": "Crop advice",
+    "quick_mandi": "Mandi rates",
+    "quick_reminder": "Reminder",
+    "chat_now": "Chat now"
   },
   "assistant": {
     "title": "Farm Assistant",

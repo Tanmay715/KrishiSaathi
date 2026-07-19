@@ -60,7 +60,18 @@
     "health_thriving": "फूल रहा",
     "health_steady": "स्थिर",
     "health_strain": "ध्यान चाहिए",
-    "market_insights": "बाज़ार"
+    "market_insights": "बाज़ार",
+    "today_summary": "आज का सारांश",
+    "total_profit": "कुल लाभ",
+    "from_farm": "इस फसल से",
+    "quick_do": "जल्दी करें",
+    "quick_expense": "खर्च जोड़ें",
+    "quick_income": "आय जोड़ें",
+    "quick_farms": "खेत विवरण",
+    "quick_advice": "फसल सलाह",
+    "quick_mandi": "मंडी भाव",
+    "quick_reminder": "रिमाइंडर",
+    "chat_now": "चैट करें"
   },
   "assistant": {
     "title": "फार्म सहायक",
