@@ -2,7 +2,7 @@ const redis = require('../../config/redis');
 const { detectCropsFromText } = require('./kcc_crop_map');
 
 const CACHE_TTL_SECONDS = 1800;
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const DEFAULT_RESOURCE_ID = 'cef25fe2-9231-4128-8aec-2c948fedd43f';
 
 const STOP_WORDS = new Set([
@@ -357,7 +357,7 @@ class KccService {
 
     if (intent?.id === 'plant_protection') {
       const leaf_question = /(yellow|spot|leaf|blight|पत्ती|पीले|धब्ब)/i.test(message);
-      if (leaf_question && /storage pest|market price|weed control/i.test(item.query)) {
+      if (leaf_question && /storage|market price|weed control/i.test(item.query)) {
         return false;
       }
     }
