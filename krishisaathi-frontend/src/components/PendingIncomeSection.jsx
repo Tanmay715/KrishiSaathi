@@ -110,7 +110,6 @@ function PendingIncomeSection({ crops, show_location = false, on_log_income, on_
         <Modal
           title={t('incomes.skip_sale_title')}
           on_close={() => !is_skipping && setSkipCrop(null)}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned is-stack">
               <button
@@ -140,10 +139,12 @@ function PendingIncomeSection({ crops, show_location = false, on_log_income, on_
             </div>
           )}
         >
-          <p className="section-note" style={{ marginTop: 0 }}>
-            {t('incomes.skip_sale_body', { crop: skip_crop.crop_name })}
-          </p>
-          {skip_error && <div className="error-banner">{skip_error}</div>}
+          <div className="sheet-section">
+            <p className="confirm-dialog-message">
+              {t('incomes.skip_sale_body', { crop: skip_crop.crop_name })}
+            </p>
+            {skip_error && <div className="error-banner">{skip_error}</div>}
+          </div>
         </Modal>
       )}
     </>

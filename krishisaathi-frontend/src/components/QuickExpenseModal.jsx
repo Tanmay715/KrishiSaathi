@@ -184,7 +184,6 @@ function QuickExpenseModal({ is_open, on_close, on_saved }) {
       title={t('quick_log.title')}
       subtitle={t('quick_log.subtitle')}
       on_close={on_close}
-      variant="sheet"
       footer={!is_loading && targets.length > 0 ? (
         <div className="modal-actions is-pinned">
           <button type="button" className="btn btn-secondary" onClick={on_close}>
@@ -204,124 +203,131 @@ function QuickExpenseModal({ is_open, on_close, on_saved }) {
       {is_loading ? (
         <LoadingState />
       ) : !targets.length ? (
-        <div className="empty-state" style={{ padding: '12px 0' }}>
-          <p>{t('quick_log.no_farm')}</p>
+        <div className="sheet-section">
+          <p style={{ margin: 0 }}>{t('quick_log.no_farm')}</p>
         </div>
       ) : (
-        <form id="quick-expense-form" className="form-compact" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>{t('quick_log.where')}</label>
-            <select
-              className="form-select"
-              value={target_key}
-              onChange={(event) => setTargetKey(event.target.value)}
-            >
-              {targets.map((target) => (
-                <option key={target.target_key} value={target.target_key}>
-                  {formatTargetLabel(target, t)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {selected?.crop_name && (
-            <p className="quick-log-context">
-              {t('quick_log.for_crop', { crop: selected.crop_name })}
-            </p>
-          )}
-          {selected && !selected.crop_name && (
-            <p className="quick-log-context">{t('quick_log.optional_crop_hint')}</p>
-          )}
-
-          <div className="form-group voice-entry">
-            <label>{t('voice.title')}</label>
-            <VoiceMicButton
-              lang={i18n.language}
-              on_transcript={handleTranscript}
-              on_error={setErrorMessage}
-              disabled={is_parsing || is_saving}
-            />
-            {transcript && (
-              <p className="voice-transcript">“{transcript}”</p>
+        <form id="quick-expense-form" className="sheet-form" onSubmit={handleSubmit}>
+          <section className="sheet-section">
+            <p className="sheet-section-label">{t('common.sheet_where')}</p>
+            <div className="form-group">
+              <label>{t('quick_log.where')}</label>
+              <select
+                className="form-select"
+                value={target_key}
+                onChange={(event) => setTargetKey(event.target.value)}
+              >
+                {targets.map((target) => (
+                  <option key={target.target_key} value={target.target_key}>
+                    {formatTargetLabel(target, t)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selected?.crop_name && (
+              <p className="quick-log-context" style={{ margin: 0 }}>
+                {t('quick_log.for_crop', { crop: selected.crop_name })}
+              </p>
             )}
-            {is_parsing && <p className="section-note">{t('voice.parsing')}</p>}
-          </div>
+            {selected && !selected.crop_name && (
+              <p className="quick-log-context" style={{ margin: 0 }}>{t('quick_log.optional_crop_hint')}</p>
+            )}
+          </section>
 
-          <div className="form-group">
-            <label>{t('expenses.category_label')}</label>
-            <div className="quick-log-categories">
+          <section className="sheet-section">
+            <p className="sheet-section-label">{t('common.sheet_voice')}</p>
+            <div className="form-group voice-entry">
+              <VoiceMicButton
+                lang={i18n.language}
+                on_transcript={handleTranscript}
+                on_error={setErrorMessage}
+                disabled={is_parsing || is_saving}
+              />
+              {transcript && (
+                <p className="voice-transcript">“{transcript}”</p>
+              )}
+              {is_parsing && <p className="section-note">{t('voice.parsing')}</p>}
+            </div>
+          </section>
+
+          <section className="sheet-section">
+            <p className="sheet-section-label">{t('common.sheet_category')}</p>
+            <div className="choice-chips" role="listbox" aria-label={t('expenses.category_label')}>
               {QUICK_CATEGORIES.map((item) => (
                 <button
                   key={item}
                   type="button"
-                  className={`quick-log-chip ${category === item ? 'is-active' : ''}`}
+                  role="option"
+                  aria-selected={category === item}
+                  className={`choice-chip ${category === item ? 'is-active' : ''}`}
                   onClick={() => setCategory(item)}
                 >
                   {t(`expenses.category.${item}`)}
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="form-group">
-            <label>{t('expenses.title_label')}</label>
-            <input
-              className="form-input"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder={t(`expenses.category.${category}`)}
-            />
-          </div>
-
-          <div className="form-row">
             <div className="form-group">
-              <label>{t('expenses.amount')}</label>
-              <input
-                className="form-input quick-log-amount"
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="500"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('expenses.quantity')}</label>
+              <label>{t('expenses.title_label')}</label>
               <input
                 className="form-input"
-                type="number"
-                min="0"
-                step="0.01"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={t(`expenses.category.${category}`)}
               />
             </div>
-          </div>
+          </section>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>{t('expenses.unit')}</label>
-              <input
-                className="form-input"
-                value={unit}
-                onChange={(event) => setUnit(event.target.value)}
-                placeholder="bags"
-              />
+          <section className="sheet-section">
+            <p className="sheet-section-label">{t('common.sheet_amount')}</p>
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('expenses.amount')}</label>
+                <input
+                  className="form-input quick-log-amount"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="500"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('expenses.date')}</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={expense_date}
+                  onChange={(event) => setExpenseDate(event.target.value)}
+                  required
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label>{t('expenses.date')}</label>
-              <input
-                className="form-input"
-                type="date"
-                value={expense_date}
-                onChange={(event) => setExpenseDate(event.target.value)}
-                required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('expenses.quantity')}</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('expenses.unit')}</label>
+                <input
+                  className="form-input"
+                  value={unit}
+                  onChange={(event) => setUnit(event.target.value)}
+                  placeholder="bags"
+                />
+              </div>
             </div>
-          </div>
+          </section>
         </form>
       )}
     </Modal>

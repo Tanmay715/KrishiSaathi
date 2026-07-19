@@ -561,12 +561,19 @@ function FarmDetailPage() {
       />
 
       {coming_soon && (
-        <Modal title={t(`farms.${coming_soon}_title`)} on_close={() => setComingSoon('')}>
-          <p className="section-note" style={{ marginTop: 0 }}>{t('farms.coming_soon')}</p>
-          <div className="modal-actions">
-            <button type="button" className="btn btn-primary" onClick={() => setComingSoon('')}>
-              {t('common.close')}
-            </button>
+        <Modal
+          title={t(`farms.${coming_soon}_title`)}
+          on_close={() => setComingSoon('')}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-primary" onClick={() => setComingSoon('')}>
+                {t('common.close')}
+              </button>
+            </div>
+          )}
+        >
+          <div className="sheet-section">
+            <p className="section-note" style={{ margin: 0 }}>{t('farms.coming_soon')}</p>
           </div>
         </Modal>
       )}
@@ -575,7 +582,6 @@ function FarmDetailPage() {
         <Modal
           title={editing_plot ? t('farms.edit_plot') : t('farms.add_plot')}
           on_close={() => setShowPlotModal(false)}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned">
               <button type="button" className="btn btn-secondary" onClick={() => setShowPlotModal(false)}>
@@ -588,49 +594,55 @@ function FarmDetailPage() {
           )}
         >
           {error_message && <div className="error-banner">{error_message}</div>}
-          <form id="plot-form" className="form-compact" onSubmit={handleSavePlot}>
-            <div className="form-group">
-              <label>{t('farms.plot_name')}</label>
-              <input
-                className="form-input"
-                value={plot_form.name}
-                onChange={(e) => setPlotForm((p) => ({ ...p, name: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="form-row">
+          <form id="plot-form" className="sheet-form" onSubmit={handleSavePlot}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_basics')}</p>
               <div className="form-group">
-                <label>
-                  {t('farms.plot_area')} ({land_unit_label})
-                </label>
+                <label>{t('farms.plot_name')}</label>
                 <input
                   className="form-input"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={plot_form.area}
-                  onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))}
+                  value={plot_form.name}
+                  onChange={(e) => setPlotForm((p) => ({ ...p, name: e.target.value }))}
                   required
                 />
               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>
+                    {t('farms.plot_area')} ({land_unit_label})
+                  </label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={plot_form.area}
+                    onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('farms.soil_type')}</label>
+                  <input
+                    className="form-input"
+                    value={plot_form.soil_type}
+                    onChange={(e) => setPlotForm((p) => ({ ...p, soil_type: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_optional')}</p>
               <div className="form-group">
-                <label>{t('farms.soil_type')}</label>
-                <input
-                  className="form-input"
-                  value={plot_form.soil_type}
-                  onChange={(e) => setPlotForm((p) => ({ ...p, soil_type: e.target.value }))}
+                <label>{t('farms.notes')}</label>
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  value={plot_form.notes}
+                  onChange={(e) => setPlotForm((p) => ({ ...p, notes: e.target.value }))}
                 />
               </div>
-            </div>
-            <div className="form-group">
-              <label>{t('farms.notes')}</label>
-              <textarea
-                className="form-textarea"
-                rows={2}
-                value={plot_form.notes}
-                onChange={(e) => setPlotForm((p) => ({ ...p, notes: e.target.value }))}
-              />
-            </div>
+            </section>
           </form>
         </Modal>
       )}
@@ -639,7 +651,6 @@ function FarmDetailPage() {
         <Modal
           title={t('farms.edit_farm')}
           on_close={() => setShowFarmModal(false)}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned">
               <button type="button" className="btn btn-secondary" onClick={() => setShowFarmModal(false)}>
@@ -652,75 +663,81 @@ function FarmDetailPage() {
           )}
         >
           {error_message && <div className="error-banner">{error_message}</div>}
-          <form id="edit-farm-form" className="form-compact" onSubmit={handleSaveFarm}>
-            <div className="form-group">
-              <label>{t('farms.name')}</label>
-              <input
-                className="form-input"
-                value={farm_form.name}
-                onChange={(e) => setFarmForm((p) => ({ ...p, name: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="form-row">
+          <form id="edit-farm-form" className="sheet-form" onSubmit={handleSaveFarm}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_basics')}</p>
               <div className="form-group">
-                <label>{t('farms.state')}</label>
-                <select
-                  className="form-select"
-                  value={farm_form.state}
-                  onChange={(e) => handleFarmStateChange(e.target.value)}
-                >
-                  <option value="">—</option>
-                  {INDIAN_STATES.map((state) => (
-                    <option key={state.code} value={state.label_en}>
-                      {state[state_label_key]}
+                <label>{t('farms.name')}</label>
+                <input
+                  className="form-input"
+                  value={farm_form.name}
+                  onChange={(e) => setFarmForm((p) => ({ ...p, name: e.target.value }))}
+                  required
+                />
+              </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_location')}</p>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('farms.state')}</label>
+                  <select
+                    className="form-select"
+                    value={farm_form.state}
+                    onChange={(e) => handleFarmStateChange(e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state.code} value={state.label_en}>
+                        {state[state_label_key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>{t('farms.district')}</label>
+                  <select
+                    className="form-select"
+                    value={farm_form.district}
+                    disabled={!farm_form.state}
+                    onChange={(e) => setFarmForm((p) => ({ ...p, district: e.target.value }))}
+                  >
+                    <option value="">
+                      {farm_form.state
+                        ? t('profile.district_placeholder')
+                        : t('profile.district_select_state')}
                     </option>
-                  ))}
-                </select>
+                    {has_custom_farm_district && (
+                      <option value={farm_form.district}>{farm_form.district}</option>
+                    )}
+                    {farm_district_options.map((district) => (
+                      <option key={district} value={district}>{district}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label>{t('farms.district')}</label>
-                <select
-                  className="form-select"
-                  value={farm_form.district}
-                  disabled={!farm_form.state}
-                  onChange={(e) => setFarmForm((p) => ({ ...p, district: e.target.value }))}
-                >
-                  <option value="">
-                    {farm_form.state
-                      ? t('profile.district_placeholder')
-                      : t('profile.district_select_state')}
-                  </option>
-                  {has_custom_farm_district && (
-                    <option value={farm_form.district}>{farm_form.district}</option>
-                  )}
-                  {farm_district_options.map((district) => (
-                    <option key={district} value={district}>{district}</option>
-                  ))}
-                </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('farms.village')}</label>
+                  <input
+                    className="form-input"
+                    value={farm_form.village}
+                    onChange={(e) => setFarmForm((p) => ({ ...p, village: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('farms.total_area')}</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={farm_form.total_area}
+                    onChange={(e) => setFarmForm((p) => ({ ...p, total_area: e.target.value }))}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('farms.village')}</label>
-                <input
-                  className="form-input"
-                  value={farm_form.village}
-                  onChange={(e) => setFarmForm((p) => ({ ...p, village: e.target.value }))}
-                />
-              </div>
-              <div className="form-group">
-                <label>{t('farms.total_area')}</label>
-                <input
-                  className="form-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={farm_form.total_area}
-                  onChange={(e) => setFarmForm((p) => ({ ...p, total_area: e.target.value }))}
-                />
-              </div>
-            </div>
+            </section>
           </form>
         </Modal>
       )}

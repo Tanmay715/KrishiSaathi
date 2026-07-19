@@ -330,7 +330,6 @@ function FarmsPage() {
         <Modal
           title={editing_farm ? t('farms.edit_farm') : t('farms.add_farm')}
           on_close={closeModal}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned">
               <button type="button" className="btn btn-secondary" onClick={closeModal}>
@@ -343,102 +342,118 @@ function FarmsPage() {
           )}
         >
           {error_message && <div className="error-banner">{error_message}</div>}
-          <form id="farm-form" className="form-compact" onSubmit={handleSaveFarm}>
-            <div className="form-group">
-              <label htmlFor="farm-name">{t('farms.name')}</label>
-              <input
-                id="farm-name"
-                className="form-input"
-                value={form.name}
-                onChange={(e) => updateForm('name', e.target.value)}
-                required
-                autoFocus
-              />
-            </div>
-            <div className="form-row">
+          <form id="farm-form" className="sheet-form" onSubmit={handleSaveFarm}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_basics')}</p>
               <div className="form-group">
-                <label htmlFor="farm-state">{t('farms.state')}</label>
-                <select
-                  id="farm-state"
-                  className="form-select"
-                  value={form.state}
-                  onChange={(e) => updateForm('state', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {INDIAN_STATES.map((state) => (
-                    <option key={state.code} value={state.label_en}>
-                      {state[state_label_key]}
+                <label htmlFor="farm-name">{t('farms.name')}</label>
+                <input
+                  id="farm-name"
+                  className="form-input"
+                  value={form.name}
+                  onChange={(e) => updateForm('name', e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+            </section>
+
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_location')}</p>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="farm-state">{t('farms.state')}</label>
+                  <select
+                    id="farm-state"
+                    className="form-select"
+                    value={form.state}
+                    onChange={(e) => updateForm('state', e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state.code} value={state.label_en}>
+                        {state[state_label_key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="farm-district">{t('farms.district')}</label>
+                  <select
+                    id="farm-district"
+                    className="form-select"
+                    value={form.district}
+                    disabled={!form.state}
+                    onChange={(e) => updateForm('district', e.target.value)}
+                  >
+                    <option value="">
+                      {form.state ? t('profile.district_placeholder') : t('profile.district_select_state')}
                     </option>
-                  ))}
-                </select>
+                    {has_custom_farm_district && (
+                      <option value={form.district}>{form.district}</option>
+                    )}
+                    {farm_district_options.map((district) => (
+                      <option key={district} value={district}>{district}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label htmlFor="farm-district">{t('farms.district')}</label>
-                <select
-                  id="farm-district"
-                  className="form-select"
-                  value={form.district}
-                  disabled={!form.state}
-                  onChange={(e) => updateForm('district', e.target.value)}
-                >
-                  <option value="">
-                    {form.state ? t('profile.district_placeholder') : t('profile.district_select_state')}
-                  </option>
-                  {has_custom_farm_district && (
-                    <option value={form.district}>{form.district}</option>
-                  )}
-                  {farm_district_options.map((district) => (
-                    <option key={district} value={district}>{district}</option>
-                  ))}
-                </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="farm-village">{t('farms.village')}</label>
+                  <input
+                    id="farm-village"
+                    className="form-input"
+                    value={form.village}
+                    onChange={(e) => updateForm('village', e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="farm-area">{t('farms.total_area')}</label>
+                  <input
+                    id="farm-area"
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.total_area}
+                    onChange={(e) => updateForm('total_area', e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="form-row">
+            </section>
+
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_optional')}</p>
               <div className="form-group">
-                <label htmlFor="farm-village">{t('farms.village')}</label>
-                <input
-                  id="farm-village"
-                  className="form-input"
-                  value={form.village}
-                  onChange={(e) => updateForm('village', e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="farm-area">{t('farms.total_area')}</label>
-                <input
-                  id="farm-area"
-                  className="form-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.total_area}
-                  onChange={(e) => updateForm('total_area', e.target.value)}
-                />
-              </div>
-            </div>
-            <details className="form-optional">
-              <summary>{t('farms.notes')}</summary>
-              <div className="form-group">
+                <label htmlFor="farm-notes">{t('farms.notes')}</label>
                 <textarea
                   id="farm-notes"
                   className="form-textarea"
                   value={form.notes}
                   onChange={(e) => updateForm('notes', e.target.value)}
-                  rows={2}
+                  rows={3}
                 />
               </div>
-            </details>
+            </section>
           </form>
         </Modal>
       )}
 
       {coming_soon && (
-        <Modal title={t(`farms.${coming_soon}_title`)} on_close={() => setComingSoon('')}>
-          <p className="section-note" style={{ marginTop: 0 }}>{t('farms.coming_soon')}</p>
-          <div className="modal-actions">
-            <button type="button" className="btn btn-primary" onClick={() => setComingSoon('')}>
-              {t('common.close')}
-            </button>
+        <Modal
+          title={t(`farms.${coming_soon}_title`)}
+          on_close={() => setComingSoon('')}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-primary" onClick={() => setComingSoon('')}>
+                {t('common.close')}
+              </button>
+            </div>
+          )}
+        >
+          <div className="sheet-section">
+            <p className="section-note" style={{ margin: 0 }}>{t('farms.coming_soon')}</p>
           </div>
         </Modal>
       )}

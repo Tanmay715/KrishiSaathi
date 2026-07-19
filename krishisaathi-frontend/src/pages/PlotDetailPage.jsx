@@ -41,6 +41,7 @@ import {
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import ConfirmDialog from '../components/ConfirmDialog';
+import Modal from '../components/Modal';
 import DiseaseScanPanel from '../components/DiseaseScanPanel';
 import MandiPricePanel from '../components/MandiPricePanel';
 import CropLivingPanel from '../components/CropLivingPanel';
@@ -1013,11 +1014,23 @@ function PlotDetailPage() {
       </div>
 
       {crop_to_delete && (
-        <div className="modal-overlay" onClick={() => setCropToDelete(null)}>
-          <div className="modal delete-crop-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <h3>{t('crops.delete_history')}</h3>
+        <Modal
+          title={t('crops.delete_history')}
+          on_close={() => setCropToDelete(null)}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setCropToDelete(null)}>
+                {t('farms.cancel')}
+              </button>
+              <button type="button" className="btn btn-danger" onClick={handleConfirmDeleteCrop} disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('crops.delete_history_confirm_btn')}
+              </button>
+            </div>
+          )}
+        >
+          <div className="sheet-section">
             <p className="delete-crop-name">{crop_to_delete.crop_name}</p>
-            <p className="delete-crop-body">
+            <p className="confirm-dialog-message">
               {(crop_to_delete.expenses?.length || 0) + (crop_to_delete.incomes?.length || 0) > 0
                 ? t('crops.delete_history_with_money', {
                     crop: crop_to_delete.crop_name,
@@ -1027,24 +1040,29 @@ function PlotDetailPage() {
                 : t('crops.delete_history_confirm', { crop: crop_to_delete.crop_name })}
             </p>
             {error_message && <div className="error-banner">{error_message}</div>}
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setCropToDelete(null)}>
-                {t('farms.cancel')}
-              </button>
-              <button type="button" className="btn btn-danger" onClick={handleConfirmDeleteCrop} disabled={is_saving}>
-                {is_saving ? t('common.loading') : t('crops.delete_history_confirm_btn')}
-              </button>
-            </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {show_crop_modal && (
-        <div className="modal-overlay" onClick={() => setShowCropModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('crops.start_crop')}</h3>
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleStartCrop}>
+        <Modal
+          title={t('crops.start_crop')}
+          on_close={() => setShowCropModal(false)}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowCropModal(false)}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="start-crop-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
+        >
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="start-crop-form" className="sheet-form" onSubmit={handleStartCrop}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_basics')}</p>
               <div className="form-group">
                 <label>{t('crops.template')}</label>
                 <select
@@ -1071,18 +1089,22 @@ function PlotDetailPage() {
               </div>
               <div className="form-group">
                 <label>{t('crops.season_label')}</label>
-                <select
-                  className="form-select"
-                  value={crop_form.season_type}
-                  onChange={(e) => setCropForm((p) => ({ ...p, season_type: e.target.value }))}
-                >
+                <div className="choice-chips">
                   {SEASON_OPTIONS.map((season) => (
-                    <option key={season} value={season}>
+                    <button
+                      key={season}
+                      type="button"
+                      className={`choice-chip${crop_form.season_type === season ? ' is-active' : ''}`}
+                      onClick={() => setCropForm((p) => ({ ...p, season_type: season }))}
+                    >
                       {t(`crops.season.${season}`)}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_details')}</p>
               <div className="form-row">
                 <div className="form-group">
                   <label>{t('crops.sowing_date')}</label>
@@ -1103,44 +1125,51 @@ function PlotDetailPage() {
                   />
                 </div>
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowCropModal(false)}>
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </section>
+          </form>
+        </Modal>
       )}
 
       {show_expense_modal && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
+        <Modal
+          title={editing_expense ? t('expenses.edit') : t('expenses.add')}
+          on_close={() => {
             setShowExpenseModal(false);
             setEditingExpense(null);
           }}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowExpenseModal(false);
+                  setEditingExpense(null);
+                }}
+              >
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="plot-expense-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
         >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editing_expense ? t('expenses.edit') : t('expenses.add')}</h3>
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleSaveExpense}>
-              <div className="form-group">
-                <label>{t('expenses.category_label')}</label>
-                <select
-                  className="form-select"
-                  value={expense_form.category}
-                  onChange={(e) => setExpenseForm((p) => applyExpenseCategoryChange(p, e.target.value))}
-                >
-                  {EXPENSE_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {t(`expenses.category.${category}`)}
-                    </option>
-                  ))}
-                </select>
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="plot-expense-form" className="sheet-form" onSubmit={handleSaveExpense}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_category')}</p>
+              <div className="choice-chips">
+                {EXPENSE_CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`choice-chip${expense_form.category === category ? ' is-active' : ''}`}
+                    onClick={() => setExpenseForm((p) => applyExpenseCategoryChange(p, category))}
+                  >
+                    {t(`expenses.category.${category}`)}
+                  </button>
+                ))}
               </div>
               <div className="form-group">
                 <label>{t('expenses.title_label')}</label>
@@ -1151,6 +1180,9 @@ function PlotDetailPage() {
                   required
                 />
               </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_amount')}</p>
               <div className="form-row">
                 <div className="form-group">
                   <label>{t('expenses.amount')}</label>
@@ -1216,61 +1248,29 @@ function PlotDetailPage() {
               {!expense_field_config.show_quantity && (
                 <p className="section-note">{t('expenses.amount_only_hint')}</p>
               )}
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_optional')}</p>
               <div className="form-group">
                 <label>{t('farms.notes')}</label>
                 <textarea
                   className="form-textarea"
-                  rows={2}
+                  rows={3}
                   value={expense_form.notes}
                   onChange={(e) => setExpenseForm((p) => ({ ...p, notes: e.target.value }))}
                 />
               </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setShowExpenseModal(false);
-                    setEditingExpense(null);
-                  }}
-                >
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </section>
+          </form>
+        </Modal>
       )}
 
       {harvest_success_crop && (
-        <div className="modal-overlay" onClick={handleHarvestSuccessLater}>
-          <div
-            className="modal harvest-success-modal"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="harvest-success-title"
-          >
-            <div className="harvest-success-icon" aria-hidden="true">
-              ✓
-            </div>
-            <h3 id="harvest-success-title">{t('crops.harvest_success_title')}</h3>
-            <p className="harvest-success-crop">{harvest_success_crop.crop_name}</p>
-            <p className="harvest-success-body">{t('crops.harvest_success_body')}</p>
-            <p className="section-note">{t('crops.harvest_success_hint')}</p>
-            <div style={{ margin: '16px 0' }}>
-              <MandiPricePanel
-                crop_name={harvest_success_crop.crop_name}
-                farm_id={farm_id}
-                expense_total={Number(harvest_success_crop.expense_total || 0)}
-                default_open
-                compact
-              />
-            </div>
-            <div className="modal-actions harvest-success-actions">
+        <Modal
+          title={t('crops.harvest_success_title')}
+          on_close={handleHarvestSuccessLater}
+          footer={(
+            <div className="modal-actions is-pinned">
               <button type="button" className="btn btn-secondary" onClick={handleHarvestSuccessLater}>
                 {t('crops.harvest_success_later')}
               </button>
@@ -1278,32 +1278,59 @@ function PlotDetailPage() {
                 {t('crops.harvest_success_log_income')}
               </button>
             </div>
+          )}
+        >
+          <div className="sheet-section" style={{ textAlign: 'center' }}>
+            <div className="harvest-success-icon" aria-hidden="true">✓</div>
+            <p className="harvest-success-crop">{harvest_success_crop.crop_name}</p>
+            <p className="harvest-success-body">{t('crops.harvest_success_body')}</p>
+            <p className="section-note">{t('crops.harvest_success_hint')}</p>
           </div>
-        </div>
+          <div className="sheet-section">
+            <MandiPricePanel
+              crop_name={harvest_success_crop.crop_name}
+              farm_id={farm_id}
+              expense_total={Number(harvest_success_crop.expense_total || 0)}
+              default_open
+              compact
+            />
+          </div>
+        </Modal>
       )}
 
       {show_income_modal && (
-        <div className="modal-overlay" onClick={closeIncomeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editing_income ? t('incomes.edit') : t('incomes.add')}</h3>
-            {income_crop_context?.crop_name && (
-              <p className="section-note">{t('incomes.for_crop', { crop: income_crop_context.crop_name })}</p>
-            )}
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleSaveIncome}>
-              <div className="form-group">
-                <label>{t('incomes.category_label')}</label>
-                <select
-                  className="form-select"
-                  value={income_form.category}
-                  onChange={(e) => setIncomeForm((p) => applyIncomeCategoryChange(p, e.target.value))}
-                >
-                  {INCOME_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {t(`incomes.category.${category}`)}
-                    </option>
-                  ))}
-                </select>
+        <Modal
+          title={editing_income ? t('incomes.edit') : t('incomes.add')}
+          on_close={closeIncomeModal}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={closeIncomeModal}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="plot-income-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
+        >
+          {income_crop_context?.crop_name && (
+            <p className="section-note">{t('incomes.for_crop', { crop: income_crop_context.crop_name })}</p>
+          )}
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="plot-income-form" className="sheet-form" onSubmit={handleSaveIncome}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_category')}</p>
+              <div className="choice-chips">
+                {INCOME_CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`choice-chip${income_form.category === category ? ' is-active' : ''}`}
+                    onClick={() => setIncomeForm((p) => applyIncomeCategoryChange(p, category))}
+                  >
+                    {t(`incomes.category.${category}`)}
+                  </button>
+                ))}
               </div>
               <div className="form-group">
                 <label>{t('incomes.title_label')}</label>
@@ -1314,6 +1341,9 @@ function PlotDetailPage() {
                   required
                 />
               </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_amount')}</p>
               <div className="form-row">
                 <div className="form-group">
                   <label>{t('incomes.amount')}</label>
@@ -1379,34 +1409,42 @@ function PlotDetailPage() {
               {!income_field_config.show_quantity && (
                 <p className="section-note">{t('incomes.amount_only_hint')}</p>
               )}
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_optional')}</p>
               <div className="form-group">
                 <label>{t('farms.notes')}</label>
                 <textarea
                   className="form-textarea"
-                  rows={2}
+                  rows={3}
                   value={income_form.notes}
                   onChange={(e) => setIncomeForm((p) => ({ ...p, notes: e.target.value }))}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeIncomeModal}>
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </section>
+          </form>
+        </Modal>
       )}
 
       {show_plot_modal && (
-        <div className="modal-overlay" onClick={() => setShowPlotModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('farms.edit_plot')}</h3>
-            {error_message && <div className="error-banner">{error_message}</div>}
-            <form onSubmit={handleSavePlot}>
+        <Modal
+          title={t('farms.edit_plot')}
+          on_close={() => setShowPlotModal(false)}
+          footer={(
+            <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowPlotModal(false)}>
+                {t('farms.cancel')}
+              </button>
+              <button type="submit" form="edit-plot-form" className="btn btn-primary" disabled={is_saving}>
+                {is_saving ? t('common.loading') : t('farms.save')}
+              </button>
+            </div>
+          )}
+        >
+          {error_message && <div className="error-banner">{error_message}</div>}
+          <form id="edit-plot-form" className="sheet-form" onSubmit={handleSavePlot}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_basics')}</p>
               <div className="form-group">
                 <label>{t('farms.plot_name')}</label>
                 <input
@@ -1438,17 +1476,9 @@ function PlotDetailPage() {
                   onChange={(e) => setPlotForm((p) => ({ ...p, soil_type: e.target.value }))}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowPlotModal(false)}>
-                  {t('farms.cancel')}
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={is_saving}>
-                  {is_saving ? t('common.loading') : t('farms.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </section>
+          </form>
+        </Modal>
       )}
 
       {confirm_delete && (

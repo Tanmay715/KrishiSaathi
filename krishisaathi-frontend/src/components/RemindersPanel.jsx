@@ -188,7 +188,6 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
         <Modal
           title={t('reminders.add')}
           on_close={() => setShowModal(false)}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned">
               <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
@@ -200,28 +199,32 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
             </div>
           )}
         >
-          <form id="panel-reminder-form" className="form-compact" onSubmit={handleCreate}>
-            <div className="form-group">
-              <label>{t('reminders.reminder_title')}</label>
-              <input
-                className="form-input"
-                value={form.title}
-                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="form-row">
+          <form id="panel-reminder-form" className="sheet-form" onSubmit={handleCreate}>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_details')}</p>
+              <div className="form-group">
+                <label>{t('reminders.reminder_title')}</label>
+                <input
+                  className="form-input"
+                  value={form.title}
+                  onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </div>
               <div className="form-group">
                 <label>{t('reminders.type')}</label>
-                <select
-                  className="form-select"
-                  value={form.type}
-                  onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}
-                >
+                <div className="choice-chips">
                   {REMINDER_TYPES.map((type) => (
-                    <option key={type} value={type}>{t(`reminders.types.${type}`)}</option>
+                    <button
+                      key={type}
+                      type="button"
+                      className={`choice-chip${form.type === type ? ' is-active' : ''}`}
+                      onClick={() => setForm((prev) => ({ ...prev, type }))}
+                    >
+                      {t(`reminders.types.${type}`)}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
               <div className="form-group">
                 <label>{t('reminders.due_at')}</label>
@@ -233,7 +236,7 @@ function RemindersPanel({ farm_id = null, compact = false, default_open = false 
                   required
                 />
               </div>
-            </div>
+            </section>
           </form>
         </Modal>
       )}

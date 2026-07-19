@@ -290,7 +290,6 @@ function MoneyPage() {
             setShowIncomeModal(false);
             clearAddParam();
           }}
-          variant="sheet"
           footer={(
             <div className="modal-actions is-pinned">
               <button
@@ -309,56 +308,62 @@ function MoneyPage() {
             </div>
           )}
         >
-          <form id="income-form" className="form-compact" onSubmit={handleSaveIncome}>
+          <form id="income-form" className="sheet-form" onSubmit={handleSaveIncome}>
             {income_error && <div className="error-banner">{income_error}</div>}
-            <div className="form-group">
-              <label>{t('quick_log.where')}</label>
-              <select
-                className="form-select"
-                value={target_key}
-                onChange={(event) => setTargetKey(event.target.value)}
-                required
-              >
-                {targets.map((target) => (
-                  <option key={target.target_key} value={target.target_key}>
-                    {targetLabel(target)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>{t('incomes.title_label')}</label>
-              <input
-                className="form-input"
-                value={income_title}
-                onChange={(event) => setIncomeTitle(event.target.value)}
-                required
-              />
-            </div>
-            <div className="form-row">
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_where')}</p>
               <div className="form-group">
-                <label>{t('incomes.amount')}</label>
+                <label>{t('quick_log.where')}</label>
+                <select
+                  className="form-select"
+                  value={target_key}
+                  onChange={(event) => setTargetKey(event.target.value)}
+                  required
+                >
+                  {targets.map((target) => (
+                    <option key={target.target_key} value={target.target_key}>
+                      {targetLabel(target)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+            <section className="sheet-section">
+              <p className="sheet-section-label">{t('common.sheet_details')}</p>
+              <div className="form-group">
+                <label>{t('incomes.title_label')}</label>
                 <input
                   className="form-input"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={income_amount}
-                  onChange={(event) => setIncomeAmount(event.target.value)}
+                  value={income_title}
+                  onChange={(event) => setIncomeTitle(event.target.value)}
                   required
                 />
               </div>
-              <div className="form-group">
-                <label>{t('incomes.date')}</label>
-                <input
-                  className="form-input"
-                  type="date"
-                  value={income_date}
-                  onChange={(event) => setIncomeDate(event.target.value)}
-                  required
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('incomes.amount')}</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={income_amount}
+                    onChange={(event) => setIncomeAmount(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('incomes.date')}</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={income_date}
+                    onChange={(event) => setIncomeDate(event.target.value)}
+                    required
+                  />
+                </div>
               </div>
-            </div>
+            </section>
           </form>
         </Modal>
       )}

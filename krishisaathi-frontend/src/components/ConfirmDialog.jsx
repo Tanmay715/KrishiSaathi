@@ -18,7 +18,7 @@ function ConfirmDialog({
       title={title || t('common.confirm')}
       on_close={on_cancel}
       footer={(
-        <div className="modal-actions">
+        <div className="modal-actions is-pinned">
           <button type="button" className="btn btn-secondary" onClick={on_cancel} disabled={is_loading}>
             {cancel_label || t('common.cancel')}
           </button>
@@ -33,7 +33,9 @@ function ConfirmDialog({
         </div>
       )}
     >
-      <p className="confirm-dialog-message">{message}</p>
+      <div className="sheet-section">
+        <p className="confirm-dialog-message">{message}</p>
+      </div>
     </Modal>
   );
 }
