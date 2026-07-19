@@ -6278,6 +6278,470 @@ textarea {
   box-shadow: var(--shadow-sm);
 }
 
+.farms-hub,
+.farm-detail-hub {
+  gap: 16px;
+}
+
+.farms-hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.farm-hub-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  box-shadow: 0 6px 18px rgba(15, 55, 35, 0.05);
+}
+
+.farm-hub-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.farm-hub-mark,
+.plot-hub-mark {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #1f6b4a, #2f9e5f);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.plot-hub-mark {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+}
+
+.farm-hub-card-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.farm-hub-card-copy h3,
+.plot-hub-title h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.farm-hub-card-copy p,
+.plot-hub-title p {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-subtle);
+  overflow-wrap: anywhere;
+}
+
+.farm-hub-manage {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(47, 158, 95, 0.35);
+  color: var(--color-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  background: #f3faf5;
+}
+
+.farm-hub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.farm-hub-chips span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(30, 92, 64, 0.06);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.farms-hub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.farms-hub-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.farms-hub-section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.farms-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.farms-summary-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.farms-summary-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.farms-summary-tile.tone-green .farms-summary-icon {
+  background: #e8f7ee;
+  color: #166534;
+}
+
+.farms-summary-tile.tone-blue .farms-summary-icon {
+  background: #e8f1ff;
+  color: #1d4ed8;
+}
+
+.farms-summary-tile.tone-orange .farms-summary-icon {
+  background: #fff1e6;
+  color: #c2410c;
+}
+
+.farms-summary-tile strong {
+  font-size: clamp(0.95rem, 3.6vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.farms-summary-tile em,
+.farms-summary-tile small {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+}
+
+.farms-summary-tile em {
+  font-weight: 650;
+  color: var(--color-text-muted);
+}
+
+.farms-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.farms-quick-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 88px;
+  padding: 10px 6px;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.farms-quick-tile span {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.farms-quick-tile.tone-green span {
+  background: #e8f7ee;
+  color: #166534;
+}
+
+.farms-quick-tile.tone-blue span {
+  background: #e8f1ff;
+  color: #1d4ed8;
+}
+
+.farms-quick-tile.tone-purple span {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.farms-quick-tile.tone-orange span {
+  background: #fff1e6;
+  color: #c2410c;
+}
+
+.farms-link-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 55, 35, 0.04);
+}
+
+.farms-link-card.is-report {
+  background: linear-gradient(180deg, #fffaf0, #fff);
+}
+
+.farms-link-card > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.farms-link-card strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.farms-link-card p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+}
+
+.farms-link-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.farms-link-icon.tone-green {
+  background: #e8f7ee;
+  color: #166534;
+}
+
+.farms-link-icon.tone-amber {
+  background: #fff4df;
+  color: #b45309;
+}
+
+.farms-link-icon.tone-purple {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.farms-link-chevron {
+  color: var(--color-text-subtle);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.farm-detail-top {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.farm-detail-back {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 92, 64, 0.12);
+  background: #fff;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+.farm-detail-top h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.farm-detail-top p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-subtle);
+}
+
+.farm-detail-edit {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(30, 92, 64, 0.14);
+  border-radius: 12px;
+  background: #f5faf7;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+}
+
+.farm-detail-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(112px, 1fr);
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.farm-detail-stats::-webkit-scrollbar {
+  display: none;
+}
+
+.farm-detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 112px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.farm-detail-stat span,
+.farm-detail-stat small {
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+}
+
+.farm-detail-stat strong {
+  font-size: 1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.plot-hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plot-hub-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  box-shadow: 0 6px 18px rgba(15, 55, 35, 0.05);
+}
+
+.plot-hub-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.plot-hub-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.plot-hub-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plot-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.plot-status-pill.is-active {
+  background: rgba(47, 158, 95, 0.14);
+  color: #166534;
+}
+
+.plot-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(15, 55, 35, 0.06);
+}
+
+.plot-hub-grid span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+}
+
+.plot-hub-grid strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.plot-hub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 380px) {
+  .farms-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .money-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

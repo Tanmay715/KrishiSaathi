@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { createFarm, deleteFarm, getFarms, updateFarm } from '../services/farm_service';
+import { createFarm, getExpenseSummary, getFarms, updateFarm } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { INDIAN_STATES } from '../config/indian_states';
 import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
@@ -10,7 +10,7 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useAuth } from '../hooks/useAuth';
 import { normalizeLanguage } from '../utils/language';
 
 const EMPTY_FORM = {
@@ -22,19 +22,25 @@ const EMPTY_FORM = {
   notes: '',
 };
 
+function formatAmount(value) {
+  return Number(value || 0).toLocaleString('en-IN');
+}
+
 function FarmsPage() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [search_params, setSearchParams] = useSearchParams();
   const [farms, setFarms] = useState([]);
+  const [spent, setSpent] = useState(0);
   const [is_loading, setIsLoading] = useState(true);
   const [show_modal, setShowModal] = useState(false);
   const [editing_farm, setEditingFarm] = useState(null);
-  const [farm_to_delete, setFarmToDelete] = useState(null);
   const [is_saving, setIsSaving] = useState(false);
-  const [is_deleting, setIsDeleting] = useState(false);
   const [error_message, setErrorMessage] = useState('');
   const [load_error, setLoadError] = useState('');
   const [is_cached_view, setIsCachedView] = useState(false);
+  const [coming_soon, setComingSoon] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
   const state_label_key = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'hi'
     ? 'label_hi'
@@ -43,6 +49,7 @@ function FarmsPage() {
   const has_custom_farm_district = Boolean(
     form.district && !farm_district_options.includes(form.district),
   );
+  const land_unit = t(`common.${user?.preferred_land_unit || 'acre'}`);
 
   useEffect(() => {
     loadFarms();
@@ -53,11 +60,7 @@ function FarmsPage() {
       return;
     }
 
-    setEditingFarm(null);
-    setForm(EMPTY_FORM);
-    setErrorMessage('');
-    setShowModal(true);
-
+    openCreateModal();
     const next = new URLSearchParams(search_params);
     next.delete('add');
     setSearchParams(next, { replace: true });
@@ -68,9 +71,13 @@ function FarmsPage() {
     setLoadError('');
 
     try {
-      const response = await getFarms();
-      const rows = response.data || [];
+      const [farms_response, expense_response] = await Promise.all([
+        getFarms(),
+        getExpenseSummary(),
+      ]);
+      const rows = farms_response.data || [];
       setFarms(rows);
+      setSpent(Number(expense_response.data?.total_spent || 0));
       setIsCachedView(false);
       saveOfflineData(CACHE_KEYS.farms, rows);
     } catch (error) {
@@ -116,21 +123,12 @@ function FarmsPage() {
     setErrorMessage('');
   }
 
-  function openEditModal(event, farm) {
-    event.preventDefault();
-    event.stopPropagation();
-    setEditingFarm(farm);
-    const state = farm.state || '';
-    setForm({
-      name: farm.name || '',
-      state,
-      district: normalizeDistrictOption(state, farm.district || ''),
-      village: farm.village || '',
-      total_area: farm.total_area != null ? String(farm.total_area) : '',
-      notes: farm.notes || '',
-    });
-    setErrorMessage('');
-    setShowModal(true);
+  function handleAddPlotQuick() {
+    if (!farms.length) {
+      openCreateModal();
+      return;
+    }
+    navigate(`/farms/${farms[0].id}?add_plot=1`);
   }
 
   async function handleSaveFarm(event) {
@@ -159,24 +157,11 @@ function FarmsPage() {
     }
   }
 
-  async function confirmDeleteFarm() {
-    if (!farm_to_delete) {
-      return;
-    }
-
-    setIsDeleting(true);
-
-    try {
-      await deleteFarm(farm_to_delete.id);
-      setFarmToDelete(null);
-      await loadFarms();
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || t('common.error'));
-      setFarmToDelete(null);
-    } finally {
-      setIsDeleting(false);
-    }
-  }
+  const totals = useMemo(() => {
+    const area = farms.reduce((sum, farm) => sum + Number(farm.total_area || 0), 0);
+    const plots = farms.reduce((sum, farm) => sum + Number(farm.plot_count || 0), 0);
+    return { area, plots, count: farms.length };
+  }, [farms]);
 
   if (is_loading) {
     return <LoadingState />;
@@ -189,13 +174,13 @@ function FarmsPage() {
   const has_farms = farms.length > 0;
 
   return (
-    <div>
+    <div className="farms-hub page-stack">
       <PageHeader
         title={t('farms.title')}
         subtitle={t('farms.subtitle')}
         action={has_farms ? (
-          <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            {t('farms.add_farm')}
+          <button type="button" className="btn btn-primary btn-sm" onClick={openCreateModal}>
+            + {t('farms.add_farm')}
           </button>
         ) : null}
       />
@@ -217,56 +202,120 @@ function FarmsPage() {
           )}
         />
       ) : (
-        <div className="farm-list">
-          {farms.map((farm) => (
-            <div key={farm.id} className="card farm-card is-rich">
-              <Link to={`/farms/${farm.id}`} className="farm-card-link">
-                <div className="farm-card-top">
-                  <div className="farm-card-identity">
-                    <span className="farm-mark" aria-hidden="true">
-                      {(farm.name || '?').trim().charAt(0).toUpperCase()}
-                    </span>
-                    <div>
-                      <h3>{farm.name}</h3>
-                      {(farm.village || farm.district || farm.state) && (
-                        <p className="farm-card-location">
-                          {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="farm-card-cta">{t('farms.manage_farm')} →</span>
-                </div>
-                <div className="farm-card-chips">
-                  <span className="farm-chip">
-                    {t('farms.plot_count', { count: farm.plot_count || 0 })}
+        <>
+          <div className="farms-hub-list">
+            {farms.map((farm) => (
+              <article key={farm.id} className="farm-hub-card">
+                <div className="farm-hub-card-main">
+                  <span className="farm-hub-mark" aria-hidden="true">
+                    {(farm.name || '?').trim().charAt(0).toUpperCase()}
                   </span>
-                  {farm.total_area > 0 && (
-                    <span className="farm-chip">
-                      {farm.total_area} {t('farms.area_unit')}
+                  <div className="farm-hub-card-copy">
+                    <h3>{farm.name}</h3>
+                    {(farm.village || farm.district || farm.state) && (
+                      <p>
+                        {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    <Link to={`/farms/${farm.id}`} className="farm-hub-manage">
+                      {t('farms.manage_farm')} →
+                    </Link>
+                  </div>
+                </div>
+                <div className="farm-hub-chips">
+                  <span>{t('farms.plot_count', { count: farm.plot_count || 0 })}</span>
+                  {Number(farm.total_area) > 0 && (
+                    <span>
+                      {Number(farm.total_area).toFixed(4)} {land_unit}
                     </span>
                   )}
                 </div>
-              </Link>
-              <div className="action-row">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => openEditModal(e, farm)}>
-                  {t('common.edit')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setFarmToDelete(farm);
-                  }}
-                >
-                  {t('common.delete')}
-                </button>
+              </article>
+            ))}
+          </div>
+
+          <section className="farms-hub-section">
+            <h3 className="farms-hub-section-title">{t('farms.summary_title')}</h3>
+            <div className="farms-summary-grid">
+              <div className="farms-summary-tile tone-green">
+                <span className="farms-summary-icon" aria-hidden="true">⌂</span>
+                <strong>{totals.count}</strong>
+                <em>{t('farms.summary_farms')}</em>
+                <small>{t('farms.summary_active')}</small>
+              </div>
+              <div className="farms-summary-tile tone-blue">
+                <span className="farms-summary-icon" aria-hidden="true">▣</span>
+                <strong>{totals.area.toFixed(4)}</strong>
+                <em>{t('farms.summary_area')}</em>
+                <small>{land_unit}</small>
+              </div>
+              <div className="farms-summary-tile tone-orange">
+                <span className="farms-summary-icon" aria-hidden="true">₹</span>
+                <strong>₹{formatAmount(spent)}</strong>
+                <em>{t('farms.summary_value')}</em>
+                <small>{t('farms.summary_estimated')}</small>
               </div>
             </div>
-          ))}
-        </div>
+          </section>
+
+          <section className="farms-hub-section">
+            <h3 className="farms-hub-section-title">{t('farms.quick_title')}</h3>
+            <div className="farms-quick-grid">
+              <button type="button" className="farms-quick-tile tone-green" onClick={openCreateModal}>
+                <span aria-hidden="true">＋</span>
+                {t('farms.add_farm')}
+              </button>
+              <button type="button" className="farms-quick-tile tone-blue" onClick={handleAddPlotQuick}>
+                <span aria-hidden="true">▤</span>
+                {t('farms.add_plot')}
+              </button>
+              <button
+                type="button"
+                className="farms-quick-tile tone-purple"
+                onClick={() => setComingSoon('crop_plan')}
+              >
+                <span aria-hidden="true">▤</span>
+                {t('farms.crop_plan')}
+              </button>
+              <Link to="/money?add=expense" className="farms-quick-tile tone-orange">
+                <span aria-hidden="true">₹</span>
+                {t('farms.log_expense')}
+              </Link>
+            </div>
+          </section>
+
+          <Link to="/market" className="farms-link-card">
+            <span className="farms-link-icon tone-green" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M4 8.5 6.2 4.8h11.6L20 8.5v1.2a2.3 2.3 0 0 1-4.6 0 2.3 2.3 0 0 1-4.6 0 2.3 2.3 0 1 1-4.6 0 2.3 2.3 0 0 1-2.2-1.2V8.5z" />
+                <path d="M6.2 11.8h11.6V19a1.2 1.2 0 0 1-1.2 1.2H7.4A1.2 1.2 0 0 1 6.2 19v-7.2z" />
+              </svg>
+            </span>
+            <div>
+              <strong>{t('farms.mandi_hint_title')}</strong>
+              <p>{t('farms.mandi_hint_body')}</p>
+            </div>
+            <span className="farms-link-chevron" aria-hidden="true">›</span>
+          </Link>
+
+          <button
+            type="button"
+            className="farms-link-card is-button"
+            onClick={() => setComingSoon('tip')}
+          >
+            <span className="farms-link-icon tone-amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M9 18h6M10 21h4" />
+                <path d="M12 3a6 6 0 0 1 3.6 10.8c-.7.5-1.1 1.2-1.2 2H9.6c-.1-.8-.5-1.5-1.2-2A6 6 0 0 1 12 3z" />
+              </svg>
+            </span>
+            <div>
+              <strong>{t('farms.tip_title')}</strong>
+              <p>{t('farms.tip_body')}</p>
+            </div>
+            <span className="farms-link-chevron" aria-hidden="true">›</span>
+          </button>
+        </>
       )}
 
       {show_modal && (
@@ -368,16 +417,15 @@ function FarmsPage() {
         </Modal>
       )}
 
-      {farm_to_delete && (
-        <ConfirmDialog
-          title={t('common.delete')}
-          message={t('farms.delete_confirm', { name: farm_to_delete.name })}
-          confirm_label={t('common.delete')}
-          is_danger
-          is_loading={is_deleting}
-          on_confirm={confirmDeleteFarm}
-          on_cancel={() => setFarmToDelete(null)}
-        />
+      {coming_soon && (
+        <Modal title={t(`farms.${coming_soon}_title`)} on_close={() => setComingSoon('')}>
+          <p className="section-note" style={{ marginTop: 0 }}>{t('farms.coming_soon')}</p>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-primary" onClick={() => setComingSoon('')}>
+              {t('common.close')}
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );
