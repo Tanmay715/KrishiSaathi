@@ -416,16 +416,18 @@ function FarmsPage() {
                 />
               </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="farm-notes">{t('farms.notes')}</label>
-              <textarea
-                id="farm-notes"
-                className="form-textarea"
-                value={form.notes}
-                onChange={(e) => updateForm('notes', e.target.value)}
-                rows={2}
-              />
-            </div>
+            <details className="form-optional">
+              <summary>{t('farms.notes')}</summary>
+              <div className="form-group">
+                <textarea
+                  id="farm-notes"
+                  className="form-textarea"
+                  value={form.notes}
+                  onChange={(e) => updateForm('notes', e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </details>
           </form>
         </Modal>
       )}

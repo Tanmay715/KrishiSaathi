@@ -327,6 +327,11 @@
     "amount_only_hint": "For subsidies, amount and date are enough.",
     "pending_title": "Pending sale income",
     "pending_hint": "Harvested crops waiting for sale income to be logged.",
+    "skip_sale": "Skip",
+    "skip_sale_title": "Skip sale income?",
+    "skip_sale_body": "Remove \"{{crop}}\" from pending sale income. Do you still want to track expenses for this crop?",
+    "keep_expense_tracking": "Yes, keep expense tracking",
+    "stop_expense_tracking": "No, stop expense tracking",
     "quantity_labels": {
       "yield": "Yield sold",
       "quantity": "Quantity"

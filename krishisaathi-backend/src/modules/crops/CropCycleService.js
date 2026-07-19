@@ -226,6 +226,24 @@ class CropCycleService {
     return db('crop_cycles').where({ id: cycle_id }).first();
   }
 
+  async skipSaleIncome(user_id, farm_id, plot_id, cycle_id, payload = {}) {
+    await this.#getOwnedPlot(user_id, farm_id, plot_id);
+    const cycle = await this.#findOwnedCycle(plot_id, cycle_id);
+
+    if (cycle.status !== 'harvested') {
+      throw ApiError.badRequest('Only harvested crops can skip sale income');
+    }
+
+    const track_expenses = payload.track_expenses !== false;
+
+    await db('crop_cycles').where({ id: cycle_id }).update({
+      skip_sale_income: true,
+      track_expenses,
+    });
+
+    return db('crop_cycles').where({ id: cycle_id }).first();
+  }
+
   async deleteCropCycle(user_id, farm_id, plot_id, cycle_id) {
     const plot = await this.#getOwnedPlot(user_id, farm_id, plot_id);
     const cycle = await this.#findOwnedCycle(plot_id, cycle_id);

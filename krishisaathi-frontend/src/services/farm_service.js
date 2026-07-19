@@ -76,6 +76,14 @@ export async function harvestCrop(farm_id, plot_id, cycle_id, payload = {}) {
   return response.data;
 }
 
+export async function skipSaleIncome(farm_id, plot_id, cycle_id, payload = {}) {
+  const response = await api_client.post(
+    `/farms/${farm_id}/plots/${plot_id}/crop-cycles/${cycle_id}/skip-sale`,
+    payload,
+  );
+  return response.data;
+}
+
 export async function deleteCropCycle(farm_id, plot_id, cycle_id) {
   const response = await api_client.delete(
     `/farms/${farm_id}/plots/${plot_id}/crop-cycles/${cycle_id}`,

@@ -68,6 +68,7 @@ class IncomeService {
       .where('farms.is_active', true)
       .where('plots.is_active', true)
       .where('crop_cycles.status', 'harvested')
+      .where('crop_cycles.skip_sale_income', false)
       .select(
         'crop_cycles.id',
         'crop_cycles.crop_name',

@@ -520,7 +520,11 @@ function PlotDetailPage() {
     earned,
   });
   const pending_income_crops = (plot.crop_history || [])
-    .filter((crop) => crop.status === 'harvested' && Number(crop.income_total || 0) === 0)
+    .filter((crop) => (
+      crop.status === 'harvested'
+      && !crop.skip_sale_income
+      && Number(crop.income_total || 0) === 0
+    ))
     .map((crop) => ({
       id: crop.id,
       crop_name: crop.crop_name,
@@ -823,6 +827,7 @@ function PlotDetailPage() {
           setExpandedHistoryId(crop.id);
           openCreateIncomeForCrop(crop);
         }}
+        on_changed={loadPlot}
       />
 
       {plot.crop_history?.length > 0 && (

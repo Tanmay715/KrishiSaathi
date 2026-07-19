@@ -92,6 +92,15 @@ function DashboardPage() {
     }
   }
 
+  async function refreshPendingIncome() {
+    try {
+      const pending_response = await getPendingIncomeCrops();
+      setPendingIncomeCrops(pending_response.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function loadDashboard() {
     setIsLoading(true);
     setErrorMessage('');
@@ -298,49 +307,6 @@ function DashboardPage() {
             </div>
           </section>
 
-          <MandiMarketSection
-            farm_id={farms[0]?.id || null}
-            preferred_crops={pending_income_crops.map((crop) => crop.crop_name || crop.name)}
-          />
-
-          <section className="home-split">
-            <div className="home-quick">
-              <h3 className="home-section-title">{t('dashboard.quick_do')}</h3>
-              <div className="home-quick-grid">
-                {QUICK_ACTIONS.map((action) => (
-                  action.is_reminder ? (
-                    <button
-                      key={action.label_key}
-                      type="button"
-                      className="home-quick-tile"
-                      onClick={() => setShowReminderModal(true)}
-                    >
-                      <SectionIcon name={action.icon} tone={action.tone} />
-                      <span>{t(action.label_key)}</span>
-                    </button>
-                  ) : (
-                    <Link key={action.label_key} to={action.to} className="home-quick-tile">
-                      <SectionIcon name={action.icon} tone={action.tone} />
-                      <span>{t(action.label_key)}</span>
-                    </Link>
-                  )
-                ))}
-              </div>
-            </div>
-
-            <Link to="/assistant" className="home-assistant-card">
-              <div>
-                <strong>{t('assistant.title')}</strong>
-                <p>{t('assistant.cta')}</p>
-              </div>
-              <span className="home-assistant-btn">{t('dashboard.chat_now')} →</span>
-            </Link>
-          </section>
-
-          {pending_income_crops.length > 0 && (
-            <PendingIncomeSection crops={pending_income_crops} show_location />
-          )}
-
           <section className="home-section" id="reminders">
             <div className="home-section-head">
               <h3 className="home-section-title">{t('reminders.title')}</h3>
@@ -398,6 +364,53 @@ function DashboardPage() {
                 </button>
               </div>
             </div>
+          </section>
+
+          {(pending_income_crops.length > 0) && (
+            <PendingIncomeSection
+              crops={pending_income_crops}
+              show_location
+              on_changed={refreshPendingIncome}
+            />
+          )}
+
+          <MandiMarketSection
+            farm_id={farms[0]?.id || null}
+            preferred_crops={pending_income_crops.map((crop) => crop.crop_name || crop.name)}
+          />
+
+          <section className="home-split">
+            <div className="home-quick">
+              <h3 className="home-section-title">{t('dashboard.quick_do')}</h3>
+              <div className="home-quick-grid">
+                {QUICK_ACTIONS.map((action) => (
+                  action.is_reminder ? (
+                    <button
+                      key={action.label_key}
+                      type="button"
+                      className="home-quick-tile"
+                      onClick={() => setShowReminderModal(true)}
+                    >
+                      <SectionIcon name={action.icon} tone={action.tone} />
+                      <span>{t(action.label_key)}</span>
+                    </button>
+                  ) : (
+                    <Link key={action.label_key} to={action.to} className="home-quick-tile">
+                      <SectionIcon name={action.icon} tone={action.tone} />
+                      <span>{t(action.label_key)}</span>
+                    </Link>
+                  )
+                ))}
+              </div>
+            </div>
+
+            <Link to="/assistant" className="home-assistant-card">
+              <div>
+                <strong>{t('assistant.title')}</strong>
+                <p>{t('assistant.cta')}</p>
+              </div>
+              <span className="home-assistant-btn">{t('dashboard.chat_now')} →</span>
+            </Link>
           </section>
         </>
       )}

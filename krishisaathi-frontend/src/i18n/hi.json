@@ -46,7 +46,7 @@
     "title": "डैशबोर्ड",
     "welcome": "स्वागत है",
     "total_farms": "कुल खेत",
-    "total_plots": "कुल खेत के टुकड़े",
+    "total_plots": "कुल प्लॉट",
     "total_spent": "कुल खर्च",
     "total_earned": "कुल आय",
     "net": "शुद्ध",
@@ -327,6 +327,11 @@
     "amount_only_hint": "सब्सिडी के लिए राशि और तारीख पर्याप्त हैं।",
     "pending_title": "बाकी बिक्री आय",
     "pending_hint": "कटाई हो चुकी फसलें जिनकी बिक्री आय अभी दर्ज नहीं हुई।",
+    "skip_sale": "हटाएँ",
+    "skip_sale_title": "बिक्री आय छोड़ें?",
+    "skip_sale_body": "\"{{crop}}\" को बाकी बिक्री सूची से हटाएँ। क्या आप इस फसल का खर्च अभी भी ट्रैक करना चाहते हैं?",
+    "keep_expense_tracking": "हाँ, खर्च ट्रैक रखें",
+    "stop_expense_tracking": "नहीं, खर्च ट्रैक बंद करें",
     "quantity_labels": {
       "yield": "बेची गई उपज",
       "quantity": "मात्रा"

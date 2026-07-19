@@ -60,6 +60,21 @@ class CropCycleController {
     }
   }
 
+  async skipSale(req, res, next) {
+    try {
+      const cycle = await CropCycleService.skipSaleIncome(
+        req.user.id,
+        req.params.farm_id,
+        req.params.plot_id,
+        req.params.cycle_id,
+        req.body,
+      );
+      return ApiResponse.success(res, cycle, 'Sale income skipped');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   async remove(req, res, next) {
     try {
       await CropCycleService.deleteCropCycle(
@@ -106,9 +121,14 @@ const harvest_schema = Joi.object({
   notes: Joi.string().allow('', null).optional(),
 });
 
+const skip_sale_schema = Joi.object({
+  track_expenses: Joi.boolean().optional(),
+});
+
 module.exports = {
   controller: new CropCycleController(),
   create_crop_schema,
   update_crop_schema,
   harvest_schema,
+  skip_sale_schema,
 };

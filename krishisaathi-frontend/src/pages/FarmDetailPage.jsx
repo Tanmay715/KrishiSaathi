@@ -140,6 +140,16 @@ function FarmDetailPage() {
     }
   }
 
+  async function refreshPendingIncome() {
+    try {
+      const pending_response = await getPendingIncomeCrops();
+      const farm_pending = (pending_response.data || []).filter((crop) => crop.farm_id === farm_id);
+      setPendingIncomeCrops(farm_pending);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function loadSeasonFinance(season, year) {
     try {
       const response = await getFarmSeasonFinance(farm_id, { season, year });
@@ -383,7 +393,11 @@ function FarmDetailPage() {
         </div>
       </div>
 
-      <PendingIncomeSection crops={pending_income_crops} show_location />
+      <PendingIncomeSection
+        crops={pending_income_crops}
+        show_location
+        on_changed={refreshPendingIncome}
+      />
 
       <section className="farms-hub-section">
         <div className="farms-hub-section-head">

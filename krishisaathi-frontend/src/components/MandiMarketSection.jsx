@@ -29,7 +29,7 @@ function pickGlanceCrops(preferred_crops = [], board_rows = []) {
     .map((name) => String(name || '').trim())
     .filter(Boolean);
   const board_names = board_rows.map((row) => row.crop);
-  return [...new Set([...preferred, ...BOARD_CROPS, ...board_names])].slice(0, 3);
+  return [...new Set([...preferred, ...BOARD_CROPS, ...board_names])].slice(0, 6);
 }
 
 function ChangePill({ change_pct, label = null }) {
@@ -104,7 +104,7 @@ function MandiBoardBody({
           : t('mandi.board_subtitle')}
       </p>
 
-      <div className="mandi-crop-picker is-wrap" role="list">
+      <div className="mandi-crop-square-grid" role="list">
         {crop_rows.map((row) => {
           const is_active = row.crop === selected_crop;
           return (
@@ -112,11 +112,11 @@ function MandiBoardBody({
               key={row.crop}
               type="button"
               role="listitem"
-              className={`mandi-crop-chip-btn${is_active ? ' is-active' : ''}`}
+              className={`mandi-crop-square${is_active ? ' is-active' : ''}`}
               onClick={() => on_select_crop(row.crop)}
             >
-              <CropMark crop={row.crop} size={28} shape="circle" />
-              <span>{row.crop}</span>
+              <CropMark crop={row.crop} size={36} shape="circle" />
+              <strong>{row.crop}</strong>
             </button>
           );
         })}
@@ -343,29 +343,21 @@ function MandiMarketSection({
         )}
 
         {!is_loading && !has_error && (
-          <>
-            <ul className="mandi-price-list is-premium">
-              {glance_rows.map((row, index) => (
-                <li key={row.crop}>
-                  <button
-                    type="button"
-                    className="mandi-price-row is-button is-premium"
-                    style={{ animationDelay: `${index * 60}ms` }}
-                    onClick={() => openMarket(row.crop)}
-                  >
-                    <span className="mandi-price-identity">
-                      <CropMark crop={row.crop} size={44} shape="circle" />
-                      <span className="mandi-price-crop">{row.crop}</span>
-                    </span>
-                    <span className="mandi-price-meta">
-                      <span className="mandi-price-value">{formatRate(row.modal)}</span>
-                      <ChangePill change_pct={row.change_pct} />
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
+          <div className="mandi-glance-square-grid">
+            {glance_rows.map((row, index) => (
+              <button
+                key={row.crop}
+                type="button"
+                className="mandi-crop-square is-glance"
+                style={{ animationDelay: `${index * 60}ms` }}
+                onClick={() => openMarket(row.crop)}
+              >
+                <CropMark crop={row.crop} size={40} shape="circle" />
+                <strong>{row.crop}</strong>
+                <span className="mandi-crop-square-price">{formatRate(row.modal)}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </section>
