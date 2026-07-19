@@ -25,6 +25,15 @@ function LoginPage() {
   const [dev_otp, setDevOtp] = useState('');
 
   useEffect(() => {
+    document.documentElement.classList.add('is-auth-screen');
+    document.body.classList.add('is-auth-screen');
+    return () => {
+      document.documentElement.classList.remove('is-auth-screen');
+      document.body.classList.remove('is-auth-screen');
+    };
+  }, []);
+
+  useEffect(() => {
     let is_active = true;
 
     async function warmApi() {
@@ -153,7 +162,7 @@ function LoginPage() {
             </div>
           </form>
         ) : (
-          <form onSubmit={handleVerifyOtp}>
+          <form onSubmit={handleVerifyOtp} className="auth-otp-form">
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: 16 }}>
               {t('auth.otp_sent')} +91 {phone}
             </p>
@@ -188,46 +197,50 @@ function LoginPage() {
                 onChange={(e) => setOtp(e.target.value)}
                 required
                 autoComplete="one-time-code"
+                autoFocus
               />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="name">{t('auth.name_label')}</label>
-              <input id="name" className="form-input" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="language">{t('auth.language_label')}</label>
-                <select
-                  id="language"
-                  className="form-select"
-                  value={preferred_language}
-                  onChange={(e) => setPreferredLanguage(e.target.value)}
-                >
-                  <option value="en">{t('common.english')}</option>
-                  <option value="hi">{t('common.hindi')}</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="land_unit">{t('auth.land_unit_label')}</label>
-                <select
-                  id="land_unit"
-                  className="form-select"
-                  value={preferred_land_unit}
-                  onChange={(e) => setPreferredLandUnit(e.target.value)}
-                >
-                  <option value="acre">{t('common.acre')}</option>
-                  <option value="hectare">{t('common.hectare')}</option>
-                  <option value="bigha">{t('common.bigha')}</option>
-                </select>
-              </div>
             </div>
 
             <div className="auth-submit-bar">
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={is_loading}>
                 {is_loading ? t('common.loading') : t('auth.verify_otp')}
               </button>
+            </div>
+
+            <div className="auth-profile-fields">
+              <p className="auth-profile-label">{t('auth.optional_profile')}</p>
+              <div className="form-group">
+                <label htmlFor="name">{t('auth.name_label')}</label>
+                <input id="name" className="form-input" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="language">{t('auth.language_label')}</label>
+                  <select
+                    id="language"
+                    className="form-select"
+                    value={preferred_language}
+                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                  >
+                    <option value="en">{t('common.english')}</option>
+                    <option value="hi">{t('common.hindi')}</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="land_unit">{t('auth.land_unit_label')}</label>
+                  <select
+                    id="land_unit"
+                    className="form-select"
+                    value={preferred_land_unit}
+                    onChange={(e) => setPreferredLandUnit(e.target.value)}
+                  >
+                    <option value="acre">{t('common.acre')}</option>
+                    <option value="hectare">{t('common.hectare')}</option>
+                    <option value="bigha">{t('common.bigha')}</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </form>
         )}

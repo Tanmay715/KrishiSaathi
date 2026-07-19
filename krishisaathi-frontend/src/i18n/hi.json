@@ -16,6 +16,7 @@
     "dev_otp_hint": "आपका लॉगिन कोड (पायलट मोड — अभी SMS नहीं):",
     "dev_otp_label": "आपका OTP कोड",
     "name_label": "आपका नाम (वैकल्पिक)",
+    "optional_profile": "प्रोफ़ाइल विवरण (वैकल्पिक)",
     "language_label": "पसंदीदा भाषा",
     "land_unit_label": "भूमि की इकाई",
     "invalid_phone": "मान्य 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें",

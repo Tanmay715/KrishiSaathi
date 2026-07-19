@@ -16,6 +16,7 @@
     "dev_otp_hint": "Your login code (pilot mode — no SMS yet):",
     "dev_otp_label": "Your OTP code",
     "name_label": "Your name (optional)",
+    "optional_profile": "Profile details (optional)",
     "language_label": "Preferred language",
     "land_unit_label": "Land unit",
     "invalid_phone": "Enter a valid 10-digit Indian mobile number",
