@@ -24,10 +24,11 @@
     "slow_server": "Server is slow right now. Please try once more."
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Home",
     "assistant": "Farm Assistant",
     "farms": "Farms",
-    "activity": "Activity",
+    "activity": "Money",
+    "market": "Market",
     "profile": "Profile",
     "logout": "Logout",
     "menu": "Menu"

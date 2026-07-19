@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getMandiBoard } from '../services/farm_service';
 import CropMark from './CropMark';
-import Modal from './Modal';
 
 const BOARD_CROPS = [
   'Potato', 'Wheat', 'Onion', 'Rice', 'Tomato', 'Mustard', 'Moong', 'Chana', 'Cotton',
@@ -81,14 +81,165 @@ function PriceSparkline({ points = [] }) {
   );
 }
 
-function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
+function MandiBoardBody({
+  board,
+  crop_rows,
+  selected_crop,
+  selected_row,
+  modal_price,
+  quantity,
+  qty_value,
+  estimated_sale,
+  other_rows,
+  trend_points,
+  on_select_crop,
+  on_quantity_change,
+  on_step_quantity,
+  t,
+}) {
+  return (
+    <div className="mandi-board-sheet is-premium">
+      <p className="mandi-board-subtitle">
+        {board?.place_label
+          ? t('mandi.board_subtitle_place', { place: board.place_label })
+          : t('mandi.board_subtitle')}
+      </p>
+
+      <div className="mandi-crop-picker is-top">
+        <div className="mandi-crop-scroller" role="list">
+          {crop_rows.map((row) => {
+            const is_active = row.crop === selected_crop;
+            return (
+              <button
+                key={row.crop}
+                type="button"
+                role="listitem"
+                className={`mandi-crop-tile${is_active ? ' is-active' : ''}`}
+                onClick={() => on_select_crop(row.crop)}
+              >
+                <CropMark crop={row.crop} size={40} shape="circle" />
+                <strong>{row.crop}</strong>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mandi-hero-card">
+        <div className="mandi-hero-visual">
+          <CropMark crop={selected_crop} size={72} shape="circle" />
+        </div>
+        <div className="mandi-hero-copy">
+          <p className="mandi-hero-label">{t('mandi.today_rate')}</p>
+          <div className="mandi-hero-price-row">
+            <strong className="mandi-hero-price">{formatRate(modal_price)}</strong>
+            <span className="mandi-hero-unit">/ {t('mandi.quintal')}</span>
+          </div>
+          {selected_row?.min != null && selected_row?.max != null && (
+            <p className="mandi-hero-range">
+              {t('mandi.range_line', {
+                min: formatRate(selected_row.min),
+                max: formatRate(selected_row.max),
+              })}
+            </p>
+          )}
+          <ChangePill
+            change_pct={selected_row?.change_pct}
+            label={t('mandi.from_yesterday')}
+          />
+        </div>
+      </div>
+
+      <div className="mandi-calc-card">
+        <label htmlFor="mandi-board-qty">{t('mandi.quantity_label')}</label>
+        <div className="mandi-stepper">
+          <button type="button" onClick={() => on_step_quantity(-1)} aria-label="-">−</button>
+          <input
+            id="mandi-board-qty"
+            type="number"
+            min="0"
+            step="0.1"
+            inputMode="decimal"
+            value={quantity}
+            onChange={(event) => on_quantity_change(event.target.value)}
+          />
+          <button type="button" onClick={() => on_step_quantity(1)} aria-label="+">+</button>
+        </div>
+        {estimated_sale != null ? (
+          <p className="mandi-calc-result">
+            <span>
+              {t('mandi.est_sale_math', {
+                qty: qty_value,
+                price: formatRate(modal_price),
+              })}
+            </span>
+            <strong>₹{estimated_sale.toLocaleString('en-IN')}</strong>
+          </p>
+        ) : (
+          <p className="mandi-calc-idle">{t('mandi.est_sale_idle')}</p>
+        )}
+      </div>
+
+      {other_rows.length > 0 && (
+        <div className="mandi-other-block">
+          <div className="mandi-crop-picker-head">
+            <strong>{t('mandi.other_crops')}</strong>
+            <span>{t('mandi.swipe_more')}</span>
+          </div>
+          <div className="mandi-crop-scroller" role="list">
+            {other_rows.map((row) => (
+              <button
+                key={row.crop}
+                type="button"
+                role="listitem"
+                className="mandi-mini-card"
+                onClick={() => on_select_crop(row.crop)}
+              >
+                <CropMark crop={row.crop} size={34} shape="circle" />
+                <span>
+                  <strong>{row.crop}</strong>
+                  <em>{formatRate(row.modal)}</em>
+                </span>
+                <ChangePill change_pct={row.change_pct} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {trend_points.length >= 2 && (
+        <div className="mandi-trend-card">
+          <strong>{t('mandi.trend_title')}</strong>
+          <PriceSparkline points={trend_points} />
+          <div className="mandi-trend-labels">
+            <span>{trend_points[0]?.date?.slice(5)}</span>
+            <span>{trend_points[trend_points.length - 1]?.date?.slice(5)}</span>
+          </div>
+        </div>
+      )}
+
+      <p className="mandi-disclaimer-box">
+        {selected_row?.source === 'reference'
+          ? t('mandi.disclaimer_reference')
+          : t('mandi.disclaimer')}
+      </p>
+    </div>
+  );
+}
+
+function MandiMarketSection({
+  farm_id = null,
+  preferred_crops = [],
+  layout = 'glance',
+  initial_crop = null,
+}) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const preferred_key = preferred_crops.join('|');
   const [board, setBoard] = useState(null);
   const [is_loading, setIsLoading] = useState(true);
   const [has_error, setHasError] = useState(false);
-  const [is_board_open, setIsBoardOpen] = useState(false);
-  const [selected_crop, setSelectedCrop] = useState('Wheat');
+  const [selected_crop, setSelectedCrop] = useState(initial_crop || 'Wheat');
   const [quantity, setQuantity] = useState('5');
 
   useEffect(() => {
@@ -109,7 +260,9 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
 
         const data = response.data || null;
         setBoard(data);
-        const first_priced = data?.crops?.find((row) => row.modal != null);
+        const preferred = initial_crop
+          && data?.crops?.find((row) => row.crop === initial_crop);
+        const first_priced = preferred || data?.crops?.find((row) => row.modal != null);
         if (first_priced) {
           setSelectedCrop(first_priced.crop);
         }
@@ -130,7 +283,7 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
     return () => {
       is_cancelled = true;
     };
-  }, [farm_id]);
+  }, [farm_id, initial_crop]);
 
   const crop_rows = board?.crops || [];
   const glance_names = useMemo(
@@ -152,16 +305,9 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
   const other_rows = crop_rows.filter((row) => row.crop !== selected_crop);
   const trend_points = selected_row?.trend || [];
 
-  function openBoard(crop_name) {
-    if (crop_name) {
-      setSelectedCrop(crop_name);
-    }
-    setQuantity((prev) => (prev === '' ? '5' : prev));
-    setIsBoardOpen(true);
-  }
-
-  function selectCrop(crop_name) {
-    setSelectedCrop(crop_name);
+  function openMarket(crop_name) {
+    const params = crop_name ? `?crop=${encodeURIComponent(crop_name)}` : '';
+    navigate(`/market${params}`);
   }
 
   function stepQuantity(delta) {
@@ -171,15 +317,54 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
     });
   }
 
+  const board_props = {
+    board,
+    crop_rows,
+    selected_crop,
+    selected_row,
+    modal_price,
+    quantity,
+    qty_value,
+    estimated_sale,
+    other_rows,
+    trend_points,
+    on_select_crop: setSelectedCrop,
+    on_quantity_change: setQuantity,
+    on_step_quantity: stepQuantity,
+    t,
+  };
+
+  if (layout === 'page') {
+    return (
+      <section className="mandi-market-page">
+        {is_loading && <p className="mandi-glance-status">{t('common.loading')}</p>}
+        {!is_loading && has_error && (
+          <p className="mandi-glance-status">{t('mandi.glance_empty')}</p>
+        )}
+        {!is_loading && !has_error && <MandiBoardBody {...board_props} />}
+      </section>
+    );
+  }
+
   return (
     <section className="field-secondary surface-panel is-muted mandi-market-section is-premium">
       <div className="mandi-glance-strip">
         <div className="mandi-glance-head is-stack">
-          <p className="surface-kicker">{t('dashboard.market_insights')}</p>
-          <h3 className="mandi-glance-title">{t('mandi.nearby_rates')}</h3>
-          <p className="mandi-glance-place">
-            {board?.place_label || t('mandi.unit_note')}
-          </p>
+          <div className="mandi-glance-title-row">
+            <div>
+              <p className="surface-kicker">{t('dashboard.market_insights')}</p>
+              <h3 className="mandi-glance-title">{t('mandi.nearby_rates')}</h3>
+              <p className="mandi-glance-place">
+                {board?.place_label || t('mandi.unit_note')}
+              </p>
+            </div>
+            {!is_loading && !has_error && crop_rows.length > 0 && (
+              <Link to="/market" className="mandi-glance-cta">
+                {t('mandi.view_all_count', { count: crop_rows.length })}
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         {is_loading && (
@@ -199,7 +384,7 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
                     type="button"
                     className="mandi-price-row is-button is-premium"
                     style={{ animationDelay: `${index * 60}ms` }}
-                    onClick={() => openBoard(row.crop)}
+                    onClick={() => openMarket(row.crop)}
                   >
                     <span className="mandi-price-identity">
                       <CropMark crop={row.crop} size={44} shape="circle" />
@@ -213,148 +398,9 @@ function MandiMarketSection({ farm_id = null, preferred_crops = [] }) {
                 </li>
               ))}
             </ul>
-
-            <button
-              type="button"
-              className="mandi-view-all-link"
-              onClick={() => openBoard(selected_crop)}
-            >
-              {t('mandi.view_all_prices')}
-              <span aria-hidden="true">›</span>
-            </button>
           </>
         )}
       </div>
-
-      {is_board_open && (
-        <Modal
-          title={t('mandi.board_title')}
-          subtitle={board?.place_label || t('mandi.unit_note')}
-          size="lg"
-          variant="sheet"
-          header_style="bar"
-          close_label={t('mandi.back_to_dashboard')}
-          on_close={() => setIsBoardOpen(false)}
-        >
-          <div className="mandi-board-sheet is-premium">
-            <div className="mandi-crop-picker is-top">
-              <div className="mandi-crop-scroller" role="list">
-                {crop_rows.map((row) => {
-                  const is_active = row.crop === selected_crop;
-                  return (
-                    <button
-                      key={row.crop}
-                      type="button"
-                      role="listitem"
-                      className={`mandi-crop-tile${is_active ? ' is-active' : ''}`}
-                      onClick={() => selectCrop(row.crop)}
-                    >
-                      <CropMark crop={row.crop} size={40} shape="circle" />
-                      <strong>{row.crop}</strong>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mandi-hero-card">
-              <div className="mandi-hero-visual">
-                <CropMark crop={selected_crop} size={86} shape="circle" />
-              </div>
-              <div className="mandi-hero-copy">
-                <p className="mandi-hero-label">{t('mandi.today_rate')}</p>
-                <strong className="mandi-hero-price">{formatRate(modal_price)}</strong>
-                <span className="mandi-hero-unit">/ {t('mandi.quintal')}</span>
-                {selected_row?.min != null && selected_row?.max != null && (
-                  <p className="mandi-hero-range">
-                    {t('mandi.range_line', {
-                      min: formatRate(selected_row.min),
-                      max: formatRate(selected_row.max),
-                    })}
-                  </p>
-                )}
-                <ChangePill
-                  change_pct={selected_row?.change_pct}
-                  label={t('mandi.from_yesterday')}
-                />
-              </div>
-            </div>
-
-            <div className="mandi-calc-card">
-              <label htmlFor="mandi-board-qty">{t('mandi.quantity_label')}</label>
-              <div className="mandi-stepper">
-                <button type="button" onClick={() => stepQuantity(-1)} aria-label="-">−</button>
-                <input
-                  id="mandi-board-qty"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                />
-                <button type="button" onClick={() => stepQuantity(1)} aria-label="+">+</button>
-              </div>
-              {estimated_sale != null ? (
-                <p className="mandi-calc-result">
-                  {t('mandi.est_sale_math', {
-                    qty: qty_value,
-                    price: formatRate(modal_price),
-                  })}
-                  {' = '}
-                  <strong>₹{estimated_sale.toLocaleString('en-IN')}</strong>
-                </p>
-              ) : (
-                <p className="mandi-calc-idle">{t('mandi.est_sale_idle')}</p>
-              )}
-            </div>
-
-            {other_rows.length > 0 && (
-              <div className="mandi-other-block">
-                <div className="mandi-crop-picker-head">
-                  <strong>{t('mandi.other_crops')}</strong>
-                  <span>{t('mandi.swipe_more')}</span>
-                </div>
-                <div className="mandi-crop-scroller" role="list">
-                  {other_rows.map((row) => (
-                    <button
-                      key={row.crop}
-                      type="button"
-                      role="listitem"
-                      className="mandi-mini-card"
-                      onClick={() => selectCrop(row.crop)}
-                    >
-                      <CropMark crop={row.crop} size={34} shape="circle" />
-                      <span>
-                        <strong>{row.crop}</strong>
-                        <em>{formatRate(row.modal)}</em>
-                      </span>
-                      <ChangePill change_pct={row.change_pct} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {trend_points.length >= 2 && (
-              <div className="mandi-trend-card">
-                <strong>{t('mandi.trend_title')}</strong>
-                <PriceSparkline points={trend_points} />
-                <div className="mandi-trend-labels">
-                  <span>{trend_points[0]?.date?.slice(5)}</span>
-                  <span>{trend_points[trend_points.length - 1]?.date?.slice(5)}</span>
-                </div>
-              </div>
-            )}
-
-            <p className="mandi-disclaimer-box">
-              {selected_row?.source === 'reference'
-                ? t('mandi.disclaimer_reference')
-                : t('mandi.disclaimer')}
-            </p>
-          </div>
-        </Modal>
-      )}
     </section>
   );
 }

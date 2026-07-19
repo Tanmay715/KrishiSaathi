@@ -41,7 +41,8 @@
   --btn-height: 44px;
   --btn-height-sm: 36px;
   --fab-size: 52px;
-  --fab-clearance: calc(108px + env(safe-area-inset-bottom, 0px));
+  --fab-clearance: calc(148px + env(safe-area-inset-bottom, 0px));
+  --bottom-nav-height: 64px;
 }
 
 *,
@@ -398,6 +399,53 @@ textarea {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.app-bottom-nav {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top: 1px solid rgba(30, 92, 64, 0.1);
+  z-index: 40;
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 2px;
+  border-radius: 12px;
+  color: #7d9186;
+  text-decoration: none;
+}
+
+.bottom-nav-link.is-active {
+  color: var(--color-primary-dark);
+  background: rgba(47, 158, 95, 0.08);
+}
+
+.bottom-nav-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+}
+
+.bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .main-content:has(.assistant-page) {
@@ -2547,7 +2595,8 @@ textarea {
   .menu-toggle,
   .sidebar,
   .no-print,
-  .quick-log-fab {
+  .quick-log-fab,
+  .app-bottom-nav {
     display: none !important;
   }
 
@@ -2596,13 +2645,13 @@ textarea {
 .quick-log-fab {
   position: absolute;
   right: var(--space-4);
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--bottom-nav-height) + 14px + env(safe-area-inset-bottom, 0px));
   z-index: 20;
   width: var(--fab-size);
   height: var(--fab-size);
   border: none;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: var(--color-primary-dark);
   color: #fff;
   font-size: 1rem;
   font-weight: 700;
@@ -2618,7 +2667,7 @@ textarea {
 .quick-log-offline-notice {
   position: absolute;
   right: var(--space-4);
-  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--bottom-nav-height) + 78px + env(safe-area-inset-bottom, 0px));
   z-index: 21;
   max-width: 240px;
   margin-bottom: 0;
@@ -5846,9 +5895,64 @@ textarea {
   background: linear-gradient(160deg, #e9f7ef, #fff);
 }
 
+.profile-page.is-lively .profile-hero {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-page.is-lively .profile-hero-glow {
+  display: none;
+}
+
+.profile-page.is-lively .profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e8f3ec;
+  color: var(--color-primary-dark);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.profile-page.is-lively .profile-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profile-page.is-lively .profile-stat-tile {
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  padding: 12px;
+}
+
+.profile-page.is-lively .profile-settings-card,
+.profile-page.is-lively .profile-finance-card,
 .profile-page.is-lively .profile-capacity-card,
-.profile-page.is-lively .profile-settings-card {
-  border: 1px solid var(--color-border);
+.profile-page.is-lively .profile-logout-card {
+  border-radius: 18px;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  background: #fff;
+}
+
+.farms-page .farm-card,
+.farms-list .farm-card {
+  border-radius: 18px;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.market-page .page-header h2 {
+  font-size: var(--text-xl);
 }
 
 /* Dashboard mandi market */
@@ -6099,11 +6203,12 @@ textarea {
 
 .mandi-hero-card {
   display: grid;
-  grid-template-columns: 96px 1fr;
-  gap: 14px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  padding: 16px;
+  padding: 14px;
   border-radius: 22px;
+  overflow: hidden;
   background:
     radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.7), transparent 40%),
     linear-gradient(145deg, #edf8f1 0%, #f7fbf8 55%, #fff 100%);
@@ -6116,6 +6221,10 @@ textarea {
   justify-content: center;
 }
 
+.mandi-hero-copy {
+  min-width: 0;
+}
+
 .mandi-hero-label {
   margin: 0;
   font-size: 12px;
@@ -6123,18 +6232,26 @@ textarea {
   color: var(--color-text-subtle);
 }
 
+.mandi-hero-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  margin-top: 2px;
+}
+
 .mandi-hero-price {
   display: inline-block;
-  margin-top: 2px;
-  font-size: 1.85rem;
+  max-width: 100%;
+  font-size: clamp(1.35rem, 7vw, 1.75rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--color-text);
   line-height: 1.1;
+  word-break: break-word;
 }
 
 .mandi-hero-unit {
-  margin-left: 4px;
   font-size: var(--text-sm);
   color: var(--color-text-subtle);
   font-weight: 600;
@@ -6144,6 +6261,7 @@ textarea {
   margin: 6px 0 8px;
   font-size: 13px;
   color: var(--color-text-subtle);
+  overflow-wrap: anywhere;
 }
 
 .mandi-calc-card {
@@ -6151,6 +6269,7 @@ textarea {
   border-radius: 18px;
   background: #fff;
   border: 1px solid rgba(30, 92, 64, 0.1);
+  overflow: hidden;
 }
 
 .mandi-calc-card label {
@@ -6163,52 +6282,74 @@ textarea {
 
 .mandi-stepper {
   display: grid;
-  grid-template-columns: 48px 1fr 48px;
-  gap: 10px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
   align-items: center;
+  width: 100%;
 }
 
 .mandi-stepper button {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border: 1px solid rgba(30, 92, 64, 0.16);
   border-radius: 14px;
   background: #eef7f1;
   color: var(--color-primary-dark);
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
 }
 
 .mandi-stepper input {
-  height: 48px;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
   border: 1.5px solid rgba(47, 158, 95, 0.35);
   border-radius: 14px;
   text-align: center;
   font: inherit;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 750;
   color: var(--color-text);
   background: #fff;
 }
 
 .mandi-calc-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 12px 0 0;
   font-size: var(--text-sm);
   color: var(--color-text-subtle);
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .mandi-calc-result strong {
   color: #166534;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
 }
 
 .mandi-calc-idle {
   margin: 12px 0 0;
   font-size: var(--text-sm);
   color: var(--color-text-subtle);
+}
+
+.mandi-market-page,
+.mandi-board-sheet {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mandi-glance-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .mandi-other-block {

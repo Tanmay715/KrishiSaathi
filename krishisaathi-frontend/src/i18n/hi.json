@@ -24,12 +24,13 @@
     "slow_server": "सर्वर अभी धीमा है। कृपया एक बार और कोशिश करें।"
   },
   "nav": {
-    "dashboard": "डैशबोर्ड",
+    "dashboard": "होम",
     "assistant": "फार्म सहायक",
     "farms": "खेत",
-    "activity": "गतिविधि",
-    "profile": "प्रोफ़ाइल",
-    "logout": "लॉगआउट",
+    "activity": "खर्च / आय",
+    "market": "बाजार",
+    "profile": "प्रोफाइल",
+    "logout": "लॉग आउट",
     "menu": "मेनू"
   },
   "dashboard": {

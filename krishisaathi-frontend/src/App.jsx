@@ -10,6 +10,7 @@ import PlotDetailPage from './pages/PlotDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import AssistantPage from './pages/AssistantPage';
 import ActivityPage from './pages/ActivityPage';
+import MarketPage from './pages/MarketPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
               <Route path="farms/:farm_id" element={<FarmDetailPage />} />
               <Route path="farms/:farm_id/plots/:plot_id" element={<PlotDetailPage />} />
               <Route path="activity" element={<ActivityPage />} />
+              <Route path="market" element={<MarketPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
           </Route>
