@@ -11,6 +11,20 @@ async function startServer() {
     console.log('[db] MySQL connected');
 
     try {
+      const [batch, log] = await db.migrate.latest();
+      if (log.length) {
+        console.log(`[db] ran migrations: ${log.join(', ')}`);
+      } else {
+        console.log('[db] migrations up to date');
+      }
+    } catch (migrate_error) {
+      console.error('[db] migration failed:', migrate_error.message);
+      if (env.is_production) {
+        throw migrate_error;
+      }
+    }
+
+    try {
       await redis.connect();
       console.log('[redis] connected');
     } catch (redis_error) {

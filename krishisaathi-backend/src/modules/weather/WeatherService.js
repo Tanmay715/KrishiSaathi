@@ -62,10 +62,24 @@ class WeatherService {
 
   async clearUserCache(user_id) {
     try {
-      const keys = await redis.keys(`weather:${user_id}:*`);
-      if (keys.length) {
-        await redis.del(...keys);
+      if (redis.status !== 'ready' && typeof redis.connect === 'function') {
+        await redis.connect().catch(() => null);
       }
+
+      let cursor = '0';
+      do {
+        const [next_cursor, keys] = await redis.scan(
+          cursor,
+          'MATCH',
+          `weather:${user_id}:*`,
+          'COUNT',
+          100,
+        );
+        cursor = String(next_cursor);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } while (cursor !== '0');
     } catch (error) {
       console.warn('[weather] cache clear failed:', error.message);
     }

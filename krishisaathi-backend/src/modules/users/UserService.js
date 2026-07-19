@@ -34,15 +34,25 @@ class UserService {
       payload.district = String(payload.district || '').trim() || null;
     }
 
-    await db('users').where({ id: user_id }).update(payload);
+    try {
+      await db('users').where({ id: user_id }).update(payload);
+    } catch (error) {
+      if (error?.code === 'ER_BAD_FIELD_ERROR' || String(error.message || '').includes('district')) {
+        throw ApiError.internal('Profile location update needs a database migration. Please redeploy the API.');
+      }
+      throw error;
+    }
 
     if (payload.district !== undefined || payload.state_code !== undefined) {
-      try {
-        const WeatherService = require('../weather/WeatherService');
-        await WeatherService.clearUserCache(user_id);
-      } catch (error) {
-        console.warn('[users] weather cache clear failed:', error.message);
-      }
+      // Never block profile save on weather cache issues
+      Promise.resolve()
+        .then(() => {
+          const WeatherService = require('../weather/WeatherService');
+          return WeatherService.clearUserCache(user_id);
+        })
+        .catch((error) => {
+          console.warn('[users] weather cache clear failed:', error.message);
+        });
     }
 
     return this.getProfile(user_id);
