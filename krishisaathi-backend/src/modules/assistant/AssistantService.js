@@ -5,6 +5,7 @@ const db = require('../../db/connection');
 const ApiError = require('../../utils/ApiError');
 const { detectMessageLanguage } = require('../../utils/detect_message_language');
 const WeatherService = require('../weather/WeatherService');
+const KccService = require('./KccService');
 
 const MAX_HISTORY_MESSAGES = 20;
 
@@ -16,7 +17,10 @@ class AssistantService {
       .whereIn('role', ['user', 'assistant'])
       .orderBy('created_at', 'asc');
 
-    return { thread, messages };
+    return {
+      thread,
+      messages: messages.map((message) => this.#formatMessage(message)),
+    };
   }
 
   async chat(user_id, message, scope = {}) {
@@ -35,7 +39,8 @@ class AssistantService {
 
     const thread = await this.#getOrCreateThread(user_id);
     const user = await db('users').where({ id: user_id }).first();
-    const context = await this.#buildFarmContext(user_id, user, scope);
+    const context_payload = await this.#buildFarmContext(user_id, user, scope);
+    const government = await this.#lookupGovernmentAdvice(trimmed, context_payload, user);
 
     await this.#saveMessage(thread.id, 'user', trimmed);
 
@@ -48,6 +53,7 @@ class AssistantService {
     const openai = getOpenAiClient();
     const message_language = detectMessageLanguage(trimmed);
     const reply_language = message_language === 'hi' ? 'Hindi' : 'English';
+    const farm_context = JSON.stringify(context_payload);
 
     let completion;
 
@@ -57,7 +63,7 @@ class AssistantService {
         messages: [
           {
             role: 'system',
-            content: this.#systemPrompt(reply_language, context),
+            content: this.#systemPrompt(reply_language, farm_context, government),
           },
           ...history.map((item) => ({
             role: item.role,
@@ -74,13 +80,52 @@ class AssistantService {
     const reply = completion.choices?.[0]?.message?.content?.trim()
       || 'Sorry, I could not generate a response. Please try again.';
 
-    const assistant_message = await this.#saveMessage(thread.id, 'assistant', reply);
+    const metadata = government
+      ? { government_recommendation: government }
+      : null;
+
+    const assistant_message = await this.#saveMessage(thread.id, 'assistant', reply, metadata);
     await db('assistant_threads').where({ id: thread.id }).update({ updated_at: db.fn.now() });
 
-    return { thread_id: thread.id, message: assistant_message };
+    return { thread_id: thread.id, message: this.#formatMessage(assistant_message) };
   }
 
-  #systemPrompt(reply_language, context) {
+  async #lookupGovernmentAdvice(message, context_payload, user) {
+    const preferred_crops = (context_payload.active_crops || [])
+      .map((crop) => crop.crop_name)
+      .filter(Boolean);
+
+    const farm = (context_payload.farms || [])[0] || null;
+    const state = farm?.state || this.#stateFromCode(user?.state_code) || null;
+    const district = farm?.district || user?.district || null;
+
+    try {
+      return await KccService.searchRecommendations({
+        message,
+        state,
+        district,
+        preferred_crops,
+      });
+    } catch (error) {
+      console.warn('[assistant] KCC lookup failed:', error.message);
+      return null;
+    }
+  }
+
+  #stateFromCode(state_code) {
+    if (!state_code) {
+      return null;
+    }
+
+    try {
+      const { resolveStateName } = require('../../utils/location_names');
+      return resolveStateName(state_code, 'en');
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  #systemPrompt(reply_language, context, government) {
     const language_rules = reply_language === 'Hindi'
       ? [
         'The user is writing in Hindi or Romanized Hindi (Hinglish — Hindi words typed in English letters).',
@@ -90,6 +135,21 @@ class AssistantService {
       : [
         'Reply in English.',
         'If the user switches to Hindi or Romanized Hindi in a later message, reply in Devanagari Hindi.',
+      ];
+
+    const gov_block = government?.items?.length
+      ? [
+        '',
+        'Official Kisan Call Centre (KCC) excerpts for this question are shown separately as "Government Recommendation".',
+        'Use them as supporting guidance. Do not invent that you called KCC.',
+        'If an excerpt looks outdated or mismatched, say farmers should reconfirm with local agri officer / Krishibhavan / KVK.',
+        'Keep your own advice practical and complementary — do not paste the full KCC text again.',
+        'KCC excerpts JSON:',
+        JSON.stringify(government),
+      ]
+      : [
+        '',
+        'No matching Kisan Call Centre excerpt was found for this turn.',
       ];
 
     return [
@@ -102,6 +162,7 @@ class AssistantService {
       'If required data is missing, clearly say what is missing instead of inventing numbers.',
       'Never prescribe a specific pesticide brand as certain. Suggest confirming with a local agri officer or KVK.',
       'If unsure about treatment, say so clearly.',
+      ...gov_block,
       '',
       'Farmer context:',
       context,
@@ -197,10 +258,14 @@ class AssistantService {
       }
     }
 
-    return JSON.stringify({
+    return {
       name: user?.name || null,
       preferred_language: user?.preferred_language || 'en',
       preferred_land_unit: user?.preferred_land_unit || 'acre',
+      profile: {
+        state_code: user?.state_code || null,
+        district: user?.district || null,
+      },
       scope: {
         farm_id: scope.farm_id || null,
         plot_id: scope.plot_id || null,
@@ -227,7 +292,7 @@ class AssistantService {
           forecast: weather.forecast?.slice?.(0, 3) || weather.forecast,
         }
         : null,
-    });
+    };
   }
 
   #parseJson(value) {
@@ -244,6 +309,13 @@ class AssistantService {
     } catch (error) {
       return null;
     }
+  }
+
+  #formatMessage(message) {
+    return {
+      ...message,
+      metadata: this.#parseJson(message.metadata),
+    };
   }
 
   async #getOrCreateThread(user_id) {
@@ -266,13 +338,14 @@ class AssistantService {
     return db('assistant_threads').where({ id: thread_id }).first();
   }
 
-  async #saveMessage(thread_id, role, content) {
+  async #saveMessage(thread_id, role, content, metadata = null) {
     const message_id = uuidv4();
     await db('assistant_messages').insert({
       id: message_id,
       thread_id,
       role,
       content,
+      metadata: metadata ? JSON.stringify(metadata) : null,
     });
 
     return db('assistant_messages').where({ id: message_id }).first();

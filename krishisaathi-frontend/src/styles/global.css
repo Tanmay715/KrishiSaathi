@@ -2049,6 +2049,71 @@ textarea {
   line-height: 1.45;
 }
 
+.assistant-gov {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f3f8f4 0%, #eef6f0 100%);
+  border: 1px solid rgba(30, 92, 64, 0.14);
+}
+
+.assistant-gov-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.assistant-gov-head strong {
+  font-size: 0.82rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: #1e5c40;
+}
+
+.assistant-gov-head span {
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: #5b7164;
+  white-space: nowrap;
+}
+
+.assistant-gov-item + .assistant-gov-item {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(30, 92, 64, 0.1);
+}
+
+.assistant-gov-meta {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  color: #5b7164;
+  line-height: 1.3;
+}
+
+.assistant-gov-answer {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #14271d;
+  white-space: pre-wrap;
+}
+
+.assistant-gov-query {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: #5b7164;
+  line-height: 1.35;
+}
+
+.assistant-gov-note {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: #6a7d70;
+}
+
 .assistant-composer {
   display: flex;
   gap: 10px;

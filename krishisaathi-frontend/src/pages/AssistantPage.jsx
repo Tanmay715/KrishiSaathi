@@ -8,6 +8,54 @@ import PageHeader from '../components/PageHeader';
 
 const SCOPE_STORAGE_KEY = 'ks_assistant_scope';
 
+function parseMetadata(raw) {
+  if (!raw) {
+    return null;
+  }
+  if (typeof raw === 'object') {
+    return raw;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (_error) {
+    return null;
+  }
+}
+
+function GovernmentRecommendation({ recommendation, t }) {
+  const items = recommendation?.items || [];
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <div className="assistant-gov">
+      <div className="assistant-gov-head">
+        <strong>{t('assistant.gov_title')}</strong>
+        <span>{t('assistant.gov_source')}</span>
+      </div>
+      {items.map((item, index) => {
+        const place = [item.district, item.state].filter(Boolean).join(', ');
+        const meta = [item.query_type, item.crop, place, item.as_of]
+          .filter(Boolean)
+          .join(' · ');
+        return (
+          <div key={`${item.as_of}-${index}`} className="assistant-gov-item">
+            {meta && <p className="assistant-gov-meta">{meta}</p>}
+            <p className="assistant-gov-answer">{item.answer}</p>
+            {item.query && (
+              <p className="assistant-gov-query">
+                {t('assistant.gov_asked')}: {item.query}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      <p className="assistant-gov-note">{t('assistant.gov_disclaimer')}</p>
+    </div>
+  );
+}
+
 function AssistantPage() {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
@@ -203,17 +251,25 @@ function AssistantPage() {
             </div>
           )}
 
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`assistant-bubble ${message.role === 'user' ? 'assistant-bubble-user' : 'assistant-bubble-bot'}`}
-            >
-              <div className="assistant-role">
-                {message.role === 'user' ? t('assistant.you') : t('assistant.bot')}
+          {messages.map((message) => {
+            const metadata = parseMetadata(message.metadata);
+            const government = metadata?.government_recommendation || null;
+
+            return (
+              <div
+                key={message.id}
+                className={`assistant-bubble ${message.role === 'user' ? 'assistant-bubble-user' : 'assistant-bubble-bot'}`}
+              >
+                <div className="assistant-role">
+                  {message.role === 'user' ? t('assistant.you') : t('assistant.bot')}
+                </div>
+                {message.role === 'assistant' && (
+                  <GovernmentRecommendation recommendation={government} t={t} />
+                )}
+                <div className="assistant-content">{message.content}</div>
               </div>
-              <div className="assistant-content">{message.content}</div>
-            </div>
-          ))}
+            );
+          })}
 
           {is_sending && (
             <div className="assistant-bubble assistant-bubble-bot">
