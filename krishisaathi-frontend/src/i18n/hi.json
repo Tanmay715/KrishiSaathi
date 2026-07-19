@@ -164,6 +164,8 @@
     "summary_farms": "कुल खेत",
     "summary_area": "कुल क्षेत्र",
     "summary_value": "कुल खर्च",
+    "summary_spent": "कुल खर्च",
+    "summary_income": "कुल आय",
     "summary_active": "सक्रिय",
     "summary_estimated": "अनुमानित",
     "quick_title": "त्वरित कार्य",

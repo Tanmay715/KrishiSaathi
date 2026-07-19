@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { createFarm, getExpenseSummary, getFarms, updateFarm } from '../services/farm_service';
+import { createFarm, getExpenseSummary, getFarms, getIncomeSummary, updateFarm } from '../services/farm_service';
 import { CACHE_KEYS, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { INDIAN_STATES } from '../config/indian_states';
 import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
@@ -34,6 +34,7 @@ function FarmsPage() {
   const [search_params, setSearchParams] = useSearchParams();
   const [farms, setFarms] = useState([]);
   const [spent, setSpent] = useState(0);
+  const [earned, setEarned] = useState(0);
   const [is_loading, setIsLoading] = useState(true);
   const [show_modal, setShowModal] = useState(false);
   const [editing_farm, setEditingFarm] = useState(null);
@@ -72,13 +73,15 @@ function FarmsPage() {
     setLoadError('');
 
     try {
-      const [farms_response, expense_response] = await Promise.all([
+      const [farms_response, expense_response, income_response] = await Promise.all([
         getFarms(),
         getExpenseSummary(),
+        getIncomeSummary(),
       ]);
       const rows = farms_response.data || [];
       setFarms(rows);
       setSpent(Number(expense_response.data?.total_spent || 0));
+      setEarned(Number(income_response.data?.total_earned || 0));
       setIsCachedView(false);
       saveOfflineData(CACHE_KEYS.farms, rows);
     } catch (error) {
@@ -248,10 +251,16 @@ function FarmsPage() {
                 <em>{t('farms.summary_area')}</em>
                 <small>{land_unit}</small>
               </div>
-              <div className="farms-summary-tile tone-orange is-wide">
+              <div className="farms-summary-tile tone-orange">
                 <span className="farms-summary-icon" aria-hidden="true">₹</span>
                 <strong>₹{formatAmount(spent)}</strong>
-                <em>{t('farms.summary_value')}</em>
+                <em>{t('farms.summary_spent')}</em>
+                <small>{t('farms.summary_estimated')}</small>
+              </div>
+              <div className="farms-summary-tile tone-teal">
+                <span className="farms-summary-icon" aria-hidden="true">↑</span>
+                <strong>₹{formatAmount(earned)}</strong>
+                <em>{t('farms.summary_income')}</em>
                 <small>{t('farms.summary_estimated')}</small>
               </div>
             </div>

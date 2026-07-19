@@ -41,7 +41,7 @@
   --btn-height: 44px;
   --btn-height-sm: 36px;
   --fab-size: 52px;
-  --fab-clearance: calc(148px + env(safe-area-inset-bottom, 0px));
+  --fab-clearance: calc(var(--bottom-nav-height) + var(--fab-size) + 28px + env(safe-area-inset-bottom, 0px));
   --bottom-nav-height: 64px;
 }
 
@@ -56,6 +56,7 @@ body,
 #root {
   margin: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -68,8 +69,7 @@ body {
 }
 
 #root {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 
 a {
@@ -89,6 +89,7 @@ textarea {
   justify-content: center;
   height: 100%;
   height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
   background: #243f33;
 }
@@ -100,6 +101,7 @@ textarea {
   width: 100%;
   max-width: 480px;
   height: 100%;
+  min-height: 0;
   background: var(--color-bg);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 20px 48px rgba(0, 0, 0, 0.28);
   overflow: hidden;
@@ -731,7 +733,7 @@ textarea {
 .app-bottom-nav {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
   min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
@@ -6434,10 +6436,6 @@ textarea {
   gap: 8px;
 }
 
-.farms-summary-tile.is-wide {
-  grid-column: 1 / -1;
-}
-
 .farms-summary-tile {
   display: flex;
   flex-direction: column;
@@ -6473,6 +6471,11 @@ textarea {
 .farms-summary-tile.tone-orange .farms-summary-icon {
   background: #fff1e6;
   color: #c2410c;
+}
+
+.farms-summary-tile.tone-teal .farms-summary-icon {
+  background: #e6f7f3;
+  color: #0f766e;
 }
 
 .farms-summary-tile strong {
@@ -6763,20 +6766,51 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
-.plot-hub-actions .btn {
-  width: 100%;
+.plot-action {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding-left: 6px;
-  padding-right: 6px;
-  font-size: 0.75rem;
+  gap: 5px;
+  min-height: 64px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
-@media (max-width: 380px) {
-  .plot-hub-actions {
-    grid-template-columns: 1fr;
+.plot-action.is-view {
+  background: #eef8f2;
+  color: #166534;
+  border-color: rgba(47, 158, 95, 0.18);
+}
+
+.plot-action.is-edit {
+  background: #f4f7f5;
+  color: #334155;
+  border-color: rgba(15, 55, 35, 0.1);
+}
+
+.plot-action.is-delete {
+  background: #fff5f5;
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.16);
+}
+
+@media (max-width: 360px) {
+  .plot-action {
+    font-size: 0.68rem;
+    min-height: 58px;
   }
 }
 
@@ -7134,7 +7168,39 @@ textarea {
 }
 
 .mandi-board-sheet.is-premium {
-  gap: 16px;
+  gap: 12px;
+}
+
+.mandi-board-sheet.is-vertical {
+  gap: 12px;
+}
+
+.mandi-crop-picker.is-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mandi-crop-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 12px 6px 6px;
+  border: 1.5px solid rgba(30, 92, 64, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mandi-crop-chip-btn.is-active {
+  border-color: rgba(47, 158, 95, 0.55);
+  background: linear-gradient(180deg, #eef9f2, #fff);
+  box-shadow: 0 0 0 3px rgba(47, 158, 95, 0.1);
 }
 
 .mandi-crop-picker.is-top {
@@ -7243,7 +7309,15 @@ textarea {
 }
 
 .market-page {
-  padding-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.market-page .page-header {
+  margin-bottom: 8px;
+}
+
+.main-content:has(.market-page) {
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
 
 .mandi-calc-card label {

@@ -164,6 +164,8 @@
     "summary_farms": "Total farms",
     "summary_area": "Total area",
     "summary_value": "Total spent",
+    "summary_spent": "Total spent",
+    "summary_income": "Total income",
     "summary_active": "Active",
     "summary_estimated": "Estimated",
     "quick_title": "Quick actions",

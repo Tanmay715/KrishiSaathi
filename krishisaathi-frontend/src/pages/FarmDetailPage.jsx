@@ -450,20 +450,31 @@ function FarmDetailPage() {
                   </div>
 
                   <div className="plot-hub-actions">
-                    <Link to={`/farms/${farm_id}/plots/${plot.id}`} className="btn btn-secondary btn-sm">
+                    <Link to={`/farms/${farm_id}/plots/${plot.id}`} className="plot-action is-view">
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
+                        <circle cx="12" cy="12" r="2.5" />
+                      </svg>
                       {t('farms.view_details')}
                     </Link>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => openEditPlot(e, plot)}>
+                    <button type="button" className="plot-action is-edit" onClick={(e) => openEditPlot(e, plot)}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+                        <path d="M13.5 5.5l3 3" />
+                      </svg>
                       {t('common.edit')}
                     </button>
                     <button
                       type="button"
-                      className="btn btn-danger btn-sm"
+                      className="plot-action is-delete"
                       onClick={(e) => {
                         e.preventDefault();
                         setConfirmAction({ type: 'plot', plot });
                       }}
                     >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M5 7h14M10 11v6M14 11v6M9 7l1-2h4l1 2M8 7l1 12h6l1-12" />
+                      </svg>
                       {t('common.delete')}
                     </button>
                   </div>
