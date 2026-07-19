@@ -5792,3 +5792,128 @@ textarea {
 .profile-page.is-lively .profile-settings-card {
   border: 1px solid var(--color-border);
 }
+
+/* Dashboard mandi glance strip */
+.mandi-market-section {
+  padding: var(--space-4);
+}
+
+.mandi-glance-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mandi-glance-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mandi-glance-title {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  line-height: 1.25;
+}
+
+.mandi-glance-place {
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+  line-height: 1.35;
+}
+
+.mandi-glance-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mandi-glance-cta span {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.mandi-glance-status {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.mandi-price-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mandi-price-row {
+  display: grid;
+  grid-template-columns: 1fr auto 2.75rem;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-top: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.mandi-price-row:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.mandi-price-crop {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.mandi-price-value {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.mandi-price-change {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: right;
+  color: var(--color-text-subtle);
+}
+
+.mandi-price-change.is-up {
+  color: #1f7a45;
+}
+
+.mandi-price-change.is-down {
+  color: #b42318;
+}
+
+.mandi-panel.is-embedded {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid rgba(30, 92, 64, 0.1);
+  background: transparent;
+}
+
+.mandi-panel.is-embedded .section-panel-body.is-embedded {
+  margin-top: 0;
+  padding-top: 0;
+}

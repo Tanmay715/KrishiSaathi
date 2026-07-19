@@ -35,9 +35,10 @@ function MandiPricePanel({
   default_open = false,
   compact = false,
   crop_options = [],
+  embedded = false,
 }) {
   const { t } = useTranslation();
-  const [is_open, setIsOpen] = useState(default_open);
+  const [is_open, setIsOpen] = useState(default_open || embedded);
   const [selected_crop, setSelectedCrop] = useState(crop_name || crop_options[0] || 'Wheat');
   const [quantity, setQuantity] = useState('');
   const [rates, setRates] = useState(null);
@@ -49,6 +50,12 @@ function MandiPricePanel({
       setSelectedCrop(crop_name);
     }
   }, [crop_name]);
+
+  useEffect(() => {
+    if (embedded || default_open) {
+      setIsOpen(true);
+    }
+  }, [embedded, default_open]);
 
   useEffect(() => {
     if (!is_open || !selected_crop) {
@@ -96,33 +103,35 @@ function MandiPricePanel({
     : t('mandi.disclaimer');
 
   return (
-    <section className={`mandi-panel is-quick-action${compact ? ' is-compact' : ' card'}`}>
-      <div className="quick-action-head">
-        <div className="quick-action-copy">
-          <div className="section-title-row">
-            <SectionIcon name="mandi" tone="accent" />
-            <h3>{t('mandi.title')}</h3>
+    <section className={`mandi-panel is-quick-action${compact || embedded ? ' is-compact' : ' card'}${embedded ? ' is-embedded' : ''}`}>
+      {!embedded && (
+        <div className="quick-action-head">
+          <div className="quick-action-copy">
+            <div className="section-title-row">
+              <SectionIcon name="mandi" tone="accent" />
+              <h3>{t('mandi.title')}</h3>
+            </div>
+            {!is_open && (
+              <p className="section-note is-one-line">
+                {crop_name
+                  ? t('mandi.collapsed_hint_crop', { crop: crop_name })
+                  : t('mandi.collapsed_hint')}
+              </p>
+            )}
           </div>
-          {!is_open && (
-            <p className="section-note is-one-line">
-              {crop_name
-                ? t('mandi.collapsed_hint_crop', { crop: crop_name })
-                : t('mandi.collapsed_hint')}
-            </p>
-          )}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            aria-expanded={is_open}
+            onClick={() => setIsOpen((prev) => !prev)}
+          >
+            {is_open ? t('common.hide') : t('common.show')}
+          </button>
         </div>
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          aria-expanded={is_open}
-          onClick={() => setIsOpen((prev) => !prev)}
-        >
-          {is_open ? t('common.hide') : t('common.show')}
-        </button>
-      </div>
+      )}
 
       {is_open && (
-        <div className="section-panel-body is-compact">
+        <div className={`section-panel-body${compact || embedded ? ' is-compact' : ''}${embedded ? ' is-embedded' : ''}`}>
           {!crop_name && crop_options.length > 0 && (
             <div className="form-group" style={{ marginBottom: 12 }}>
               <label htmlFor="mandi-crop">{t('mandi.crop_label')}</label>

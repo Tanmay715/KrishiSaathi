@@ -475,6 +475,9 @@
   },
   "mandi": {
     "title": "Mandi price hint",
+    "nearby_rates": "Nearby mandi prices",
+    "view_all": "View all",
+    "glance_empty": "Rates unavailable right now. Tap View all to try again.",
     "collapsed_hint": "Check nearby mandi rates before you sell",
     "collapsed_hint_crop": "Mandi rates for {{crop}}",
     "crop_label": "Crop",
