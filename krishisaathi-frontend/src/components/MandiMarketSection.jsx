@@ -1,12 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { INDIAN_STATES } from '../config/indian_states';
+import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { getMandiBoard } from '../services/farm_service';
+import { normalizeLanguage } from '../utils/language';
 import CropMark from './CropMark';
 
 const BOARD_CROPS = [
   'Potato', 'Wheat', 'Onion', 'Rice', 'Tomato', 'Mustard', 'Moong', 'Chana', 'Cotton',
 ];
+
+const MANDI_LOCATION_SESSION_KEY = 'ks_mandi_location_override';
+
+function readSessionOverride() {
+  try {
+    const raw = sessionStorage.getItem(MANDI_LOCATION_SESSION_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed?.state) {
+      return null;
+    }
+    return {
+      state: String(parsed.state),
+      district: parsed.district ? String(parsed.district) : '',
+      state_code: parsed.state_code || '',
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function writeSessionOverride(value) {
+  try {
+    if (!value) {
+      sessionStorage.removeItem(MANDI_LOCATION_SESSION_KEY);
+      return;
+    }
+    sessionStorage.setItem(MANDI_LOCATION_SESSION_KEY, JSON.stringify(value));
+  } catch (_error) {
+    // ignore
+  }
+}
 
 function formatRate(value) {
   if (value == null || Number.isNaN(Number(value))) {
@@ -201,21 +238,124 @@ function MandiBoardBody({
   );
 }
 
+function MandiLocationPicker({
+  draft,
+  home_label,
+  is_override,
+  applied_label,
+  on_change_state,
+  on_change_district,
+  on_apply,
+  on_reset,
+  t,
+  state_label_key,
+}) {
+  const district_options = getDistrictsForState(draft.state_code);
+  const has_custom_district = Boolean(
+    draft.district && !district_options.includes(draft.district),
+  );
+
+  return (
+    <div className={`mandi-location-card${is_override ? ' is-override' : ''}`}>
+      <div className="mandi-location-head">
+        <div>
+          <p className="mandi-location-kicker">{t('mandi.location_showing')}</p>
+          <strong>{applied_label || home_label || t('mandi.location_unknown')}</strong>
+          {is_override ? (
+            <span className="mandi-location-badge">{t('mandi.location_custom')}</span>
+          ) : (
+            <span className="mandi-location-badge is-home">{t('mandi.location_mine')}</span>
+          )}
+        </div>
+        {is_override && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={on_reset}>
+            {t('mandi.location_reset')}
+          </button>
+        )}
+      </div>
+
+      <p className="mandi-location-hint">{t('mandi.location_hint')}</p>
+
+      <div className="mandi-location-form">
+        <div className="form-group">
+          <label htmlFor="mandi-state">{t('profile.state_label')}</label>
+          <select
+            id="mandi-state"
+            className="form-select"
+            value={draft.state_code}
+            onChange={(event) => on_change_state(event.target.value)}
+          >
+            <option value="">{t('profile.state_placeholder')}</option>
+            {INDIAN_STATES.map((state) => (
+              <option key={state.code} value={state.code}>
+                {state[state_label_key]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="mandi-district">{t('profile.district_label')}</label>
+          <select
+            id="mandi-district"
+            className="form-select"
+            value={draft.district}
+            disabled={!draft.state_code}
+            onChange={(event) => on_change_district(event.target.value)}
+          >
+            <option value="">
+              {draft.state_code
+                ? t('profile.district_placeholder')
+                : t('profile.district_select_state')}
+            </option>
+            {has_custom_district && (
+              <option value={draft.district}>{draft.district}</option>
+            )}
+            {district_options.map((district) => (
+              <option key={district} value={district}>{district}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={!draft.state_code}
+          onClick={on_apply}
+        >
+          {t('mandi.location_apply')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MandiMarketSection({
   farm_id = null,
   preferred_crops = [],
   layout = 'glance',
   initial_crop = null,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const preferred_key = preferred_crops.join('|');
+  const app_language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const state_label_key = app_language === 'hi' ? 'label_hi' : 'label_en';
+
   const [board, setBoard] = useState(null);
   const [is_loading, setIsLoading] = useState(true);
   const [has_error, setHasError] = useState(false);
   const [selected_crop, setSelectedCrop] = useState(initial_crop || 'Wheat');
   const [quantity, setQuantity] = useState('5');
   const [location_tick, setLocationTick] = useState(0);
+  const [override, setOverride] = useState(() => (
+    layout === 'page' ? readSessionOverride() : null
+  ));
+  const [draft, setDraft] = useState(() => {
+    const saved = layout === 'page' ? readSessionOverride() : null;
+    return {
+      state_code: saved?.state_code || '',
+      district: saved?.district || '',
+    };
+  });
 
   useEffect(() => {
     function onLocationUpdated() {
@@ -234,7 +374,9 @@ function MandiMarketSection({
 
       try {
         const response = await getMandiBoard({
-          farm_id,
+          farm_id: override ? undefined : farm_id,
+          state: override?.state || undefined,
+          district: override?.district || undefined,
           crops: BOARD_CROPS,
         });
         if (is_cancelled) {
@@ -269,7 +411,7 @@ function MandiMarketSection({
     return () => {
       is_cancelled = true;
     };
-  }, [farm_id, initial_crop, location_tick]);
+  }, [farm_id, initial_crop, location_tick, override?.state, override?.district]);
 
   const crop_rows = board?.crops || [];
   const glance_names = useMemo(
@@ -289,6 +431,8 @@ function MandiMarketSection({
     ? Math.round(modal_price * qty_value)
     : null;
   const trend_points = selected_row?.trend || [];
+  const is_override = Boolean(override?.state);
+  const applied_label = board?.place_label || null;
 
   function openMarket(crop_name) {
     const params = crop_name ? `?crop=${encodeURIComponent(crop_name)}` : '';
@@ -300,6 +444,33 @@ function MandiMarketSection({
       const next = Math.max(0, Math.round((Number(prev || 0) + delta) * 10) / 10);
       return String(next);
     });
+  }
+
+  function handleDraftState(state_code) {
+    setDraft({
+      state_code,
+      district: normalizeDistrictOption(state_code, ''),
+    });
+  }
+
+  function handleApplyLocation() {
+    const state = INDIAN_STATES.find((item) => item.code === draft.state_code);
+    if (!state) {
+      return;
+    }
+    const next = {
+      state: state.label_en,
+      district: draft.district || '',
+      state_code: draft.state_code,
+    };
+    writeSessionOverride(next);
+    setOverride(next);
+  }
+
+  function handleResetLocation() {
+    writeSessionOverride(null);
+    setOverride(null);
+    setDraft({ state_code: '', district: '' });
   }
 
   const board_props = {
@@ -321,6 +492,18 @@ function MandiMarketSection({
   if (layout === 'page') {
     return (
       <section className="mandi-market-page">
+        <MandiLocationPicker
+          draft={draft}
+          home_label={null}
+          is_override={is_override}
+          applied_label={applied_label}
+          on_change_state={handleDraftState}
+          on_change_district={(district) => setDraft((prev) => ({ ...prev, district }))}
+          on_apply={handleApplyLocation}
+          on_reset={handleResetLocation}
+          t={t}
+          state_label_key={state_label_key}
+        />
         {is_loading && <p className="mandi-glance-status">{t('common.loading')}</p>}
         {!is_loading && has_error && (
           <p className="mandi-glance-status">{t('mandi.glance_empty')}</p>

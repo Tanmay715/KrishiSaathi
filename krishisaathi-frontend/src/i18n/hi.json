@@ -569,6 +569,13 @@
   "mandi": {
     "title": "मंडी भाव संकेत",
     "nearby_rates": "नजदीकी मंडी भाव",
+    "location_showing": "इन भाव दिखा रहे हैं",
+    "location_mine": "मेरा स्थान",
+    "location_custom": "अन्य स्थान",
+    "location_unknown": "आपका सेव स्थान",
+    "location_hint": "डिफ़ॉल्ट आपका प्रोफ़ाइल स्थान है। दूसरे राज्य/जिले के भाव देखने के लिए चुनें।",
+    "location_apply": "भाव दिखाएँ",
+    "location_reset": "मेरे स्थान पर वापस",
     "view_all": "सभी देखें",
     "view_all_count": "सभी देखें ({{count}})",
     "view_all_prices": "सभी मंडी भाव देखें",

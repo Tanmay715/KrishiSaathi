@@ -8610,3 +8610,103 @@ html:has(.auth-page) #root {
     transform: translateY(0);
   }
 }
+
+.mandi-location-card {
+  margin-bottom: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.1);
+  box-shadow: 0 1px 2px rgba(15, 40, 28, 0.04);
+}
+
+.mandi-location-card.is-override {
+  border-color: rgba(47, 158, 95, 0.35);
+  background: linear-gradient(180deg, #f3fbf6, #fff);
+}
+
+.mandi-location-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.mandi-location-kicker {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.mandi-location-head strong {
+  display: block;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: #14271d;
+}
+
+.mandi-location-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8f6ee;
+  color: #1e5c40;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.mandi-location-badge.is-home {
+  background: #eef2ff;
+  color: #364fc7;
+}
+
+.mandi-location-hint {
+  margin: 0 0 12px;
+  font-size: 0.84rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.mandi-location-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mandi-location-form .form-group {
+  margin: 0;
+}
+
+.mandi-location-form .form-group label {
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.mandi-location-form .form-select {
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+.mandi-location-form .btn-primary {
+  min-height: 48px;
+  border-radius: 14px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .mandi-location-form {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+
+  .mandi-location-form .btn-primary {
+    width: auto;
+    min-width: 140px;
+  }
+}

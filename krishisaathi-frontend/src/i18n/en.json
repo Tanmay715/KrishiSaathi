@@ -569,6 +569,13 @@
   "mandi": {
     "title": "Mandi price hint",
     "nearby_rates": "Nearby mandi prices",
+    "location_showing": "Showing rates for",
+    "location_mine": "My location",
+    "location_custom": "Other place",
+    "location_unknown": "Your saved location",
+    "location_hint": "Default is your profile location. Pick any state/district to compare rates elsewhere.",
+    "location_apply": "Show rates",
+    "location_reset": "Back to my location",
     "view_all": "View all",
     "view_all_count": "View all ({{count}})",
     "view_all_prices": "View all mandi prices",
