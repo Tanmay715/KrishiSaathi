@@ -86,8 +86,8 @@ function AppLayout() {
         {!is_assistant && (
           <header className="app-topbar is-centered">
             <div className="app-topbar-brand">
-              <BrandWordmark as="h1" size="sm" />
-              <p>{t('app.tagline')}</p>
+              <BrandWordmark as="h1" size="md" />
+              <p className="app-topbar-tagline">{t('app.tagline')}</p>
             </div>
             <LanguageSwitcher variant="topbar" />
           </header>
