@@ -41,45 +41,11 @@ class AssistantService {
     const user = await db('users').where({ id: user_id }).first();
     const context_payload = await this.#buildFarmContext(user_id, user, scope);
     const government = await this.#lookupGovernmentAdvice(trimmed, context_payload, user);
+    const history = await this.#getRecentHistory(thread.id);
 
     await this.#saveMessage(thread.id, 'user', trimmed);
 
-    const history = await db('assistant_messages')
-      .where({ thread_id: thread.id })
-      .whereIn('role', ['user', 'assistant'])
-      .orderBy('created_at', 'asc')
-      .limit(MAX_HISTORY_MESSAGES);
-
-    const openai = getOpenAiClient();
-    const message_language = detectMessageLanguage(trimmed);
-    const reply_language = message_language === 'hi' ? 'Hindi' : 'English';
-    const farm_context = JSON.stringify(context_payload);
-
-    let completion;
-
-    try {
-      completion = await openai.chat.completions.create({
-        model: getOpenAiModel(),
-        messages: [
-          {
-            role: 'system',
-            content: this.#systemPrompt(reply_language, farm_context, government),
-          },
-          ...history.map((item) => ({
-            role: item.role,
-            content: item.content,
-          })),
-        ],
-        temperature: 0.4,
-      });
-    } catch (error) {
-      console.error('[assistant] OpenAI error:', error.message);
-      throw ApiError.serviceUnavailable('Farm Assistant could not reach OpenAI. Try again shortly.');
-    }
-
-    const reply = completion.choices?.[0]?.message?.content?.trim()
-      || 'Sorry, I could not generate a response. Please try again.';
-
+    const reply = await this.#generateReply(trimmed, history, context_payload, government);
     const metadata = government
       ? { government_recommendation: government }
       : null;
@@ -88,6 +54,44 @@ class AssistantService {
     await db('assistant_threads').where({ id: thread.id }).update({ updated_at: db.fn.now() });
 
     return { thread_id: thread.id, message: this.#formatMessage(assistant_message) };
+  }
+
+  async #generateReply(message, history, context_payload, government) {
+    const openai = getOpenAiClient();
+    const reply_language = detectMessageLanguage(message) === 'hi' ? 'Hindi' : 'English';
+    const system_prompt = this.#systemPrompt(reply_language, JSON.stringify(context_payload), government);
+
+    let completion;
+
+    try {
+      completion = await openai.chat.completions.create({
+        model: getOpenAiModel(),
+        messages: [
+          { role: 'system', content: system_prompt },
+          ...history,
+          { role: 'user', content: message },
+        ],
+        temperature: 0.4,
+      });
+    } catch (error) {
+      console.error('[assistant] OpenAI error:', error.message);
+      throw ApiError.serviceUnavailable('Farm Assistant could not reach OpenAI. Try again shortly.');
+    }
+
+    return completion.choices?.[0]?.message?.content?.trim()
+      || 'Sorry, I could not generate a response. Please try again.';
+  }
+
+  async #getRecentHistory(thread_id) {
+    const messages = await db('assistant_messages')
+      .where({ thread_id })
+      .whereIn('role', ['user', 'assistant'])
+      .orderBy('created_at', 'desc')
+      .limit(MAX_HISTORY_MESSAGES);
+
+    return messages
+      .reverse()
+      .map((item) => ({ role: item.role, content: item.content }));
   }
 
   async #lookupGovernmentAdvice(message, context_payload, user) {
