@@ -8529,13 +8529,14 @@ html:has(.auth-page) #root {
 }
 
 .mandi-crop-square {
-  aspect-ratio: 1;
+  aspect-ratio: auto;
+  min-height: 76px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 6px;
+  padding: 10px 8px;
   border: 1.5px solid rgba(30, 92, 64, 0.12);
   border-radius: 16px;
   background: #fff;
@@ -8546,21 +8547,24 @@ html:has(.auth-page) #root {
 }
 
 .mandi-crop-square strong {
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.45;
   text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block;
   max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  /* Devanagari matras (ूँ on गेहूँ, etc.) need room — no clip. */
+  overflow: visible;
+  padding-block: 1px;
 }
 
 .mandi-crop-square-price {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--color-primary-dark);
+  line-height: 1.3;
 }
 
 .mandi-crop-square.is-active {
