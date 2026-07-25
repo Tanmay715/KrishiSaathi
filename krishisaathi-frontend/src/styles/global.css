@@ -41,7 +41,8 @@
   --btn-height: 44px;
   --btn-height-sm: 36px;
   --fab-size: 52px;
-  --fab-clearance: calc(var(--bottom-nav-height) + var(--fab-size) + 28px + env(safe-area-inset-bottom, 0px));
+  /* Main content already ends above the bottom nav — only clear the floating mic. */
+  --fab-clearance: calc(var(--fab-size) + 36px);
   --bottom-nav-height: 64px;
 }
 
