@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-icon.svg'],
       manifest: {
-        name: 'KrishiSaathi',
-        short_name: 'KrishiSaathi',
-        description: 'Farm management for Indian farmers',
+        name: 'Fasalya',
+        short_name: 'Fasalya',
+        description: 'Farm records and advice for Indian farmers',
         theme_color: '#2d6a4f',
         background_color: '#f8f6f0',
         display: 'standalone',

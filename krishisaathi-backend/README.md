@@ -1,6 +1,6 @@
-# KrishiSaathi Backend
+# Fasalya Backend
 
-Farm management REST API for KrishiSaathi.
+Farm management REST API for Fasalya.
 
 ## Stack
 

@@ -1,7 +1,7 @@
 {
   "name": "krishisaathi-backend",
   "version": "0.1.0",
-  "description": "KrishiSaathi farm management API",
+  "description": "Fasalya farm management API",
   "main": "src/server.js",
   "scripts": {
     "start": "npm run migrate && node src/server.js",
@@ -20,7 +20,7 @@
   "keywords": [
     "farm-management",
     "agriculture",
-    "krishisaathi"
+    "fasalya"
   ],
   "license": "UNLICENSED",
   "engines": {

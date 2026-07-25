@@ -1,4 +1,4 @@
-# KrishiSaathi
+# Fasalya
 
 Farm management platform for Indian farmers — monorepo workspace with two independent repositories.
 

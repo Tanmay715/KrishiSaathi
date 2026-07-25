@@ -1,4 +1,4 @@
-/** Maps KrishiSaathi crop names → AGMARKNET / data.gov.in commodity labels. */
+/** Maps Fasalya crop names → AGMARKNET / data.gov.in commodity labels. */
 const COMMODITY_ALIASES = [
   { match: ['wheat', 'गेहूं', 'gehun'], commodity: 'Wheat' },
   { match: ['rice', 'paddy', 'dhan', 'धान', 'चावल'], commodity: 'Paddy(Dhan)(Common)' },

@@ -50,7 +50,7 @@ router.get('/health', async (req, res) => {
     success: is_ok,
     data: {
       status: is_ok ? 'ok' : 'degraded',
-      service: 'krishisaathi-api',
+      service: 'fasalya-api',
       checks,
     },
   });

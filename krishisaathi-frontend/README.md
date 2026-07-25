@@ -1,6 +1,6 @@
-# KrishiSaathi Frontend
+# Fasalya Frontend
 
-Web application for KrishiSaathi farm management platform.
+Web application for Fasalya farm management platform.
 
 ## Stack
 

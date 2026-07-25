@@ -36,7 +36,7 @@ async function startServer() {
     }
 
     app.listen(env.port, '0.0.0.0', () => {
-      console.log(`[server] KrishiSaathi API running on port ${env.port}${env.api_prefix}`);
+      console.log(`[server] Fasalya API running on port ${env.port}${env.api_prefix}`);
     });
   } catch (error) {
     console.error('[server] failed to start:', error.message);
