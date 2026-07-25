@@ -345,7 +345,7 @@ function FarmDetailPage() {
             { id: 'edit-farm', label: t('farms.edit_farm'), onClick: openEditFarm },
             {
               id: 'delete-farm',
-              label: t('common.delete'),
+              label: t('farms.delete_farm'),
               danger: true,
               onClick: handleDeleteFarm,
             },
@@ -377,6 +377,14 @@ function FarmDetailPage() {
             aria-label={t('farms.edit_farm')}
           >
             ✎
+          </button>
+        </div>
+        <div className="farm-hub-card-actions">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={openEditFarm}>
+            {t('farms.edit_farm')}
+          </button>
+          <button type="button" className="btn btn-danger btn-sm" onClick={handleDeleteFarm}>
+            {t('farms.delete_farm')}
           </button>
         </div>
       </article>
@@ -664,6 +672,9 @@ function FarmDetailPage() {
           on_close={() => setShowFarmModal(false)}
           footer={(
             <div className="modal-actions is-pinned">
+              <button type="button" className="btn btn-danger" onClick={handleDeleteFarm}>
+                {t('farms.delete_farm')}
+              </button>
               <button type="button" className="btn btn-secondary" onClick={() => setShowFarmModal(false)}>
                 {t('farms.cancel')}
               </button>

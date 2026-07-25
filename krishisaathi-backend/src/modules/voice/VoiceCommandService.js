@@ -14,6 +14,7 @@ const {
 } = require('./voice_slots');
 const { matchTargetFromSpeech } = require('./target_matcher');
 const { summarizeMoney, formatMoneyAnswer } = require('./money_query');
+const { sanitizeStructureName, parseSpokenArea } = require('./structure_parse');
 
 const RECORD_INTENTS = ['expense', 'income', 'reminder'];
 const STRUCTURE_INTENTS = ['create_farm', 'create_plot'];
@@ -259,15 +260,20 @@ class VoiceCommandService {
 
   #mergeStructureDraft(intent, draft, fields, targets, spoken, context) {
     const merged = { ...draft };
-    const name = this.#toText(fields.name, 150) || this.#toText(fields.title, 150);
+    const raw_name = this.#toText(fields.name, 150) || this.#toText(fields.title, 150);
+    const name = sanitizeStructureName(raw_name);
+    const spoken_area = parseSpokenArea(spoken);
+    const model_area = this.#toNumber(fields.total_area) || this.#toNumber(fields.area);
 
+    // Only set name when it is a real place name — never "नया खेत" / "add farm".
     this.#assign(merged, 'name', name);
     this.#assign(merged, 'state', this.#toText(fields.state, 100));
     this.#assign(merged, 'district', this.#toText(fields.district, 100));
     this.#assign(merged, 'village', this.#toText(fields.village, 150));
     this.#assign(merged, 'notes', this.#toText(fields.notes, 500));
-    this.#assign(merged, 'total_area', this.#toNumber(fields.total_area) || this.#toNumber(fields.area));
-    this.#assign(merged, 'area', this.#toNumber(fields.area) || this.#toNumber(fields.total_area));
+    // Prefer the number heard in speech ("4 bigha") over a model guess/conversion.
+    this.#assign(merged, 'total_area', spoken_area || model_area);
+    this.#assign(merged, 'area', spoken_area || model_area);
     this.#assign(merged, 'soil_type', this.#toText(fields.soil_type, 80));
 
     if (intent === 'create_plot') {
@@ -380,7 +386,8 @@ class VoiceCommandService {
       'Choosing intent:',
       '- "expense": money spent on farming. "income": money earned/crop sold.',
       '- "reminder": the farmer wants to be reminded to do a task later.',
-      '- "create_farm": add a new farm/field, e.g. "नया खेत जोड़ो", "add farm in Meerut".',
+      '- "create_farm": add a new farm/field. Phrases like "नया खेत जोड़ो", "naya khet jodo",',
+      '  "add a new farm" are ONLY the intent — never put them in "name". Leave name null and ask.',
       '- "create_plot": add a plot inside a farm, e.g. "नया प्लॉट जोड़ो", "add plot of 2 acre".',
       '- "money_query": questions about past spending or earning, e.g. "जुलाई में कितना खर्च",',
       '  "how much on diesel", "डीजल पर कुल कितना खर्च", "this season income". Do NOT use assistant for these.',
@@ -400,7 +407,8 @@ class VoiceCommandService {
       `- Merge with the draft already collected: ${JSON.stringify(draft || {})}.`,
       intent ? `- The farmer is currently completing a "${intent}" action; keep that intent unless they clearly switch.` : '',
       `- For expense/income/reminder, "title" is what the money was for or the reminder task.`,
-      `- For create_farm/create_plot, put the farm or plot name in "name" (also accept it in "title").`,
+      `- For create_farm/create_plot, put a real farm/plot name in "name" (village or family name).`,
+      '  Never use "नया खेत", "naya khet", "new farm", or "add farm" as the name.',
       '- For money_query: set kind expense|income, query to the item word (diesel/डीजल/urea),',
       '  category when clear, and date_from/date_to for months ("July" → first/last day of that month).',
       '  If only a month is named, set date_from to the 1st and date_to to the last day.',
@@ -408,12 +416,13 @@ class VoiceCommandService {
       `- reminder_type: ${REMINDER_TYPES.join(', ')}.`,
       '- Map urea/DAP/NPK/खाद to fertilizer, spray/कीटनाशक to pesticide, बीज to seed, मजदूर/labour to labor,',
       '  diesel/डीजल/भाड़ा to transport, pump/pipe to equipment. Selling crop is income with category "sale".',
-      `- For create_farm, always collect total_area (acres) — ask if missing.`,
+      `- For create_farm, always collect total_area. "चार बीघा" / "4 bigha" → total_area: 4.`,
+      '  Keep the number the farmer said. Never convert bigha↔acre↔hectare.',
       `- Today is ${this.#todayWithWeekday()} (India). Resolve "आज", "कल", "परसों", "yesterday",`,
       '  "सोमवार", "next Monday", "July", "जुलाई" to real dates. A named weekday means the next such day from today.',
       '- Amounts are Indian rupees; understand Hindi number words ("पाँच सौ" = 500, "दो हज़ार" = 2000).',
       '- Keep the unit the farmer said (quintal, kg, bag, litre, bora). Never convert between units.',
-      '- Area is in the farmer\'s land unit (usually acres). "दो एकड़" = 2.',
+      '- Area numbers: "दो एकड़" = 2, "चार बीघा" = 4. Do not convert land units.',
       '- Pick target_key / farm_id when the farmer names a farm, plot or crop from this list.',
       this.#targetLines(targets),
       `- "summary": when nothing is missing, read back what will be saved in one short line in ${language_name}.`,

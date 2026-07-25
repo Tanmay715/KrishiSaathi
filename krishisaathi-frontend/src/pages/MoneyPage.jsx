@@ -17,7 +17,6 @@ import {
 } from '../services/farm_service';
 import { formatMoneyDate } from '../utils/format_date';
 import {
-  ALL_TIME,
   CUSTOM,
   comparisonPeriod,
   isWithinRange,
@@ -29,6 +28,7 @@ import { onDataChanged } from '../utils/app_events';
 
 const FILTERS = ['all', 'expense', 'income'];
 const DEFAULT_PERIOD = 'this_season';
+const ALL_TIME = 'all';
 
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
@@ -194,12 +194,6 @@ function MoneyPage() {
   const [scope_plot_id, setScopePlotId] = useState('');
   const [scope_crop_id, setScopeCropId] = useState('');
   const [show_filters, setShowFilters] = useState(false);
-  const [draft_period, setDraftPeriod] = useState(DEFAULT_PERIOD);
-  const [draft_from, setDraftFrom] = useState('');
-  const [draft_to, setDraftTo] = useState('');
-  const [draft_farm_id, setDraftFarmId] = useState('');
-  const [draft_plot_id, setDraftPlotId] = useState('');
-  const [draft_crop_id, setDraftCropId] = useState('');
   const [show_expense_modal, setShowExpenseModal] = useState(false);
   const [show_income_modal, setShowIncomeModal] = useState(false);
   const [targets, setTargets] = useState([]);
@@ -314,53 +308,39 @@ function MoneyPage() {
 
   function handlePeriodChange(next_period) {
     setPeriod(next_period);
+    if (next_period !== CUSTOM) {
+      setCustomFrom('');
+      setCustomTo('');
+    }
   }
 
-  function openFilters() {
-    setDraftPeriod(period === 'this_season' || period === 'last_season' ? period : period);
-    setDraftFrom(custom_from);
-    setDraftTo(custom_to);
-    setDraftFarmId(scope_farm_id);
-    setDraftPlotId(scope_plot_id);
-    setDraftCropId(scope_crop_id);
-    setShowFilters(true);
+  function handleCustomFrom(value) {
+    setCustomFrom(value);
+    if (value || custom_to) {
+      setPeriod(CUSTOM);
+    } else if (period === CUSTOM) {
+      setPeriod(DEFAULT_PERIOD);
+    }
   }
 
-  function applyFilters() {
-    setPeriod(draft_period);
-    setCustomFrom(draft_from);
-    setCustomTo(draft_to);
-    setScopeFarmId(draft_farm_id);
-    setScopePlotId(draft_plot_id);
-    setScopeCropId(draft_crop_id);
-    setShowFilters(false);
+  function handleCustomTo(value) {
+    setCustomTo(value);
+    if (value || custom_from) {
+      setPeriod(CUSTOM);
+    } else if (period === CUSTOM) {
+      setPeriod(DEFAULT_PERIOD);
+    }
   }
 
-  function clearFilters() {
-    setDraftPeriod(DEFAULT_PERIOD);
-    setDraftFrom('');
-    setDraftTo('');
-    setDraftFarmId('');
-    setDraftPlotId('');
-    setDraftCropId('');
-    setPeriod(DEFAULT_PERIOD);
-    setCustomFrom('');
-    setCustomTo('');
-    setScopeFarmId('');
+  function handleFarmScope(next_farm_id) {
+    setScopeFarmId(next_farm_id);
     setScopePlotId('');
     setScopeCropId('');
-    setShowFilters(false);
   }
 
-  function handleDraftFarm(next_farm_id) {
-    setDraftFarmId(next_farm_id);
-    setDraftPlotId('');
-    setDraftCropId('');
-  }
-
-  function handleDraftPlot(next_plot_id) {
-    setDraftPlotId(next_plot_id);
-    setDraftCropId('');
+  function handlePlotScope(next_plot_id) {
+    setScopePlotId(next_plot_id);
+    setScopeCropId('');
   }
 
   const period_choices = useMemo(() => periodOptions(), []);
@@ -370,8 +350,7 @@ function MoneyPage() {
     [custom_from, custom_to],
   );
 
-  const has_extra_filters = period === CUSTOM || period === ALL_TIME
-    || Boolean(scope_farm_id || scope_plot_id || scope_crop_id);
+  const has_extra_filters = Boolean(custom_from || custom_to || scope_farm_id || scope_plot_id || scope_crop_id);
 
   const scoped_ledger = useMemo(
     () => ledger.filter((row) => matchesScope(row, {
@@ -399,8 +378,8 @@ function MoneyPage() {
     [scoped_ledger, period, profit, custom_range],
   );
 
-  const draft_farm = scope_tree.find((farm) => farm.id === draft_farm_id);
-  const draft_plot = draft_farm?.plots.find((plot) => plot.id === draft_plot_id);
+  const selected_farm = scope_tree.find((farm) => farm.id === scope_farm_id);
+  const selected_plot = selected_farm?.plots.find((plot) => plot.id === scope_plot_id);
   const show_scope = scope_tree.length > 0;
 
   if (is_loading) {
@@ -432,9 +411,9 @@ function MoneyPage() {
           <button
             type="button"
             className={`money-period-chip is-more${has_extra_filters ? ' is-active' : ''}`}
-            onClick={openFilters}
+            onClick={() => setShowFilters(true)}
           >
-            {t('money.period_more')}
+            {t('money.filters_title')}
           </button>
         </div>
 
@@ -524,57 +503,29 @@ function MoneyPage() {
         <Modal
           title={t('money.filters_title')}
           on_close={() => setShowFilters(false)}
-          footer={(
-            <div className="modal-actions is-pinned">
-              <button type="button" className="btn btn-secondary" onClick={clearFilters}>
-                {t('money.filters_clear')}
-              </button>
-              <button type="button" className="btn btn-primary" onClick={applyFilters}>
-                {t('money.filters_apply')}
-              </button>
-            </div>
-          )}
         >
           <div className="money-filter-sheet">
-            <div className="money-filter-group">
-              <p className="sheet-section-label">{t('money.period_label')}</p>
-              <div className="money-filter-chips">
-                {[...period_choices, { key: CUSTOM }, { key: ALL_TIME }].map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    className={`money-period-chip${draft_period === option.key ? ' is-active' : ''}`}
-                    onClick={() => setDraftPeriod(option.key)}
-                  >
-                    {seasonChipLabel(option.key, t)}
-                  </button>
-                ))}
-              </div>
+            <div className="money-date-range">
+              <label>
+                <span>{t('money.date_from')}</span>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={custom_from}
+                  onChange={(event) => handleCustomFrom(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>{t('money.date_to')}</span>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={custom_to}
+                  min={custom_from || undefined}
+                  onChange={(event) => handleCustomTo(event.target.value)}
+                />
+              </label>
             </div>
-
-            {draft_period === CUSTOM && (
-              <div className="money-date-range">
-                <label>
-                  <span>{t('money.date_from')}</span>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={draft_from}
-                    onChange={(event) => setDraftFrom(event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span>{t('money.date_to')}</span>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={draft_to}
-                    min={draft_from || undefined}
-                    onChange={(event) => setDraftTo(event.target.value)}
-                  />
-                </label>
-              </div>
-            )}
 
             {show_scope && (
               <div className="money-scope-row">
@@ -582,8 +533,8 @@ function MoneyPage() {
                   <span>{t('money.scope_farm')}</span>
                   <select
                     className="form-select"
-                    value={draft_farm_id}
-                    onChange={(event) => handleDraftFarm(event.target.value)}
+                    value={scope_farm_id}
+                    onChange={(event) => handleFarmScope(event.target.value)}
                   >
                     <option value="">{t('money.scope_all_farms')}</option>
                     {scope_tree.map((farm) => (
@@ -592,32 +543,32 @@ function MoneyPage() {
                   </select>
                 </label>
 
-                {draft_farm_id && (
+                {scope_farm_id && (
                   <label className="money-scope-field">
                     <span>{t('money.scope_plot')}</span>
                     <select
                       className="form-select"
-                      value={draft_plot_id}
-                      onChange={(event) => handleDraftPlot(event.target.value)}
+                      value={scope_plot_id}
+                      onChange={(event) => handlePlotScope(event.target.value)}
                     >
                       <option value="">{t('money.scope_all_plots')}</option>
-                      {(draft_farm?.plots || []).map((plot) => (
+                      {(selected_farm?.plots || []).map((plot) => (
                         <option key={plot.id} value={plot.id}>{plot.name}</option>
                       ))}
                     </select>
                   </label>
                 )}
 
-                {draft_plot_id && (draft_plot?.crops || []).length > 0 && (
+                {scope_plot_id && (selected_plot?.crops || []).length > 0 && (
                   <label className="money-scope-field">
                     <span>{t('money.scope_crop')}</span>
                     <select
                       className="form-select"
-                      value={draft_crop_id}
-                      onChange={(event) => setDraftCropId(event.target.value)}
+                      value={scope_crop_id}
+                      onChange={(event) => setScopeCropId(event.target.value)}
                     >
                       <option value="">{t('money.scope_all_crops')}</option>
-                      {draft_plot.crops.map((crop) => (
+                      {selected_plot.crops.map((crop) => (
                         <option key={crop.id} value={crop.id}>{crop.name}</option>
                       ))}
                     </select>

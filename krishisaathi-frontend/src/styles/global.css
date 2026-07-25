@@ -1484,33 +1484,51 @@ textarea {
 }
 
 .farm-finance-panel {
-  margin-bottom: 24px;
-  padding: 24px 28px;
-  border-radius: var(--radius-lg);
-  border: 1px solid #d8e9df;
-  background: linear-gradient(145deg, #f4faf6 0%, #ffffff 55%, #fffdf8 100%);
-  box-shadow: var(--shadow-md);
+  margin-bottom: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+  background: #fff;
+  box-shadow: none;
 }
 
 .farm-finance-panel.is-collapsed {
-  padding: 16px 18px;
+  padding: 14px;
 }
 
 .farm-finance-summary-card .farm-finance-subtitle {
-  margin: 8px 0 12px;
+  margin: 6px 0 12px;
 }
 
 .farm-finance-glance {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.farm-finance-glance > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(30, 92, 64, 0.08);
+}
+
+.farm-finance-glance .stat-label {
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
 }
 
 .farm-finance-glance strong {
   display: block;
-  margin-top: 4px;
-  font-size: 1.05rem;
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .farm-finance-glance .is-profit {
@@ -1526,7 +1544,7 @@ textarea {
 }
 
 .farm-finance-details {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .farm-finance-top {
@@ -1545,11 +1563,11 @@ textarea {
 }
 
 .farm-finance-eyebrow {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary-dark);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text);
 }
 
 .farm-finance-status {
@@ -1576,9 +1594,10 @@ textarea {
 
 .farm-finance-subtitle {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  text-align: right;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--color-text-subtle);
+  text-align: left;
 }
 
 .farm-finance-hero {
@@ -7575,6 +7594,13 @@ html:has(.auth-page) #root {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.farm-hub-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .farm-hub-mark,
