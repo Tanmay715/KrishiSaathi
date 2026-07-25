@@ -51,14 +51,6 @@ function QuickLogFab() {
       <div className="quick-log-fab-stack no-print">
         <button
           type="button"
-          className="quick-log-fab is-secondary"
-          onClick={() => setIsOpen(true)}
-          aria-label={t('quick_log.title')}
-        >
-          + ₹
-        </button>
-        <button
-          type="button"
           className="quick-log-fab is-voice"
           onClick={() => setIsVoiceOpen(true)}
           aria-label={t('voice_command.title')}
@@ -78,6 +70,10 @@ function QuickLogFab() {
         is_open={is_voice_open}
         on_close={() => setIsVoiceOpen(false)}
         on_saved={() => setPendingCount(getOfflineExpenseCount())}
+        on_manual_entry={() => {
+          setIsVoiceOpen(false);
+          setIsOpen(true);
+        }}
       />
     </>
   );

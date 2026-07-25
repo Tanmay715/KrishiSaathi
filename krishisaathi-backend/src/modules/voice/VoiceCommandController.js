@@ -29,7 +29,10 @@ const voice_draft_schema = Joi.object({
 const voice_command_schema = Joi.object({
   transcript: Joi.string().min(1).max(2000).required(),
   language: Joi.string().valid('en', 'hi').optional(),
-  intent: Joi.string().valid('expense', 'income', 'reminder', 'unknown').optional().allow(null),
+  intent: Joi.string()
+    .valid('expense', 'income', 'reminder', 'assistant', 'help', 'unknown')
+    .optional()
+    .allow(null),
   draft: voice_draft_schema.optional(),
 });
 

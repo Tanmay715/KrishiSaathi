@@ -522,7 +522,20 @@
     "intent_expense": "Expense",
     "intent_income": "Income",
     "intent_reminder": "Reminder",
-    "intent_unknown": "Not understood"
+    "intent_assistant": "Farm Assistant",
+    "intent_unknown": "Not understood",
+    "options_hint": "Tap what you need, or just speak",
+    "continue_hint": "Tap the mic to ask more",
+    "suggest_expense": "Log expense",
+    "suggest_income": "Log income",
+    "suggest_reminder": "Set reminder",
+    "suggest_assistant": "Ask a question",
+    "ask_expense": "Okay. What did you spend on, and how much?",
+    "ask_income": "Okay. What did you sell, and for how much?",
+    "ask_reminder": "Okay. What should I remind you about, and when?",
+    "ask_assistant": "Sure — ask me anything about your farming.",
+    "manual_entry": "Enter by hand",
+    "offline_hint": "Voice needs internet. You can still add an expense by hand."
   },
   "disease": {
     "title": "Crop disease check",

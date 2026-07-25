@@ -3,18 +3,27 @@ import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import VoiceCommandReview from './VoiceCommandReview';
 import { useSpeech } from '../hooks/useSpeech';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { normalizeLanguage } from '../utils/language';
 import { getQuickLogTargets } from '../services/farm_service';
 import { interpretVoiceCommand } from '../services/voice_service';
 import { findTarget, saveVoiceRecord } from '../config/voice_command_helpers';
 
+const INTENT_OPENERS = {
+  expense: 'voice_command.ask_expense',
+  income: 'voice_command.ask_income',
+  reminder: 'voice_command.ask_reminder',
+  assistant: 'voice_command.ask_assistant',
+};
+
 /**
- * Conversational voice logging: the farmer speaks, the app fills in what it understood
- * and asks aloud for whatever is still missing, then saves on one confirmation tap.
+ * The farmer's voice companion: it logs money and reminders, answers farming questions
+ * through the assistant, and — when unsure — offers tappable options instead of a dead end.
  */
-function VoiceCommandSheet({ is_open, on_close, on_saved }) {
+function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
   const { t, i18n } = useTranslation();
   const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const is_online = useOnlineStatus();
   const { is_listening, is_supported, listen, stopListening, speak } = useSpeech(language);
 
   const [status, setStatus] = useState('idle');
@@ -55,10 +64,24 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
     listen({
       on_result: (transcript) => sendTranscript(transcript),
       on_error: (code) => {
-        setStatus(turn_ref.current?.is_ready ? 'review' : 'idle');
+        setStatus(turn_ref.current?.is_ready ? 'review' : idleOrAnswered());
         setErrorMessage(t(code === 'unsupported' ? 'voice.unsupported' : 'voice.error'));
       },
     });
+  }
+
+  function idleOrAnswered() {
+    return turn_ref.current?.answer ? 'answered' : 'idle';
+  }
+
+  /** Chip taps seed an intent, then speak the opener and start listening for the details. */
+  function startIntent(intent) {
+    const seed = { intent, draft: {} };
+    turn_ref.current = seed;
+    setTurn(seed);
+    setErrorMessage('');
+    setStatus('asking');
+    speak(t(INTENT_OPENERS[intent] || 'voice_command.ask_assistant'), startListening);
   }
 
   async function sendTranscript(transcript) {
@@ -70,16 +93,19 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
       const response = await interpretVoiceCommand({
         transcript,
         language,
-        intent: previous_turn?.intent && previous_turn.intent !== 'unknown'
-          ? previous_turn.intent
-          : undefined,
+        intent: activeIntent(previous_turn),
         draft: previous_turn?.draft || undefined,
       });
       applyTurn(response.data);
     } catch (error) {
-      setStatus('idle');
+      setStatus(idleOrAnswered());
       setErrorMessage(error.response?.data?.message || t('common.error'));
     }
+  }
+
+  function activeIntent(previous_turn) {
+    const intent = previous_turn?.intent;
+    return intent && intent !== 'unknown' && intent !== 'help' ? intent : undefined;
   }
 
   function applyTurn(next_turn) {
@@ -90,6 +116,14 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
     if (next_turn?.is_ready) {
       setStatus('review');
       speak(next_turn.summary || t('voice_command.ready'));
+      return;
+    }
+
+    // Assistant replies, help and "not understood" all come back with spoken text and
+    // options — read it aloud, then wait for a tap or another question.
+    if (next_turn?.answer) {
+      setStatus('answered');
+      speak(next_turn.answer);
       return;
     }
 
@@ -128,9 +162,16 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
     }
   }
 
+  function handleManualEntry() {
+    stopListening();
+    on_manual_entry?.();
+  }
+
   if (!is_open) {
     return null;
   }
+
+  const suggestions = turn?.suggestions || [];
 
   return (
     <Modal
@@ -155,6 +196,25 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
               on_mic={is_listening ? stopListening : startListening}
             />
 
+            {turn?.answer && (status === 'answered' || status === 'listening') && (
+              <p className="voice-command-answer">{turn.answer}</p>
+            )}
+
+            {suggestions.length > 0 && status !== 'review' && (
+              <div className="voice-command-suggestions">
+                {suggestions.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="voice-command-chip"
+                    onClick={() => startIntent(key)}
+                  >
+                    {t(`voice_command.suggest_${key}`)}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {said.length > 0 && (
               <ul className="voice-command-said">
                 {said.map((line, index) => <li key={`${line}-${index}`}>“{line}”</li>)}
@@ -175,6 +235,10 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
               />
             )}
 
+            {!is_online && (
+              <p className="voice-command-offline">{t('voice_command.offline_hint')}</p>
+            )}
+
             {!is_supported && (
               <form className="voice-command-typed" onSubmit={handleTypedSubmit}>
                 <input
@@ -185,6 +249,16 @@ function VoiceCommandSheet({ is_open, on_close, on_saved }) {
                 />
                 <button type="submit" className="btn btn-secondary">{t('common.send')}</button>
               </form>
+            )}
+
+            {on_manual_entry && status !== 'review' && (
+              <button
+                type="button"
+                className="voice-command-manual"
+                onClick={handleManualEntry}
+              >
+                {t('voice_command.manual_entry')}
+              </button>
             )}
           </>
         )}
@@ -199,6 +273,7 @@ function VoicePrompt({ t, status, turn, is_listening, on_mic }) {
     listening: t('voice.listening'),
     thinking: t('voice_command.thinking'),
     asking: turn?.question || t('voice_command.thinking'),
+    answered: t('voice_command.continue_hint'),
     review: t('voice_command.confirm_hint'),
     saving: t('common.loading'),
   };

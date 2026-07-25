@@ -46,9 +46,29 @@ const INTENT_SLOTS = {
 };
 
 const UNKNOWN_PROMPT = {
-  en: 'I did not catch that. Try saying: spent 800 rupees on urea.',
-  hi: 'समझ नहीं आया। ऐसे बोलें: खाद पर आठ सौ रुपये खर्च हुए।',
+  en: 'Sorry, I did not understand. Here is what I can help with — tap one or just speak.',
+  hi: 'माफ़ करें, मैं समझ नहीं पाया। मैं इनमें मदद कर सकता हूँ — किसी को चुनें या बोलें।',
 };
+
+const HELP_TEXT = {
+  en: 'I am your farm companion. Tell me things like "spent 800 on urea", "sold wheat for 20000", '
+    + 'or "remind me to irrigate on Monday". You can also ask me any farming question.',
+  hi: 'मैं आपका खेती साथी हूँ। मुझसे ऐसे कहें: "खाद पर आठ सौ खर्च हुए", "गेहूँ बीस हज़ार में बेचा", '
+    + 'या "सोमवार को सिंचाई की याद दिलाना"। खेती से जुड़ा कोई भी सवाल भी पूछ सकते हैं।',
+};
+
+const ASSISTANT_ERROR = {
+  en: 'I could not reach the farm assistant right now. Please try again shortly.',
+  hi: 'अभी खेती सहायक से बात नहीं हो पाई। थोड़ी देर बाद फिर कोशिश करें।',
+};
+
+const ASSISTANT_LIMIT = {
+  en: 'You have asked a lot of questions this hour. Please try again a little later.',
+  hi: 'इस घंटे में बहुत सवाल पूछ लिए। थोड़ी देर बाद फिर पूछें।',
+};
+
+// Options offered whenever the farmer is unsure — the frontend renders these as chips.
+const DEFAULT_SUGGESTIONS = ['expense', 'income', 'reminder', 'assistant'];
 
 function missingSlots(intent, draft = {}) {
   const config = INTENT_SLOTS[intent];
@@ -71,7 +91,19 @@ function slotQuestion(intent, slot, language) {
 }
 
 function unknownPrompt(language) {
-  return language === 'hi' ? UNKNOWN_PROMPT.hi : UNKNOWN_PROMPT.en;
+  return pick(UNKNOWN_PROMPT, language);
+}
+
+function helpText(language) {
+  return pick(HELP_TEXT, language);
+}
+
+function assistantErrorText(language, is_rate_limited = false) {
+  return pick(is_rate_limited ? ASSISTANT_LIMIT : ASSISTANT_ERROR, language);
+}
+
+function pick(messages, language) {
+  return language === 'hi' ? messages.hi : messages.en;
 }
 
 function isEmptySlot(value) {
@@ -88,7 +120,10 @@ function isEmptySlot(value) {
 
 module.exports = {
   INTENT_SLOTS,
+  DEFAULT_SUGGESTIONS,
   missingSlots,
   slotQuestion,
   unknownPrompt,
+  helpText,
+  assistantErrorText,
 };

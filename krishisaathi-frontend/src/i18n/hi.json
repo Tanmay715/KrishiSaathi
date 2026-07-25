@@ -522,7 +522,20 @@
     "intent_expense": "खर्च",
     "intent_income": "आय",
     "intent_reminder": "रिमाइंडर",
-    "intent_unknown": "समझ नहीं आया"
+    "intent_assistant": "खेती सहायक",
+    "intent_unknown": "समझ नहीं आया",
+    "options_hint": "जो चाहिए उसे दबाएँ, या बस बोलें",
+    "continue_hint": "और पूछने के लिए माइक दबाएँ",
+    "suggest_expense": "खर्च दर्ज करें",
+    "suggest_income": "आय दर्ज करें",
+    "suggest_reminder": "रिमाइंडर लगाएँ",
+    "suggest_assistant": "सवाल पूछें",
+    "ask_expense": "ठीक है। किस चीज़ पर और कितना खर्च हुआ?",
+    "ask_income": "ठीक है। क्या बेचा और कितने में?",
+    "ask_reminder": "ठीक है। किस बात की और कब याद दिलाऊँ?",
+    "ask_assistant": "ज़रूर — खेती से जुड़ा कुछ भी पूछिए।",
+    "manual_entry": "हाथ से भरें",
+    "offline_hint": "आवाज़ के लिए इंटरनेट चाहिए। आप खर्च हाथ से भी जोड़ सकते हैं।"
   },
   "disease": {
     "title": "फसल बीमारी जाँच",
