@@ -1,9 +1,11 @@
-import { targetLabel } from '../config/voice_command_helpers';
+import { STRUCTURE_INTENTS, targetLabel } from '../config/voice_command_helpers';
 
 /** Last checkpoint before saving: what the app understood, in plain rows a farmer can scan. */
 function VoiceCommandReview({ t, turn, targets, target_key, on_target_change, on_save, on_redo }) {
   const { intent, draft, summary } = turn;
   const rows = buildRows(t, intent, draft);
+  const needs_target = !STRUCTURE_INTENTS.includes(intent) && intent !== 'reminder';
+  const farm_targets = targets.filter((target) => target.target_type === 'farm');
 
   return (
     <div className="voice-command-review">
@@ -20,7 +22,7 @@ function VoiceCommandReview({ t, turn, targets, target_key, on_target_change, on
         ))}
       </dl>
 
-      {targets.length > 0 && intent !== 'reminder' && (
+      {needs_target && targets.length > 0 && (
         <div className="form-group">
           <label htmlFor="voice-target">{t('quick_log.where')}</label>
           <select
@@ -32,6 +34,24 @@ function VoiceCommandReview({ t, turn, targets, target_key, on_target_change, on
             {targets.map((target) => (
               <option key={target.target_key} value={target.target_key}>
                 {targetLabel(target)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {intent === 'create_plot' && !draft.farm_id && farm_targets.length > 0 && (
+        <div className="form-group">
+          <label htmlFor="voice-farm">{t('money.scope_farm')}</label>
+          <select
+            id="voice-farm"
+            className="form-select"
+            value={target_key}
+            onChange={(event) => on_target_change(event.target.value)}
+          >
+            {farm_targets.map((target) => (
+              <option key={target.target_key} value={target.target_key}>
+                {target.farm_name}
               </option>
             ))}
           </select>
@@ -52,6 +72,23 @@ function VoiceCommandReview({ t, turn, targets, target_key, on_target_change, on
 
 function buildRows(t, intent, draft) {
   const rows = [{ label: t('voice_command.field_kind'), value: t(`voice_command.intent_${intent}`) }];
+
+  if (STRUCTURE_INTENTS.includes(intent)) {
+    if (draft.name || draft.title) {
+      rows.push({ label: t('voice_command.field_name'), value: draft.name || draft.title });
+    }
+    if (draft.district || draft.state || draft.village) {
+      rows.push({
+        label: t('voice_command.field_place'),
+        value: [draft.village, draft.district, draft.state].filter(Boolean).join(', '),
+      });
+    }
+    const area = draft.area || draft.total_area;
+    if (area) {
+      rows.push({ label: t('voice_command.field_area'), value: String(area) });
+    }
+    return rows;
+  }
 
   if (draft.title) {
     rows.push({ label: t('voice_command.field_what'), value: draft.title });

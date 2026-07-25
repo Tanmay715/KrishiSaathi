@@ -74,7 +74,6 @@ function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const is_assistant = location.pathname.startsWith('/assistant');
-  const show_fab = !is_assistant && !location.pathname.startsWith('/market');
 
   if (localStorage.getItem('ks_needs_onboarding') === '1') {
     return <Navigate to="/onboarding" replace />;
@@ -101,7 +100,7 @@ function AppLayout() {
           </ErrorBoundary>
         </main>
 
-        {show_fab && <QuickLogFab />}
+        <QuickLogFab />
 
         {!is_assistant && (
           <nav className="app-bottom-nav" aria-label="Main">

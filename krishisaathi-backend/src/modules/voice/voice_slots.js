@@ -43,6 +43,32 @@ const INTENT_SLOTS = {
       },
     },
   },
+  create_farm: {
+    required: ['name'],
+    questions: {
+      name: {
+        en: 'What should we name this farm?',
+        hi: 'इस खेत का क्या नाम रखें?',
+      },
+    },
+  },
+  create_plot: {
+    required: ['name', 'area', 'farm_id'],
+    questions: {
+      name: {
+        en: 'What is the plot name?',
+        hi: 'प्लॉट का क्या नाम है?',
+      },
+      area: {
+        en: 'How much area is this plot?',
+        hi: 'इस प्लॉट का क्षेत्रफल कितना है?',
+      },
+      farm_id: {
+        en: 'Which farm should this plot belong to?',
+        hi: 'यह प्लॉट किस खेत में जोड़ना है?',
+      },
+    },
+  },
 };
 
 const UNKNOWN_PROMPT = {
@@ -51,10 +77,10 @@ const UNKNOWN_PROMPT = {
 };
 
 const HELP_TEXT = {
-  en: 'I am your farm companion. Tell me things like "spent 800 on urea", "sold wheat for 20000", '
-    + 'or "remind me to irrigate on Monday". You can also ask me any farming question.',
-  hi: 'मैं आपका खेती साथी हूँ। मुझसे ऐसे कहें: "खाद पर आठ सौ खर्च हुए", "गेहूँ बीस हज़ार में बेचा", '
-    + 'या "सोमवार को सिंचाई की याद दिलाना"। खेती से जुड़ा कोई भी सवाल भी पूछ सकते हैं।',
+  en: 'I am your farm companion. Tell me things like "spent 800 on urea", "add a farm in Meerut", '
+    + '"sold wheat for 20000", or "remind me to irrigate on Monday". You can also ask any farming question.',
+  hi: 'मैं आपका खेती साथी हूँ। मुझसे ऐसे कहें: "खाद पर आठ सौ खर्च हुए", "मेरठ में नया खेत जोड़ो", '
+    + '"गेहूँ बीस हज़ार में बेचा", या "सोमवार को सिंचाई की याद दिलाना"। खेती से जुड़ा कोई भी सवाल भी पूछ सकते हैं।',
 };
 
 const ASSISTANT_ERROR = {
@@ -67,8 +93,34 @@ const ASSISTANT_LIMIT = {
   hi: 'इस घंटे में बहुत सवाल पूछ लिए। थोड़ी देर बाद फिर पूछें।',
 };
 
-// Options offered whenever the farmer is unsure — the frontend renders these as chips.
 const DEFAULT_SUGGESTIONS = ['expense', 'income', 'reminder', 'assistant'];
+
+/** Suggestion chips change with the screen the farmer is on. */
+function suggestionsForContext(context = {}) {
+  const page = context.page;
+
+  if (page === 'farms') {
+    return ['create_farm', 'expense', 'assistant', 'reminder'];
+  }
+
+  if (page === 'farm') {
+    return ['create_plot', 'expense', 'income', 'assistant'];
+  }
+
+  if (page === 'plot') {
+    return ['expense', 'income', 'reminder', 'assistant'];
+  }
+
+  if (page === 'assistant') {
+    return ['assistant', 'expense', 'income', 'reminder'];
+  }
+
+  if (page === 'money') {
+    return ['expense', 'income', 'reminder', 'create_farm'];
+  }
+
+  return DEFAULT_SUGGESTIONS;
+}
 
 function missingSlots(intent, draft = {}) {
   const config = INTENT_SLOTS[intent];
@@ -121,6 +173,7 @@ function isEmptySlot(value) {
 module.exports = {
   INTENT_SLOTS,
   DEFAULT_SUGGESTIONS,
+  suggestionsForContext,
   missingSlots,
   slotQuestion,
   unknownPrompt,

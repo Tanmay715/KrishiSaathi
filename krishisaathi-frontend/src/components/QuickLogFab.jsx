@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { createExpense } from '../services/farm_service';
@@ -6,16 +7,24 @@ import {
   flushOfflineExpenseQueue,
   getOfflineExpenseCount,
 } from '../utils/offline_expense_queue';
+import { deriveVoiceContext } from '../config/voice_command_helpers';
 import QuickExpenseModal from './QuickExpenseModal';
 import VoiceCommandSheet from './VoiceCommandSheet';
 
 function QuickLogFab() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const is_online = useOnlineStatus();
   const [is_open, setIsOpen] = useState(false);
   const [is_voice_open, setIsVoiceOpen] = useState(false);
   const [sync_notice, setSyncNotice] = useState('');
   const [pending_count, setPendingCount] = useState(getOfflineExpenseCount());
+  const page_context = useMemo(
+    () => deriveVoiceContext(location.pathname),
+    [location.pathname],
+  );
+  const is_assistant = page_context.page === 'assistant';
 
   useEffect(() => {
     async function syncQueue() {
@@ -36,6 +45,19 @@ function QuickLogFab() {
     syncQueue();
   }, [is_online, t]);
 
+  function handleSaved(intent) {
+    setPendingCount(getOfflineExpenseCount());
+
+    if (intent === 'create_farm') {
+      navigate('/farms');
+      return;
+    }
+
+    if (intent === 'create_plot' && page_context.farm_id) {
+      navigate(`/farms/${page_context.farm_id}`);
+    }
+  }
+
   return (
     <>
       {sync_notice && (
@@ -48,7 +70,7 @@ function QuickLogFab() {
           {t('quick_log.pending_offline', { count: pending_count })}
         </div>
       )}
-      <div className="quick-log-fab-stack no-print">
+      <div className={`quick-log-fab-stack no-print${is_assistant ? ' is-assistant-fab' : ''}`}>
         <button
           type="button"
           className="quick-log-fab is-voice"
@@ -69,7 +91,8 @@ function QuickLogFab() {
       <VoiceCommandSheet
         is_open={is_voice_open}
         on_close={() => setIsVoiceOpen(false)}
-        on_saved={() => setPendingCount(getOfflineExpenseCount())}
+        on_saved={handleSaved}
+        page_context={page_context}
         on_manual_entry={() => {
           setIsVoiceOpen(false);
           setIsOpen(true);

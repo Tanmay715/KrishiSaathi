@@ -1,12 +1,13 @@
 /**
  * Indian crop seasons drive how farmers think about money, so totals are scoped to a
- * season (or a year) instead of showing every rupee ever logged.
+ * season (or a custom date range) instead of showing every rupee ever logged.
  *
  * kharif: Jun 1 - Oct 31 | rabi: Nov 1 - Mar 31 (next year) | zaid: Apr 1 - May 31
  */
 const SEASON_ORDER = ['rabi', 'zaid', 'kharif'];
 
 export const ALL_TIME = 'all';
+export const CUSTOM = 'custom';
 
 export function currentSeason(reference_date = new Date()) {
   const month = reference_date.getMonth();
@@ -48,11 +49,18 @@ export function seasonRange({ season, year }) {
 
 /**
  * Turns a period key into an inclusive date range. Keys are `this_season`,
- * `last_season`, `year:2025` or `all`. An empty range means all time.
+ * `last_season`, `custom`, or `all`. Pass `custom_range` when key is custom.
  */
-export function periodRange(period_key, reference_date = new Date()) {
+export function periodRange(period_key, reference_date = new Date(), custom_range = {}) {
   if (!period_key || period_key === ALL_TIME) {
     return { from: null, to: null };
+  }
+
+  if (period_key === CUSTOM) {
+    return {
+      from: normalizeDate(custom_range.from),
+      to: normalizeDate(custom_range.to),
+    };
   }
 
   if (period_key === 'this_season') {
@@ -78,38 +86,43 @@ export function comparisonPeriod(period_key, reference_date = new Date()) {
     return { label_key: 'previous_season', range: seasonRange(two_back) };
   }
 
-  const year = yearFromKey(period_key);
-
-  if (year) {
-    return {
-      label_key: 'previous_year',
-      range: { from: `${year - 1}-01-01`, to: `${year - 1}-12-31` },
-    };
-  }
-
   return null;
 }
 
 /**
- * Season and year chips, limited to years the farmer actually has entries for so the
- * control stays short for a new user and grows with history.
+ * Compact period chips: this season, last season, custom dates, and all-time when
+ * the farmer has any history. Bare year chips are avoided — they look empty.
  */
-export function periodOptions(entry_dates = [], reference_date = new Date()) {
-  const this_year = reference_date.getFullYear();
-  const years = [...new Set(
-    entry_dates
-      .map((value) => Number(String(value || '').slice(0, 4)))
-      .filter((year) => year >= 2000 && year <= this_year),
-  )].sort((a, b) => b - a);
-
-  const has_history = years.some((year) => year < this_year) || years.length > 1;
+export function periodOptions(entry_dates = []) {
+  const has_entries = entry_dates.some((value) => String(value || '').slice(0, 4) >= '2000');
 
   return [
     { key: 'this_season', is_season: true },
     { key: 'last_season', is_season: true },
-    ...years.map((year) => ({ key: `year:${year}`, year })),
-    ...(has_history || years.length ? [{ key: ALL_TIME }] : []),
+    { key: CUSTOM },
+    ...(has_entries ? [{ key: ALL_TIME }] : []),
   ];
+}
+
+/** One-line season label such as "Kharif 2026" or "Rabi 2025-26". */
+export function seasonChipLabel(option_key, t) {
+  if (option_key === ALL_TIME) {
+    return t('money.period_all');
+  }
+
+  if (option_key === CUSTOM) {
+    return t('money.period_custom');
+  }
+
+  const season = option_key === 'this_season'
+    ? currentSeason()
+    : previousSeason(currentSeason());
+  const name = t(`crops.season.${season.season}`);
+  const year = season.season === 'rabi'
+    ? `${season.year}-${String(season.year + 1).slice(2)}`
+    : String(season.year);
+
+  return `${name} ${year}`;
 }
 
 function yearFromKey(period_key) {
@@ -133,4 +146,9 @@ export function isWithinRange(date_value, { from, to }) {
   }
 
   return (!from || date >= from) && (!to || date <= to);
+}
+
+function normalizeDate(value) {
+  const text = String(value || '').trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null;
 }

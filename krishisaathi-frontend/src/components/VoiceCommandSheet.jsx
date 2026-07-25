@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import VoiceCommandReview from './VoiceCommandReview';
@@ -7,20 +7,27 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { normalizeLanguage } from '../utils/language';
 import { getQuickLogTargets } from '../services/farm_service';
 import { interpretVoiceCommand } from '../services/voice_service';
-import { findTarget, saveVoiceRecord } from '../config/voice_command_helpers';
+import {
+  STRUCTURE_INTENTS,
+  findTarget,
+  saveVoiceRecord,
+  suggestionsForPage,
+} from '../config/voice_command_helpers';
 
 const INTENT_OPENERS = {
   expense: 'voice_command.ask_expense',
   income: 'voice_command.ask_income',
   reminder: 'voice_command.ask_reminder',
   assistant: 'voice_command.ask_assistant',
+  create_farm: 'voice_command.ask_create_farm',
+  create_plot: 'voice_command.ask_create_plot',
 };
 
 /**
- * The farmer's voice companion: it logs money and reminders, answers farming questions
- * through the assistant, and — when unsure — offers tappable options instead of a dead end.
+ * The farmer's voice companion: logs money, creates farms/plots, answers questions,
+ * and offers tappable options instead of a dead end when speech is unclear.
  */
-function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
+function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry, page_context = {} }) {
   const { t, i18n } = useTranslation();
   const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const is_online = useOnlineStatus();
@@ -33,9 +40,12 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
   const [target_key, setTargetKey] = useState('');
   const [typed_text, setTypedText] = useState('');
   const [error_message, setErrorMessage] = useState('');
-  // The mic reopens from inside a speech callback, so the next answer must read the
-  // latest turn rather than the one captured when that callback was created.
   const turn_ref = useRef(null);
+
+  const idle_suggestions = useMemo(
+    () => suggestionsForPage(page_context.page),
+    [page_context.page],
+  );
 
   useEffect(() => {
     if (!is_open) {
@@ -46,7 +56,7 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
     getQuickLogTargets()
       .then((response) => setTargets(response.data || []))
       .catch(() => setTargets([]));
-  }, [is_open]);
+  }, [is_open, page_context.page, page_context.farm_id, page_context.plot_id]);
 
   function resetConversation() {
     turn_ref.current = null;
@@ -74,9 +84,11 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
     return turn_ref.current?.answer ? 'answered' : 'idle';
   }
 
-  /** Chip taps seed an intent, then speak the opener and start listening for the details. */
   function startIntent(intent) {
-    const seed = { intent, draft: {} };
+    const seed = {
+      intent,
+      draft: seedDraftForIntent(intent, page_context),
+    };
     turn_ref.current = seed;
     setTurn(seed);
     setErrorMessage('');
@@ -95,6 +107,7 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
         language,
         intent: activeIntent(previous_turn),
         draft: previous_turn?.draft || undefined,
+        context: page_context,
       });
       applyTurn(response.data);
     } catch (error) {
@@ -119,8 +132,6 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
       return;
     }
 
-    // Assistant replies, help and "not understood" all come back with spoken text and
-    // options — read it aloud, then wait for a tap or another question.
     if (next_turn?.answer) {
       setStatus('answered');
       speak(next_turn.answer);
@@ -133,8 +144,14 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
 
   async function handleSave() {
     const target = findTarget(targets, target_key);
+    const is_structure = STRUCTURE_INTENTS.includes(turn.intent);
 
-    if (!target && turn.intent !== 'reminder') {
+    if (!is_structure && !target && turn.intent !== 'reminder') {
+      setErrorMessage(t('quick_log.no_farm'));
+      return;
+    }
+
+    if (turn.intent === 'create_plot' && !turn.draft?.farm_id && !target?.farm_id) {
       setErrorMessage(t('quick_log.no_farm'));
       return;
     }
@@ -145,7 +162,7 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
     try {
       await saveVoiceRecord(turn.intent, turn.draft, target);
       setStatus('saved');
-      on_saved?.();
+      on_saved?.(turn.intent);
     } catch (error) {
       setStatus('review');
       setErrorMessage(error.response?.data?.message || t('voice_command.save_failed'));
@@ -171,7 +188,9 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
     return null;
   }
 
-  const suggestions = turn?.suggestions || [];
+  const suggestions = turn?.suggestions?.length
+    ? turn.suggestions
+    : (status === 'idle' ? idle_suggestions : []);
 
   return (
     <Modal
@@ -200,7 +219,7 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
               <p className="voice-command-answer">{turn.answer}</p>
             )}
 
-            {suggestions.length > 0 && status !== 'review' && (
+            {suggestions.length > 0 && status !== 'review' && status !== 'asking' && (
               <div className="voice-command-suggestions">
                 {suggestions.map((key) => (
                   <button
@@ -254,10 +273,14 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
             {on_manual_entry && status !== 'review' && (
               <button
                 type="button"
-                className="voice-command-manual"
+                className="voice-command-manual-btn"
                 onClick={handleManualEntry}
               >
-                {t('voice_command.manual_entry')}
+                <span className="voice-command-manual-icon" aria-hidden="true">₹</span>
+                <span>
+                  <strong>{t('voice_command.manual_entry')}</strong>
+                  <em>{t('voice_command.manual_entry_hint')}</em>
+                </span>
               </button>
             )}
           </>
@@ -267,12 +290,19 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry }) {
   );
 }
 
+function seedDraftForIntent(intent, context) {
+  if (intent === 'create_plot' && context.farm_id) {
+    return { farm_id: context.farm_id };
+  }
+  return {};
+}
+
 function VoicePrompt({ t, status, turn, is_listening, on_mic }) {
   const status_labels = {
     idle: t('voice_command.tap_hint'),
     listening: t('voice.listening'),
     thinking: t('voice_command.thinking'),
-    asking: turn?.question || t('voice_command.thinking'),
+    asking: turn?.question || t(INTENT_OPENERS[turn?.intent] || 'voice_command.thinking'),
     answered: t('voice_command.continue_hint'),
     review: t('voice_command.confirm_hint'),
     saving: t('common.loading'),

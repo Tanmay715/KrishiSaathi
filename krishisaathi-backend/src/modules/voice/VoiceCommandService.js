@@ -5,7 +5,7 @@ const ApiError = require('../../utils/ApiError');
 const FarmService = require('../farms/FarmService');
 const AssistantService = require('../assistant/AssistantService');
 const {
-  DEFAULT_SUGGESTIONS,
+  suggestionsForContext,
   missingSlots,
   slotQuestion,
   unknownPrompt,
@@ -15,7 +15,9 @@ const {
 const { matchTargetFromSpeech } = require('./target_matcher');
 
 const RECORD_INTENTS = ['expense', 'income', 'reminder'];
-const ALL_INTENTS = [...RECORD_INTENTS, 'assistant', 'help', 'unknown'];
+const STRUCTURE_INTENTS = ['create_farm', 'create_plot'];
+const FILLING_INTENTS = [...RECORD_INTENTS, ...STRUCTURE_INTENTS];
+const ALL_INTENTS = [...FILLING_INTENTS, 'assistant', 'help', 'unknown'];
 const EXPENSE_CATEGORIES = [
   'seed', 'fertilizer', 'pesticide', 'irrigation', 'labor', 'equipment', 'transport', 'other',
 ];
@@ -24,13 +26,11 @@ const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'wea
 const MAX_TARGETS_IN_PROMPT = 25;
 
 /**
- * The farmer's voice companion. It logs money and reminders by collecting the needed
- * slots over a short back-and-forth, answers farming questions through the Farm
- * Assistant, and — when it cannot tell what was meant — offers clear options instead
- * of dead-ending.
+ * The farmer's voice companion. It logs money and reminders, creates farms/plots,
+ * answers farming questions, and offers clear options when speech is unclear.
  */
 class VoiceCommandService {
-  async interpret(user_id, { transcript, language, draft = {}, intent = null }) {
+  async interpret(user_id, { transcript, language, draft = {}, intent = null, context = {} }) {
     const spoken = String(transcript || '').trim();
 
     if (!spoken) {
@@ -46,18 +46,31 @@ class VoiceCommandService {
 
     const reply_language = this.#replyLanguage(language, spoken);
     const targets = await FarmService.getQuickLogTargets(user_id);
-    const parsed = await this.#askModel(spoken, { draft, intent, targets, reply_language });
+    const seeded_draft = this.#seedDraftFromContext(draft, context, targets);
+    const parsed = await this.#askModel(spoken, {
+      draft: seeded_draft,
+      intent,
+      targets,
+      reply_language,
+      context,
+    });
     const next_intent = this.#resolveIntent(parsed.intent, intent);
 
     if (next_intent === 'assistant') {
-      return this.#assistantTurn(user_id, spoken, reply_language);
+      return this.#assistantTurn(user_id, spoken, reply_language, context);
     }
 
     if (next_intent === 'help' || next_intent === 'unknown') {
-      return this.#optionsTurn(next_intent, spoken, reply_language);
+      return this.#optionsTurn(next_intent, spoken, reply_language, context);
     }
 
-    return this.#recordTurn(next_intent, parsed, { spoken, draft, targets, reply_language });
+    return this.#recordTurn(next_intent, parsed, {
+      spoken,
+      draft: seeded_draft,
+      targets,
+      reply_language,
+      context,
+    });
   }
 
   /**
@@ -66,17 +79,17 @@ class VoiceCommandService {
    */
   #resolveIntent(parsed_intent, active_intent) {
     const is_valid = ALL_INTENTS.includes(parsed_intent);
-    const is_filling_record = RECORD_INTENTS.includes(active_intent);
+    const is_filling = FILLING_INTENTS.includes(active_intent);
 
-    if (is_filling_record) {
-      return RECORD_INTENTS.includes(parsed_intent) ? parsed_intent : active_intent;
+    if (is_filling) {
+      return FILLING_INTENTS.includes(parsed_intent) ? parsed_intent : active_intent;
     }
 
     return is_valid ? parsed_intent : 'unknown';
   }
 
-  #recordTurn(intent, parsed, { spoken, draft, targets, reply_language }) {
-    const next_draft = this.#mergeDraft(intent, draft, parsed.fields, targets, spoken);
+  #recordTurn(intent, parsed, { spoken, draft, targets, reply_language, context }) {
+    const next_draft = this.#mergeDraft(intent, draft, parsed.fields, targets, spoken, context);
     const missing = missingSlots(intent, next_draft);
 
     return {
@@ -84,22 +97,22 @@ class VoiceCommandService {
       draft: next_draft,
       missing,
       is_ready: missing.length === 0,
-      // Fixed wording per slot: the model sometimes drifts into asking for details we
-      // do not need, which strands the farmer in an endless conversation.
       question: missing.length ? slotQuestion(intent, missing[0], reply_language) : null,
       summary: missing.length ? null : (parsed.summary || null),
     };
   }
 
-  /** Hands the utterance to the Farm Assistant so voice can answer questions, not just log. */
-  async #assistantTurn(user_id, spoken, reply_language) {
+  async #assistantTurn(user_id, spoken, reply_language, context) {
     try {
-      const result = await AssistantService.chat(user_id, spoken);
+      const result = await AssistantService.chat(user_id, spoken, {
+        farm_id: context.farm_id || undefined,
+        plot_id: context.plot_id || undefined,
+      });
 
       return {
         ...this.#baseTurn('assistant', reply_language, spoken),
         answer: result?.message?.content || assistantErrorText(reply_language),
-        suggestions: RECORD_INTENTS,
+        suggestions: suggestionsForContext(context).filter((key) => key !== 'assistant'),
         can_continue: true,
       };
     } catch (error) {
@@ -108,20 +121,19 @@ class VoiceCommandService {
       return {
         ...this.#baseTurn('assistant', reply_language, spoken),
         answer: assistantErrorText(reply_language, is_rate_limited),
-        suggestions: DEFAULT_SUGGESTIONS,
+        suggestions: suggestionsForContext(context),
         can_continue: !is_rate_limited,
       };
     }
   }
 
-  /** "What can I do?" and anything unclear both land here with tappable next steps. */
-  #optionsTurn(intent, spoken, reply_language) {
+  #optionsTurn(intent, spoken, reply_language, context) {
     const answer = intent === 'help' ? helpText(reply_language) : unknownPrompt(reply_language);
 
     return {
       ...this.#baseTurn(intent, reply_language, spoken),
       answer,
-      suggestions: DEFAULT_SUGGESTIONS,
+      suggestions: suggestionsForContext(context),
     };
   }
 
@@ -141,8 +153,31 @@ class VoiceCommandService {
     };
   }
 
-  #mergeDraft(intent, draft, fields = {}, targets = [], spoken = '') {
+  /** Prefill farm/plot ids when the farmer opened the mic on that screen. */
+  #seedDraftFromContext(draft = {}, context = {}, targets = []) {
+    const seeded = { ...draft };
+
+    if (context.farm_id && !seeded.farm_id) {
+      const farm = targets.find((target) => target.farm_id === context.farm_id);
+      if (farm || context.page === 'farm' || context.page === 'plot') {
+        seeded.farm_id = context.farm_id;
+      }
+    }
+
+    if (context.plot_id && !seeded.plot_id) {
+      seeded.plot_id = context.plot_id;
+    }
+
+    return seeded;
+  }
+
+  #mergeDraft(intent, draft, fields = {}, targets = [], spoken = '', context = {}) {
     const merged = { ...draft };
+
+    if (STRUCTURE_INTENTS.includes(intent)) {
+      return this.#mergeStructureDraft(intent, merged, fields, targets, spoken, context);
+    }
+
     const amount = this.#toNumber(fields.amount);
     const quantity = this.#toNumber(fields.quantity);
 
@@ -168,6 +203,49 @@ class VoiceCommandService {
     }
 
     return merged;
+  }
+
+  #mergeStructureDraft(intent, draft, fields, targets, spoken, context) {
+    const merged = { ...draft };
+    const name = this.#toText(fields.name, 150) || this.#toText(fields.title, 150);
+
+    this.#assign(merged, 'name', name);
+    this.#assign(merged, 'state', this.#toText(fields.state, 100));
+    this.#assign(merged, 'district', this.#toText(fields.district, 100));
+    this.#assign(merged, 'village', this.#toText(fields.village, 150));
+    this.#assign(merged, 'notes', this.#toText(fields.notes, 500));
+    this.#assign(merged, 'total_area', this.#toNumber(fields.total_area) || this.#toNumber(fields.area));
+    this.#assign(merged, 'area', this.#toNumber(fields.area) || this.#toNumber(fields.total_area));
+    this.#assign(merged, 'soil_type', this.#toText(fields.soil_type, 80));
+
+    if (intent === 'create_plot') {
+      const farm_id = this.#resolveFarmId(fields.farm_id || fields.target_key, targets, spoken, context);
+      this.#assign(merged, 'farm_id', farm_id);
+      if (!merged.farm_id && targets.filter((row) => row.target_type === 'farm').length === 1) {
+        merged.farm_id = targets.find((row) => row.target_type === 'farm').farm_id;
+      }
+    }
+
+    return merged;
+  }
+
+  #resolveFarmId(value, targets, spoken, context) {
+    if (context.farm_id) {
+      return context.farm_id;
+    }
+
+    const raw = String(value || '').trim();
+    if (raw.startsWith('farm:')) {
+      const farm_id = raw.slice(5);
+      return targets.some((target) => target.farm_id === farm_id) ? farm_id : null;
+    }
+
+    if (targets.some((target) => target.farm_id === raw)) {
+      return raw;
+    }
+
+    const matched = matchTargetFromSpeech(spoken, targets.filter((row) => row.target_type === 'farm'));
+    return matched ? matched.replace(/^farm:/, '') : null;
   }
 
   /** A reminder only has a due date, so any date the farmer gives is the due date. */
@@ -200,7 +278,7 @@ class VoiceCommandService {
     return preferred?.target_key || null;
   }
 
-  async #askModel(spoken, { draft, intent, targets, reply_language }) {
+  async #askModel(spoken, { draft, intent, targets, reply_language, context }) {
     const openai = getOpenAiClient();
     let completion;
 
@@ -210,7 +288,10 @@ class VoiceCommandService {
         response_format: { type: 'json_object' },
         temperature: 0.1,
         messages: [
-          { role: 'system', content: this.#systemPrompt({ draft, intent, targets, reply_language }) },
+          {
+            role: 'system',
+            content: this.#systemPrompt({ draft, intent, targets, reply_language, context }),
+          },
           { role: 'user', content: spoken },
         ],
       });
@@ -226,35 +307,45 @@ class VoiceCommandService {
     }
   }
 
-  #systemPrompt({ draft, intent, targets, reply_language }) {
+  #systemPrompt({ draft, intent, targets, reply_language, context }) {
     const language_name = reply_language === 'hi' ? 'Hindi (Devanagari script)' : 'English';
+    const page = context?.page || 'home';
 
     return [
-      'You are an Indian farmer\'s voice companion. First decide what the farmer wants, then,',
-      'only for money/reminder records, extract the structured fields.',
+      'You are an Indian farmer\'s voice companion. First decide what the farmer wants, then',
+      'extract structured fields for that intent.',
       'Speech may be Hindi, English or Hinglish, and is often a short answer to a question you just asked.',
       '',
       'Return JSON only, with this shape:',
-      '{"intent":"expense|income|reminder|assistant|help|unknown","fields":{"title":string|null,',
-      '"category":string|null,"amount":number|null,"quantity":number|null,"unit":string|null,',
-      '"date":"YYYY-MM-DD"|null,"due_at":"YYYY-MM-DD"|null,"reminder_type":string|null,',
-      '"target_key":string|null,"notes":string|null},"summary":string|null,"confidence":number}',
+      '{"intent":"expense|income|reminder|create_farm|create_plot|assistant|help|unknown",',
+      '"fields":{"title":string|null,"name":string|null,"category":string|null,"amount":number|null,',
+      '"quantity":number|null,"unit":string|null,"date":"YYYY-MM-DD"|null,"due_at":"YYYY-MM-DD"|null,',
+      '"reminder_type":string|null,"target_key":string|null,"notes":string|null,"state":string|null,',
+      '"district":string|null,"village":string|null,"total_area":number|null,"area":number|null,',
+      '"soil_type":string|null,"farm_id":string|null},"summary":string|null,"confidence":number}',
       '',
       'Choosing intent:',
       '- "expense": money spent on farming. "income": money earned/crop sold.',
       '- "reminder": the farmer wants to be reminded to do a task later.',
-      '- "assistant": any farming question, advice, or a wish to talk to the assistant — crop disease,',
-      '  weather, prices, schemes, "मेरी फसल पीली पड़ रही है", "सलाह चाहिए", "farm assistant से बात करनी है".',
-      '- "help": the farmer asks what this app or voice can do, e.g. "इससे क्या कर सकता हूँ", "what can I do".',
+      '- "create_farm": add a new farm/field, e.g. "नया खेत जोड़ो", "add farm in Meerut", "मेरा खेत बनाओ".',
+      '- "create_plot": add a plot inside a farm, e.g. "नया प्लॉट जोड़ो", "add plot of 2 acre".',
+      '- "assistant": any farming question, advice, or a wish to talk to the assistant.',
+      '- "help": the farmer asks what this app or voice can do.',
       '- "unknown": only when the speech is truly unintelligible or empty of meaning.',
+      `- The farmer is currently on the "${page}" screen`
+        + (context?.farm_id ? ` (farm ${context.farm_id})` : '')
+        + (context?.plot_id ? ` (plot ${context.plot_id})` : '')
+        + '. Prefer create_farm on farms screens, create_plot on a farm detail screen,',
+      '  and assistant on the assistant screen — but always honour a clear spoken intent.',
       '- A short word like a farm/crop name, a bare number, or "haan/नहीं" is an answer to your last',
-      '  question, not a new question — keep the record intent in that case.',
+      '  question, not a new question — keep the active intent in that case.',
       '',
-      'Field rules (only when intent is expense, income or reminder):',
-      '- Only fill a field the farmer actually mentioned; use null otherwise. Never invent an amount.',
+      'Field rules:',
+      '- Only fill a field the farmer actually mentioned; use null otherwise. Never invent amounts.',
       `- Merge with the draft already collected: ${JSON.stringify(draft || {})}.`,
-      intent ? `- The farmer is currently completing a "${intent}" record; keep that intent unless they clearly switch.` : '',
-      `- "title" is what the money was for ("urea", "खाद", "labour") or the reminder task.`,
+      intent ? `- The farmer is currently completing a "${intent}" action; keep that intent unless they clearly switch.` : '',
+      `- For expense/income/reminder, "title" is what the money was for or the reminder task.`,
+      `- For create_farm/create_plot, put the farm or plot name in "name" (also accept it in "title").`,
       `- expense categories: ${EXPENSE_CATEGORIES.join(', ')}. income categories: ${INCOME_CATEGORIES.join(', ')}.`,
       `- reminder_type: ${REMINDER_TYPES.join(', ')}.`,
       '- Map urea/DAP/NPK/खाद to fertilizer, spray/कीटनाशक to pesticide, बीज to seed, मजदूर/labour to labor,',
@@ -263,9 +354,8 @@ class VoiceCommandService {
       '  "सोमवार", "next Monday" to real dates. A named weekday means the next such day from today.',
       '- Amounts are Indian rupees; understand Hindi number words ("पाँच सौ" = 500, "दो हज़ार" = 2000).',
       '- Keep the unit the farmer said (quintal, kg, bag, litre, bora). Never convert between units.',
-      '- Pick target_key when the farmer names a farm, plot or crop from this list. Hindi crop words map',
-      '  to English names: आलू=Potato, गेहूँ=Wheat, धान/चावल=Rice, प्याज=Onion, टमाटर=Tomato,',
-      '  सरसों=Mustard, गन्ना=Sugarcane, कपास=Cotton, मक्का=Maize, चना=Chana, मूँग=Moong.',
+      '- Area is in the farmer\'s land unit (usually acres). "दो एकड़" = 2.',
+      '- Pick target_key / farm_id when the farmer names a farm, plot or crop from this list.',
       this.#targetLines(targets),
       `- "summary": when nothing is missing, read back what will be saved in one short line in ${language_name}.`,
       '  The summary is shown before saving, so never say it is already saved or done.',

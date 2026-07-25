@@ -9,6 +9,7 @@ import PageHeader from '../components/PageHeader';
 import QuickExpenseModal from '../components/QuickExpenseModal';
 import {
   createIncome,
+  getFarm,
   getFarmExpenses,
   getFarmIncomes,
   getFarms,
@@ -17,13 +18,12 @@ import {
 import { formatMoneyDate } from '../utils/format_date';
 import {
   ALL_TIME,
+  CUSTOM,
   comparisonPeriod,
-  currentSeason,
   isWithinRange,
   periodOptions,
   periodRange,
-  periodYear,
-  previousSeason,
+  seasonChipLabel,
 } from '../utils/finance_period';
 
 const FILTERS = ['all', 'expense', 'income'];
@@ -33,7 +33,7 @@ function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
 }
 
-function buildLedger(farms, expense_lists, income_lists) {
+function buildLedger(farms, expense_lists, income_lists, place_names) {
   const farm_names = Object.fromEntries(farms.map((farm) => [farm.id, farm.name]));
   const expenses = expense_lists.flatMap((group, index) => {
     const farm_id = farms[index]?.id;
@@ -43,7 +43,12 @@ function buildLedger(farms, expense_lists, income_lists) {
       title: row.title,
       amount: Number(row.amount || 0),
       date: row.expense_date || row.created_at,
+      farm_id: farm_id || null,
+      plot_id: row.plot_id || null,
+      crop_cycle_id: row.crop_cycle_id || null,
       farm_name: farm_names[farm_id] || '',
+      plot_name: place_names.plots[row.plot_id] || '',
+      crop_name: place_names.crops[row.crop_cycle_id] || '',
       category: row.category,
     }));
   });
@@ -55,7 +60,12 @@ function buildLedger(farms, expense_lists, income_lists) {
       title: row.title,
       amount: Number(row.amount || 0),
       date: row.income_date || row.created_at,
+      farm_id: farm_id || null,
+      plot_id: row.plot_id || null,
+      crop_cycle_id: row.crop_cycle_id || null,
       farm_name: farm_names[farm_id] || '',
+      plot_name: place_names.plots[row.plot_id] || '',
+      crop_name: place_names.crops[row.crop_cycle_id] || '',
       category: row.category,
     }));
   });
@@ -63,6 +73,45 @@ function buildLedger(farms, expense_lists, income_lists) {
   return [...expenses, ...incomes].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
+}
+
+function buildPlaceNames(farm_details) {
+  const plots = {};
+  const crops = {};
+
+  farm_details.forEach((farm) => {
+    (farm.plots || []).forEach((plot) => {
+      plots[plot.id] = plot.name;
+      if (plot.active_crop) {
+        crops[plot.active_crop.id] = plot.active_crop.crop_name;
+      }
+      (plot.crop_history || []).forEach((crop) => {
+        crops[crop.id] = crop.crop_name;
+      });
+    });
+  });
+
+  return { plots, crops };
+}
+
+function buildScopeTree(farm_details) {
+  return farm_details.map((farm) => ({
+    id: farm.id,
+    name: farm.name,
+    plots: (farm.plots || []).map((plot) => ({
+      id: plot.id,
+      name: plot.name,
+      crops: [
+        ...(plot.active_crop
+          ? [{ id: plot.active_crop.id, name: plot.active_crop.crop_name }]
+          : []),
+        ...(plot.crop_history || []).map((crop) => ({
+          id: crop.id,
+          name: crop.crop_name,
+        })),
+      ].filter((crop, index, list) => list.findIndex((row) => row.id === crop.id) === index),
+    })),
+  }));
 }
 
 function sumLedger(rows) {
@@ -76,8 +125,7 @@ function sumLedger(rows) {
   }, { spent: 0, earned: 0 });
 }
 
-/** How this period's profit compares with the equivalent earlier one, or null if there is none. */
-function comparisonChange(ledger, period, profit) {
+function comparisonChange(ledger, period, profit, custom_range) {
   const comparison = comparisonPeriod(period);
 
   if (!comparison) {
@@ -94,9 +142,9 @@ function comparisonChange(ledger, period, profit) {
   return profit - (previous.earned - previous.spent);
 }
 
-/** Opens on the current season, unless nothing was logged then — an empty screen helps nobody. */
 function bestInitialPeriod(ledger) {
-  const candidates = periodOptions(ledger.map((row) => row.date)).map((option) => option.key);
+  const candidates = periodOptions(ledger.map((row) => row.date)).map((option) => option.key)
+    .filter((key) => key !== CUSTOM);
   const found = candidates.find((key) => (
     ledger.some((row) => isWithinRange(row.date, periodRange(key)))
   ));
@@ -104,36 +152,21 @@ function bestInitialPeriod(ledger) {
   return found || DEFAULT_PERIOD;
 }
 
-function periodLabel(option_key, t) {
-  const year = periodYear(option_key);
-
-  if (year) {
-    return String(year);
+function matchesScope(row, { farm_id, plot_id, crop_cycle_id }) {
+  if (farm_id && row.farm_id !== farm_id) {
+    return false;
   }
-
-  if (option_key === ALL_TIME) {
-    return t('money.period_all');
+  if (plot_id && row.plot_id !== plot_id) {
+    return false;
   }
-
-  const season = option_key === 'this_season'
-    ? currentSeason()
-    : previousSeason(currentSeason());
-
-  return t(`crops.season.${season.season}`);
+  if (crop_cycle_id && row.crop_cycle_id !== crop_cycle_id) {
+    return false;
+  }
+  return true;
 }
 
-function periodSubLabel(option_key, t) {
-  const year = periodYear(option_key);
-
-  if (year || option_key === ALL_TIME) {
-    return '';
-  }
-
-  const season = option_key === 'this_season'
-    ? currentSeason()
-    : previousSeason(currentSeason());
-
-  return season.season === 'rabi' ? `${season.year}-${String(season.year + 1).slice(2)}` : String(season.year);
+function placeLine(row) {
+  return [row.farm_name, row.plot_name, row.crop_name].filter(Boolean).join(' · ');
 }
 
 function targetLabel(target) {
@@ -152,8 +185,14 @@ function MoneyPage() {
   const [is_loading, setIsLoading] = useState(true);
   const [error_message, setErrorMessage] = useState('');
   const [ledger, setLedger] = useState([]);
+  const [scope_tree, setScopeTree] = useState([]);
   const [filter, setFilter] = useState('all');
   const [period, setPeriod] = useState(DEFAULT_PERIOD);
+  const [custom_from, setCustomFrom] = useState('');
+  const [custom_to, setCustomTo] = useState('');
+  const [scope_farm_id, setScopeFarmId] = useState('');
+  const [scope_plot_id, setScopePlotId] = useState('');
+  const [scope_crop_id, setScopeCropId] = useState('');
   const [show_expense_modal, setShowExpenseModal] = useState(false);
   const [show_income_modal, setShowIncomeModal] = useState(false);
   const [targets, setTargets] = useState([]);
@@ -185,12 +224,15 @@ function MoneyPage() {
     try {
       const farms_response = await getFarms();
       const farms = farms_response.data || [];
-      const [expense_lists, income_lists] = await Promise.all([
+      const [expense_lists, income_lists, farm_details] = await Promise.all([
         Promise.all(farms.map((farm) => getFarmExpenses(farm.id).then((res) => res.data || []))),
         Promise.all(farms.map((farm) => getFarmIncomes(farm.id).then((res) => res.data || []))),
+        Promise.all(farms.map((farm) => getFarm(farm.id).then((res) => res.data || farm))),
       ]);
 
-      const rows = buildLedger(farms, expense_lists, income_lists);
+      const place_names = buildPlaceNames(farm_details);
+      const rows = buildLedger(farms, expense_lists, income_lists, place_names);
+      setScopeTree(buildScopeTree(farm_details));
       setLedger(rows);
       setPeriod(bestInitialPeriod(rows));
     } catch (error) {
@@ -257,15 +299,49 @@ function MoneyPage() {
     }
   }
 
+  function handlePeriodChange(next_period) {
+    setPeriod(next_period);
+    if (next_period === CUSTOM && !custom_from && !custom_to) {
+      const season = periodRange('this_season');
+      setCustomFrom(season.from || '');
+      setCustomTo(season.to || '');
+    }
+  }
+
+  function handleFarmScope(next_farm_id) {
+    setScopeFarmId(next_farm_id);
+    setScopePlotId('');
+    setScopeCropId('');
+  }
+
+  function handlePlotScope(next_plot_id) {
+    setScopePlotId(next_plot_id);
+    setScopeCropId('');
+  }
+
   const period_choices = useMemo(
     () => periodOptions(ledger.map((row) => row.date)),
     [ledger],
   );
 
+  const custom_range = useMemo(
+    () => ({ from: custom_from, to: custom_to }),
+    [custom_from, custom_to],
+  );
+
+  const scoped_ledger = useMemo(
+    () => ledger.filter((row) => matchesScope(row, {
+      farm_id: scope_farm_id,
+      plot_id: scope_plot_id,
+      crop_cycle_id: scope_crop_id,
+    })),
+    [ledger, scope_farm_id, scope_plot_id, scope_crop_id],
+  );
+
   const period_rows = useMemo(() => {
-    const range = periodRange(period);
-    return ledger.filter((row) => isWithinRange(row.date, range));
-  }, [ledger, period]);
+    const range = periodRange(period, new Date(), custom_range);
+    return scoped_ledger.filter((row) => isWithinRange(row.date, range));
+  }, [scoped_ledger, period, custom_range]);
 
   const visible_rows = useMemo(
     () => period_rows.filter((row) => filter === 'all' || row.kind === filter),
@@ -275,9 +351,13 @@ function MoneyPage() {
   const { spent, earned } = useMemo(() => sumLedger(period_rows), [period_rows]);
   const profit = earned - spent;
   const net_change = useMemo(
-    () => comparisonChange(ledger, period, profit),
-    [ledger, period, profit],
+    () => comparisonChange(scoped_ledger, period, profit, custom_range),
+    [scoped_ledger, period, profit, custom_range],
   );
+
+  const selected_farm = scope_tree.find((farm) => farm.id === scope_farm_id);
+  const selected_plot = selected_farm?.plots.find((plot) => plot.id === scope_plot_id);
+  const show_scope = scope_tree.length > 0;
 
   if (is_loading) {
     return <LoadingState />;
@@ -291,21 +371,96 @@ function MoneyPage() {
     <div className="money-page page-stack">
       <PageHeader title={t('nav.money')} subtitle={t('money.subtitle')} />
 
-      <div className="money-period-bar" role="tablist" aria-label={t('money.period_label')}>
-        {period_choices.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            role="tab"
-            aria-selected={period === option.key}
-            className={`money-period-chip${period === option.key ? ' is-active' : ''}`}
-            onClick={() => setPeriod(option.key)}
-          >
-            <span>{periodLabel(option.key, t)}</span>
-            {periodSubLabel(option.key, t) && <em>{periodSubLabel(option.key, t)}</em>}
-          </button>
-        ))}
-      </div>
+      <section className="money-smart-filters" aria-label={t('money.filters')}>
+        <div className="money-period-bar" role="tablist" aria-label={t('money.period_label')}>
+          {period_choices.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              role="tab"
+              aria-selected={period === option.key}
+              className={`money-period-chip${period === option.key ? ' is-active' : ''}`}
+              onClick={() => handlePeriodChange(option.key)}
+            >
+              {seasonChipLabel(option.key, t)}
+            </button>
+          ))}
+        </div>
+
+        {period === CUSTOM && (
+          <div className="money-date-range">
+            <label>
+              <span>{t('money.date_from')}</span>
+              <input
+                className="form-input"
+                type="date"
+                value={custom_from}
+                onChange={(event) => setCustomFrom(event.target.value)}
+              />
+            </label>
+            <label>
+              <span>{t('money.date_to')}</span>
+              <input
+                className="form-input"
+                type="date"
+                value={custom_to}
+                min={custom_from || undefined}
+                onChange={(event) => setCustomTo(event.target.value)}
+              />
+            </label>
+          </div>
+        )}
+
+        {show_scope && (
+          <div className="money-scope-row">
+            <label className="money-scope-field">
+              <span>{t('money.scope_farm')}</span>
+              <select
+                className="form-select"
+                value={scope_farm_id}
+                onChange={(event) => handleFarmScope(event.target.value)}
+              >
+                <option value="">{t('money.scope_all_farms')}</option>
+                {scope_tree.map((farm) => (
+                  <option key={farm.id} value={farm.id}>{farm.name}</option>
+                ))}
+              </select>
+            </label>
+
+            {scope_farm_id && (
+              <label className="money-scope-field">
+                <span>{t('money.scope_plot')}</span>
+                <select
+                  className="form-select"
+                  value={scope_plot_id}
+                  onChange={(event) => handlePlotScope(event.target.value)}
+                >
+                  <option value="">{t('money.scope_all_plots')}</option>
+                  {(selected_farm?.plots || []).map((plot) => (
+                    <option key={plot.id} value={plot.id}>{plot.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {scope_plot_id && (selected_plot?.crops || []).length > 0 && (
+              <label className="money-scope-field">
+                <span>{t('money.scope_crop')}</span>
+                <select
+                  className="form-select"
+                  value={scope_crop_id}
+                  onChange={(event) => setScopeCropId(event.target.value)}
+                >
+                  <option value="">{t('money.scope_all_crops')}</option>
+                  {selected_plot.crops.map((crop) => (
+                    <option key={crop.id} value={crop.id}>{crop.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        )}
+      </section>
 
       <div className="money-summary-grid">
         <div className="money-summary-card tone-spend">
@@ -334,7 +489,7 @@ function MoneyPage() {
       )}
 
       <div className="money-toolbar">
-        <div className="money-filters" role="tablist" aria-label={t('money.filters')}>
+        <div className="money-filters" role="tablist" aria-label={t('money.kind_filters')}>
           {FILTERS.map((key) => (
             <button
               key={key}
@@ -370,8 +525,8 @@ function MoneyPage() {
                 <div>
                   <strong>{row.title}</strong>
                   <span>
-                    {row.farm_name}
-                    {row.farm_name ? ' · ' : ''}
+                    {placeLine(row)}
+                    {placeLine(row) ? ' · ' : ''}
                     {formatMoneyDate(row.date, i18n.language)}
                   </span>
                 </div>
