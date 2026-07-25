@@ -28,6 +28,7 @@ import { INDIAN_STATES } from '../config/indian_states';
 import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { normalizeLanguage } from '../utils/language';
 import { formatArea, formatShortDate } from '../utils/format_date';
+import { onDataChanged } from '../utils/app_events';
 
 const EMPTY_PLOT = { name: '', area: '', soil_type: '', notes: '' };
 
@@ -89,6 +90,16 @@ function FarmDetailPage() {
   useEffect(() => {
     loadFarmPage();
   }, [farm_id]);
+
+  useEffect(() => onDataChanged((detail) => {
+    if (!['create_plot', 'create_farm', 'expense', 'income'].includes(detail.intent)) {
+      return;
+    }
+    if (detail.farm_id && detail.farm_id !== farm_id && detail.intent === 'create_plot') {
+      return;
+    }
+    loadFarmPage();
+  }), [farm_id]);
 
   useEffect(() => {
     if (farm) {

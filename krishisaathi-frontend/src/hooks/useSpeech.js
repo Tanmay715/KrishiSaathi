@@ -72,14 +72,15 @@ export function useSpeech(language = 'en') {
   /** Speaks `text`, then runs `on_done` so the mic can reopen for the answer. */
   const speak = useCallback((text, on_done) => {
     const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    const spoken = stripForSpeech(text);
 
-    if (!synth || !text) {
+    if (!synth || !spoken) {
       on_done?.();
       return;
     }
 
     synth.cancel();
-    const utterance = new window.SpeechSynthesisUtterance(text);
+    const utterance = new window.SpeechSynthesisUtterance(spoken);
     utterance.lang = locale;
     utterance.rate = 0.95;
     utterance.onend = () => on_done?.();
@@ -102,4 +103,18 @@ function stopSpeaking() {
   if (typeof window !== 'undefined') {
     window.speechSynthesis?.cancel();
   }
+}
+
+/** Markdown markers like *bold* sound awful when read aloud — strip them first. */
+function stripForSpeech(text) {
+  return String(text || '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/`+/g, '')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/^\s*[-•]\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

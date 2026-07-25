@@ -44,11 +44,15 @@ const INTENT_SLOTS = {
     },
   },
   create_farm: {
-    required: ['name'],
+    required: ['name', 'total_area'],
     questions: {
       name: {
         en: 'What should we name this farm?',
         hi: 'इस खेत का क्या नाम रखें?',
+      },
+      total_area: {
+        en: 'How much total area is this farm?',
+        hi: 'इस खेत का कुल क्षेत्रफल कितना है?',
       },
     },
   },
@@ -78,9 +82,9 @@ const UNKNOWN_PROMPT = {
 
 const HELP_TEXT = {
   en: 'I am your farm companion. Tell me things like "spent 800 on urea", "add a farm in Meerut", '
-    + '"sold wheat for 20000", or "remind me to irrigate on Monday". You can also ask any farming question.',
+    + '"how much did I spend on diesel in July", or "remind me to irrigate on Monday".',
   hi: 'मैं आपका खेती साथी हूँ। मुझसे ऐसे कहें: "खाद पर आठ सौ खर्च हुए", "मेरठ में नया खेत जोड़ो", '
-    + '"गेहूँ बीस हज़ार में बेचा", या "सोमवार को सिंचाई की याद दिलाना"। खेती से जुड़ा कोई भी सवाल भी पूछ सकते हैं।',
+    + '"जुलाई में डीजल पर कितना खर्च हुआ", या "सोमवार को सिंचाई की याद दिलाना"।',
 };
 
 const ASSISTANT_ERROR = {
@@ -116,7 +120,7 @@ function suggestionsForContext(context = {}) {
   }
 
   if (page === 'money') {
-    return ['expense', 'income', 'reminder', 'create_farm'];
+    return ['expense', 'income', 'reminder', 'assistant'];
   }
 
   return DEFAULT_SUGGESTIONS;

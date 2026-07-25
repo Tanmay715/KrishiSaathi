@@ -7,7 +7,8 @@ import {
   flushOfflineExpenseQueue,
   getOfflineExpenseCount,
 } from '../utils/offline_expense_queue';
-import { deriveVoiceContext } from '../config/voice_command_helpers';
+import { deriveVoiceContext, manualEntryForPage } from '../config/voice_command_helpers';
+import { notifyDataChanged } from '../utils/app_events';
 import QuickExpenseModal from './QuickExpenseModal';
 import VoiceCommandSheet from './VoiceCommandSheet';
 
@@ -25,6 +26,10 @@ function QuickLogFab() {
     [location.pathname],
   );
   const is_assistant = page_context.page === 'assistant';
+  const manual_entry = useMemo(
+    () => manualEntryForPage(page_context),
+    [page_context],
+  );
 
   useEffect(() => {
     async function syncQueue() {
@@ -47,14 +52,27 @@ function QuickLogFab() {
 
   function handleSaved(intent) {
     setPendingCount(getOfflineExpenseCount());
+    notifyDataChanged({
+      intent,
+      farm_id: page_context.farm_id || null,
+      plot_id: page_context.plot_id || null,
+    });
+  }
 
-    if (intent === 'create_farm') {
-      navigate('/farms');
+  function handleManualEntry() {
+    setIsVoiceOpen(false);
+
+    if (!manual_entry) {
       return;
     }
 
-    if (intent === 'create_plot' && page_context.farm_id) {
-      navigate(`/farms/${page_context.farm_id}`);
+    if (manual_entry.mode === 'expense') {
+      setIsOpen(true);
+      return;
+    }
+
+    if (manual_entry.to) {
+      navigate(manual_entry.to);
     }
   }
 
@@ -86,17 +104,18 @@ function QuickLogFab() {
           setIsOpen(false);
           setPendingCount(getOfflineExpenseCount());
         }}
-        on_saved={() => setPendingCount(getOfflineExpenseCount())}
+        on_saved={() => {
+          setPendingCount(getOfflineExpenseCount());
+          notifyDataChanged({ intent: 'expense' });
+        }}
       />
       <VoiceCommandSheet
         is_open={is_voice_open}
         on_close={() => setIsVoiceOpen(false)}
         on_saved={handleSaved}
         page_context={page_context}
-        on_manual_entry={() => {
-          setIsVoiceOpen(false);
-          setIsOpen(true);
-        }}
+        manual_entry={manual_entry}
+        on_manual_entry={manual_entry ? handleManualEntry : null}
       />
     </>
   );

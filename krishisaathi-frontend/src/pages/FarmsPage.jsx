@@ -13,6 +13,7 @@ import Modal from '../components/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { normalizeLanguage } from '../utils/language';
 import { formatArea } from '../utils/format_date';
+import { onDataChanged } from '../utils/app_events';
 
 const EMPTY_FORM = {
   name: '',
@@ -56,6 +57,12 @@ function FarmsPage() {
   useEffect(() => {
     loadFarms();
   }, []);
+
+  useEffect(() => onDataChanged((detail) => {
+    if (['create_farm', 'create_plot', 'expense', 'income'].includes(detail.intent)) {
+      loadFarms();
+    }
+  }), []);
 
   useEffect(() => {
     if (search_params.get('add') !== '1') {
@@ -207,6 +214,31 @@ function FarmsPage() {
         />
       ) : (
         <>
+          <section className="farms-hub-section">
+            <div className="farm-detail-stats">
+              <div className="farm-detail-stat">
+                <span>{t('farms.summary_farms')}</span>
+                <strong>{totals.count}</strong>
+                <small>{t('farms.summary_active')}</small>
+              </div>
+              <div className="farm-detail-stat">
+                <span>{t('farms.summary_area')}</span>
+                <strong>{formatArea(totals.area)}</strong>
+                <small>{land_unit}</small>
+              </div>
+              <div className="farm-detail-stat">
+                <span>{t('farms.summary_spent')}</span>
+                <strong>₹{formatAmount(spent)}</strong>
+                <small>{t('farms.summary_estimated')}</small>
+              </div>
+              <div className="farm-detail-stat">
+                <span>{t('farms.summary_income')}</span>
+                <strong>₹{formatAmount(earned)}</strong>
+                <small>{t('farms.summary_estimated')}</small>
+              </div>
+            </div>
+          </section>
+
           <div className="farms-hub-list">
             {farms.map((farm) => (
               <Link key={farm.id} to={`/farms/${farm.id}`} className="farm-hub-card is-link">
@@ -235,36 +267,6 @@ function FarmsPage() {
               </Link>
             ))}
           </div>
-
-          <section className="farms-hub-section">
-            <h3 className="farms-hub-section-title">{t('farms.summary_title')}</h3>
-            <div className="farms-summary-grid">
-              <div className="farms-summary-tile tone-green">
-                <span className="farms-summary-icon" aria-hidden="true">⌂</span>
-                <strong>{totals.count}</strong>
-                <em>{t('farms.summary_farms')}</em>
-                <small>{t('farms.summary_active')}</small>
-              </div>
-              <div className="farms-summary-tile tone-blue">
-                <span className="farms-summary-icon" aria-hidden="true">▣</span>
-                <strong>{formatArea(totals.area)}</strong>
-                <em>{t('farms.summary_area')}</em>
-                <small>{land_unit}</small>
-              </div>
-              <div className="farms-summary-tile tone-orange">
-                <span className="farms-summary-icon" aria-hidden="true">₹</span>
-                <strong>₹{formatAmount(spent)}</strong>
-                <em>{t('farms.summary_spent')}</em>
-                <small>{t('farms.summary_estimated')}</small>
-              </div>
-              <div className="farms-summary-tile tone-teal">
-                <span className="farms-summary-icon" aria-hidden="true">↑</span>
-                <strong>₹{formatAmount(earned)}</strong>
-                <em>{t('farms.summary_income')}</em>
-                <small>{t('farms.summary_estimated')}</small>
-              </div>
-            </div>
-          </section>
 
           <section className="farms-hub-section">
             <h3 className="farms-hub-section-title">{t('farms.quick_title')}</h3>

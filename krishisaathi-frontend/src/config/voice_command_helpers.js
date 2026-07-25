@@ -30,9 +30,45 @@ export function suggestionsForPage(page) {
     return ['assistant', 'expense', 'income', 'reminder'];
   }
   if (page === 'money') {
-    return ['expense', 'income', 'reminder', 'create_farm'];
+    return ['expense', 'income', 'reminder', 'assistant'];
   }
   return ['expense', 'income', 'reminder', 'assistant'];
+}
+
+/** Contextual hand-entry escape hatch — never show a button that opens the wrong form. */
+export function manualEntryForPage(context = {}) {
+  const page = context.page;
+
+  if (page === 'farms') {
+    return {
+      mode: 'farm',
+      to: '/farms?add=1',
+      label_key: 'voice_command.manual_add_farm',
+      hint_key: 'voice_command.manual_add_farm_hint',
+      icon: '＋',
+    };
+  }
+
+  if (page === 'farm' && context.farm_id) {
+    return {
+      mode: 'plot',
+      to: `/farms/${context.farm_id}?add_plot=1`,
+      label_key: 'voice_command.manual_add_plot',
+      hint_key: 'voice_command.manual_add_plot_hint',
+      icon: '▤',
+    };
+  }
+
+  if (page === 'money' || page === 'home' || page === 'plot') {
+    return {
+      mode: 'expense',
+      label_key: 'voice_command.manual_entry',
+      hint_key: 'voice_command.manual_entry_hint',
+      icon: '₹',
+    };
+  }
+
+  return null;
 }
 
 export function deriveVoiceContext(pathname = '') {

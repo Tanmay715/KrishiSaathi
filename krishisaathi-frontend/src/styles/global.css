@@ -8112,10 +8112,33 @@ html:has(.auth-page) #root {
   color: #fff;
 }
 
-.money-date-range {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.money-filter-note {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--color-primary-dark);
+}
+
+.money-filter-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.money-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.money-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.money-period-chip.is-more {
+  border-style: dashed;
 }
 
 .money-date-range label,

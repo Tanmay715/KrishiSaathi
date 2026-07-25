@@ -90,18 +90,18 @@ export function comparisonPeriod(period_key, reference_date = new Date()) {
 }
 
 /**
- * Compact period chips: this season, last season, custom dates, and all-time when
- * the farmer has any history. Bare year chips are avoided — they look empty.
+ * Compact period chips for the main bar: current and previous season only.
+ * Custom dates / all-time live in the More filters sheet.
  */
-export function periodOptions(entry_dates = []) {
-  const has_entries = entry_dates.some((value) => String(value || '').slice(0, 4) >= '2000');
-
+export function periodOptions() {
   return [
     { key: 'this_season', is_season: true },
     { key: 'last_season', is_season: true },
-    { key: CUSTOM },
-    ...(has_entries ? [{ key: ALL_TIME }] : []),
   ];
+}
+
+export function primaryPeriodOptions() {
+  return periodOptions();
 }
 
 /** One-line season label such as "Kharif 2026" or "Rabi 2025-26". */

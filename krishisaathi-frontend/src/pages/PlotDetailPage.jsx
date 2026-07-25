@@ -49,6 +49,7 @@ import OverflowMenu from '../components/OverflowMenu';
 import SectionIcon from '../components/SectionIcon';
 import { loadPlotDetail, savePlotDetail } from '../utils/offline_store';
 import { buildWeatherAdvice } from '../utils/dashboard_insights';
+import { onDataChanged } from '../utils/app_events';
 
 const SEASON_OPTIONS = ['rabi', 'kharif', 'zaid', 'custom'];
 
@@ -118,6 +119,12 @@ function PlotDetailPage() {
   useEffect(() => {
     loadPlot();
   }, [farm_id, plot_id, i18n.language]);
+
+  useEffect(() => onDataChanged((detail) => {
+    if (['expense', 'income', 'create_plot', 'create_farm'].includes(detail.intent)) {
+      loadPlot();
+    }
+  }), [farm_id, plot_id]);
 
   async function loadPlot() {
     setIsLoading(true);
@@ -563,6 +570,31 @@ function PlotDetailPage() {
       {error_message && !show_crop_modal && !show_expense_modal && !show_income_modal && !show_plot_modal && (
         <div className="error-banner">{error_message}</div>
       )}
+
+      <div className="farm-detail-stats">
+        <div className="farm-detail-stat">
+          <span>{t('farms.plot_area')}</span>
+          <strong>{plot.area}</strong>
+          <small>{land_unit_label}</small>
+        </div>
+        <div className="farm-detail-stat">
+          <span>{t('expenses.crop_total')}</span>
+          <strong>₹{spending.toLocaleString('en-IN')}</strong>
+          <small>{t('farms.summary_estimated')}</small>
+        </div>
+        <div className="farm-detail-stat">
+          <span>{t('incomes.crop_total')}</span>
+          <strong>₹{earned.toLocaleString('en-IN')}</strong>
+          <small>{t('farms.summary_estimated')}</small>
+        </div>
+        <div className="farm-detail-stat">
+          <span>{profit >= 0 ? t('finance.status_profit') : t('finance.status_loss')}</span>
+          <strong>
+            {profit >= 0 ? '+' : '-'}₹{Math.abs(profit).toLocaleString('en-IN')}
+          </strong>
+          <small>{t('farms.finance_summary')}</small>
+        </div>
+      </div>
 
       {!plot.active_crop ? (
         <div className="crop-invite surface-panel">

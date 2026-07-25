@@ -51,6 +51,7 @@ const voice_command_schema = Joi.object({
       'reminder',
       'create_farm',
       'create_plot',
+      'money_query',
       'assistant',
       'help',
       'unknown',

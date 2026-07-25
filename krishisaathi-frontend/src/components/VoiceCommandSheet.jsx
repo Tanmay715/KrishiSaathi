@@ -27,7 +27,14 @@ const INTENT_OPENERS = {
  * The farmer's voice companion: logs money, creates farms/plots, answers questions,
  * and offers tappable options instead of a dead end when speech is unclear.
  */
-function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry, page_context = {} }) {
+function VoiceCommandSheet({
+  is_open,
+  on_close,
+  on_saved,
+  on_manual_entry,
+  manual_entry = null,
+  page_context = {},
+}) {
   const { t, i18n } = useTranslation();
   const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const is_online = useOnlineStatus();
@@ -118,7 +125,11 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry, page_
 
   function activeIntent(previous_turn) {
     const intent = previous_turn?.intent;
-    return intent && intent !== 'unknown' && intent !== 'help' ? intent : undefined;
+    // Keep record/structure drafts sticky; let Q&A intents reclassify freely.
+    if (!intent || ['unknown', 'help', 'money_query'].includes(intent)) {
+      return undefined;
+    }
+    return intent;
   }
 
   function applyTurn(next_turn) {
@@ -270,16 +281,18 @@ function VoiceCommandSheet({ is_open, on_close, on_saved, on_manual_entry, page_
               </form>
             )}
 
-            {on_manual_entry && status !== 'review' && (
+            {on_manual_entry && manual_entry && status !== 'review' && (
               <button
                 type="button"
                 className="voice-command-manual-btn"
                 onClick={handleManualEntry}
               >
-                <span className="voice-command-manual-icon" aria-hidden="true">₹</span>
+                <span className="voice-command-manual-icon" aria-hidden="true">
+                  {manual_entry.icon || '₹'}
+                </span>
                 <span>
-                  <strong>{t('voice_command.manual_entry')}</strong>
-                  <em>{t('voice_command.manual_entry_hint')}</em>
+                  <strong>{t(manual_entry.label_key)}</strong>
+                  <em>{t(manual_entry.hint_key)}</em>
                 </span>
               </button>
             )}

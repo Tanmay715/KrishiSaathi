@@ -13,11 +13,12 @@ const {
   assistantErrorText,
 } = require('./voice_slots');
 const { matchTargetFromSpeech } = require('./target_matcher');
+const { summarizeMoney, formatMoneyAnswer } = require('./money_query');
 
 const RECORD_INTENTS = ['expense', 'income', 'reminder'];
 const STRUCTURE_INTENTS = ['create_farm', 'create_plot'];
 const FILLING_INTENTS = [...RECORD_INTENTS, ...STRUCTURE_INTENTS];
-const ALL_INTENTS = [...FILLING_INTENTS, 'assistant', 'help', 'unknown'];
+const ALL_INTENTS = [...FILLING_INTENTS, 'assistant', 'money_query', 'help', 'unknown'];
 const EXPENSE_CATEGORIES = [
   'seed', 'fertilizer', 'pesticide', 'irrigation', 'labor', 'equipment', 'transport', 'other',
 ];
@@ -58,6 +59,10 @@ class VoiceCommandService {
 
     if (next_intent === 'assistant') {
       return this.#assistantTurn(user_id, spoken, reply_language, context);
+    }
+
+    if (next_intent === 'money_query') {
+      return this.#moneyQueryTurn(user_id, spoken, parsed, reply_language, context);
     }
 
     if (next_intent === 'help' || next_intent === 'unknown') {
@@ -125,6 +130,53 @@ class VoiceCommandService {
         can_continue: !is_rate_limited,
       };
     }
+  }
+
+  async #moneyQueryTurn(user_id, spoken, parsed, reply_language, context) {
+    const fields = parsed.fields || {};
+    const filters = {
+      kind: fields.kind === 'income' ? 'income' : 'expense',
+      category: this.#toCategory('expense', fields.category),
+      query: this.#toText(fields.query || fields.title, 80),
+      from: this.#toDate(fields.date_from || fields.from || fields.date),
+      to: this.#toDate(fields.date_to || fields.to) || this.#monthEnd(fields.date_from || fields.from || fields.date),
+      farm_id: context.farm_id || null,
+    };
+
+    // A bare month like July often arrives as date_from=2026-07-01 without to.
+    if (filters.from && !this.#toDate(fields.date_to || fields.to)) {
+      filters.to = this.#monthEnd(filters.from);
+    }
+
+    try {
+      const summary = await summarizeMoney(user_id, filters);
+      return {
+        ...this.#baseTurn('money_query', reply_language, spoken),
+        answer: formatMoneyAnswer(summary, reply_language),
+        suggestions: suggestionsForContext({ ...context, page: context.page || 'money' }),
+        can_continue: true,
+      };
+    } catch (error) {
+      console.error('[voice_command] money query failed:', error.message);
+      return {
+        ...this.#baseTurn('money_query', reply_language, spoken),
+        answer: reply_language === 'hi'
+          ? 'अभी खर्च का हिसाब नहीं निकाल पाया। थोड़ी देर बाद कोशिश करें।'
+          : 'I could not calculate that right now. Please try again shortly.',
+        suggestions: suggestionsForContext(context),
+      };
+    }
+  }
+
+  #monthEnd(value) {
+    const date = this.#toDate(value);
+    if (!date) {
+      return null;
+    }
+
+    const [year, month] = date.split('-').map(Number);
+    const last = new Date(year, month, 0).getDate();
+    return `${year}-${String(month).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
   }
 
   #optionsTurn(intent, spoken, reply_language, context) {
@@ -317,9 +369,10 @@ class VoiceCommandService {
       'Speech may be Hindi, English or Hinglish, and is often a short answer to a question you just asked.',
       '',
       'Return JSON only, with this shape:',
-      '{"intent":"expense|income|reminder|create_farm|create_plot|assistant|help|unknown",',
+      '{"intent":"expense|income|reminder|create_farm|create_plot|money_query|assistant|help|unknown",',
       '"fields":{"title":string|null,"name":string|null,"category":string|null,"amount":number|null,',
       '"quantity":number|null,"unit":string|null,"date":"YYYY-MM-DD"|null,"due_at":"YYYY-MM-DD"|null,',
+      '"date_from":"YYYY-MM-DD"|null,"date_to":"YYYY-MM-DD"|null,"query":string|null,"kind":"expense|income"|null,',
       '"reminder_type":string|null,"target_key":string|null,"notes":string|null,"state":string|null,',
       '"district":string|null,"village":string|null,"total_area":number|null,"area":number|null,',
       '"soil_type":string|null,"farm_id":string|null},"summary":string|null,"confidence":number}',
@@ -327,16 +380,18 @@ class VoiceCommandService {
       'Choosing intent:',
       '- "expense": money spent on farming. "income": money earned/crop sold.',
       '- "reminder": the farmer wants to be reminded to do a task later.',
-      '- "create_farm": add a new farm/field, e.g. "नया खेत जोड़ो", "add farm in Meerut", "मेरा खेत बनाओ".',
+      '- "create_farm": add a new farm/field, e.g. "नया खेत जोड़ो", "add farm in Meerut".',
       '- "create_plot": add a plot inside a farm, e.g. "नया प्लॉट जोड़ो", "add plot of 2 acre".',
-      '- "assistant": any farming question, advice, or a wish to talk to the assistant.',
+      '- "money_query": questions about past spending or earning, e.g. "जुलाई में कितना खर्च",',
+      '  "how much on diesel", "डीजल पर कुल कितना खर्च", "this season income". Do NOT use assistant for these.',
+      '- "assistant": farming advice questions (crop disease, weather, schemes) — not money totals.',
       '- "help": the farmer asks what this app or voice can do.',
       '- "unknown": only when the speech is truly unintelligible or empty of meaning.',
       `- The farmer is currently on the "${page}" screen`
         + (context?.farm_id ? ` (farm ${context.farm_id})` : '')
         + (context?.plot_id ? ` (plot ${context.plot_id})` : '')
         + '. Prefer create_farm on farms screens, create_plot on a farm detail screen,',
-      '  and assistant on the assistant screen — but always honour a clear spoken intent.',
+      '  money_query on the money screen, and assistant on the assistant screen — but always honour a clear spoken intent.',
       '- A short word like a farm/crop name, a bare number, or "haan/नहीं" is an answer to your last',
       '  question, not a new question — keep the active intent in that case.',
       '',
@@ -346,12 +401,16 @@ class VoiceCommandService {
       intent ? `- The farmer is currently completing a "${intent}" action; keep that intent unless they clearly switch.` : '',
       `- For expense/income/reminder, "title" is what the money was for or the reminder task.`,
       `- For create_farm/create_plot, put the farm or plot name in "name" (also accept it in "title").`,
+      '- For money_query: set kind expense|income, query to the item word (diesel/डीजल/urea),',
+      '  category when clear, and date_from/date_to for months ("July" → first/last day of that month).',
+      '  If only a month is named, set date_from to the 1st and date_to to the last day.',
       `- expense categories: ${EXPENSE_CATEGORIES.join(', ')}. income categories: ${INCOME_CATEGORIES.join(', ')}.`,
       `- reminder_type: ${REMINDER_TYPES.join(', ')}.`,
       '- Map urea/DAP/NPK/खाद to fertilizer, spray/कीटनाशक to pesticide, बीज to seed, मजदूर/labour to labor,',
-      '  diesel/भाड़ा to transport, pump/pipe to equipment. Selling crop is income with category "sale".',
+      '  diesel/डीजल/भाड़ा to transport, pump/pipe to equipment. Selling crop is income with category "sale".',
+      `- For create_farm, always collect total_area (acres) — ask if missing.`,
       `- Today is ${this.#todayWithWeekday()} (India). Resolve "आज", "कल", "परसों", "yesterday",`,
-      '  "सोमवार", "next Monday" to real dates. A named weekday means the next such day from today.',
+      '  "सोमवार", "next Monday", "July", "जुलाई" to real dates. A named weekday means the next such day from today.',
       '- Amounts are Indian rupees; understand Hindi number words ("पाँच सौ" = 500, "दो हज़ार" = 2000).',
       '- Keep the unit the farmer said (quintal, kg, bag, litre, bora). Never convert between units.',
       '- Area is in the farmer\'s land unit (usually acres). "दो एकड़" = 2.',
