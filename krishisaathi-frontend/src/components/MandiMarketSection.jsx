@@ -587,24 +587,20 @@ function MandiMarketSection({
   }
 
   return (
-    <section className="field-secondary surface-panel is-muted mandi-market-section is-premium">
+    <section className="home-section mandi-market-section">
+      <div className="home-section-head">
+        <h3 className="home-section-title">{t('mandi.nearby_rates')}</h3>
+        {!is_loading && !has_error && crop_rows.length > 0 && (
+          <Link to="/market" className="home-section-link">
+            {t('mandi.view_all_count', { count: crop_rows.length })} →
+          </Link>
+        )}
+      </div>
+
       <div className="mandi-glance-strip">
-        <div className="mandi-glance-head is-stack">
-          <div className="mandi-glance-title-row">
-            <div>
-            <p className="surface-kicker">
-              {t('dashboard.market_insights')} ({t('mandi.nearby_rates')})
-            </p>
-            <h3 className="mandi-glance-title">{applied_label || t('mandi.unit_note')}</h3>
-            </div>
-            {!is_loading && !has_error && crop_rows.length > 0 && (
-              <Link to="/market" className="mandi-glance-cta">
-                {t('mandi.view_all_count', { count: crop_rows.length })}
-                <span aria-hidden="true">→</span>
-              </Link>
-            )}
-          </div>
-        </div>
+        <p className="mandi-glance-place">
+          {[applied_label, t('mandi.unit_note')].filter(Boolean).join(' · ')}
+        </p>
 
         {is_loading && (
           <p className="mandi-glance-status">{t('common.loading')}</p>
@@ -624,9 +620,10 @@ function MandiMarketSection({
                 style={{ animationDelay: `${index * 60}ms` }}
                 onClick={() => openMarket(row.crop)}
               >
-                <CropMark crop={row.crop} size={40} shape="circle" />
+                <CropMark crop={row.crop} size={38} shape="circle" />
                 <strong>{localizeCropName(row.crop, app_language)}</strong>
                 <span className="mandi-crop-square-price">{formatRate(row.modal)}</span>
+                <ChangePill change_pct={row.change_pct} />
               </button>
             ))}
           </div>

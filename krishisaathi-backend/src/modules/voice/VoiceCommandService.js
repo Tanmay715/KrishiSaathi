@@ -135,9 +135,10 @@ class VoiceCommandService {
 
   async #moneyQueryTurn(user_id, spoken, parsed, reply_language, context) {
     const fields = parsed.fields || {};
+    const kind = fields.kind === 'income' ? 'income' : 'expense';
     const filters = {
-      kind: fields.kind === 'income' ? 'income' : 'expense',
-      category: this.#toCategory('expense', fields.category),
+      kind,
+      category: this.#toCategory(kind, fields.category),
       query: this.#toText(fields.query || fields.title, 80),
       from: this.#toDate(fields.date_from || fields.from || fields.date),
       to: this.#toDate(fields.date_to || fields.to) || this.#monthEnd(fields.date_from || fields.from || fields.date),
@@ -409,9 +410,10 @@ class VoiceCommandService {
       `- For expense/income/reminder, "title" is what the money was for or the reminder task.`,
       `- For create_farm/create_plot, put a real farm/plot name in "name" (village or family name).`,
       '  Never use "नया खेत", "naya khet", "new farm", or "add farm" as the name.',
-      '- For money_query: set kind expense|income, query to the item word (diesel/डीजल/urea),',
-      '  category when clear, and date_from/date_to for months ("July" → first/last day of that month).',
+      '- For money_query: set kind expense|income, and date_from/date_to for months ("July" → first/last day).',
       '  If only a month is named, set date_from to the 1st and date_to to the last day.',
+      '  Set "query" ONLY when a real item is named (diesel, urea, बीज, मजदूर). Generic words such as',
+      '  "पूरा खर्च", "कुल", "सारा", "total", "how much" mean the whole total — leave query and category null.',
       `- expense categories: ${EXPENSE_CATEGORIES.join(', ')}. income categories: ${INCOME_CATEGORIES.join(', ')}.`,
       `- reminder_type: ${REMINDER_TYPES.join(', ')}.`,
       '- Map urea/DAP/NPK/खाद to fertilizer, spray/कीटनाशक to pesticide, बीज to seed, मजदूर/labour to labor,',

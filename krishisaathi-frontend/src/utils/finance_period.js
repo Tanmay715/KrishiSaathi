@@ -104,6 +104,58 @@ export function primaryPeriodOptions() {
   return periodOptions();
 }
 
+/** Ready-made date windows offered inside the filter sheet. */
+export const QUICK_RANGES = ['this_month', 'last_month', 'last_30_days', 'this_year'];
+
+export function quickRange(key, reference_date = new Date()) {
+  const year = reference_date.getFullYear();
+  const month = reference_date.getMonth();
+
+  if (key === 'this_month') {
+    return { from: isoDate(new Date(year, month, 1)), to: isoDate(new Date(year, month + 1, 0)) };
+  }
+
+  if (key === 'last_month') {
+    return { from: isoDate(new Date(year, month - 1, 1)), to: isoDate(new Date(year, month, 0)) };
+  }
+
+  if (key === 'last_30_days') {
+    const start = new Date(reference_date);
+    start.setDate(start.getDate() - 29);
+    return { from: isoDate(start), to: isoDate(reference_date) };
+  }
+
+  return { from: `${year}-01-01`, to: `${year}-12-31` };
+}
+
+/** Human label for a from/to pair, e.g. "1 Jun 2026 – 30 Jun 2026". */
+export function rangeLabel(from, to, language = 'en') {
+  if (!from && !to) {
+    return '';
+  }
+
+  const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
+  const start = from ? formatDay(from, locale) : null;
+  const end = to ? formatDay(to, locale) : null;
+
+  if (start && end) {
+    return start === end ? start : `${start} – ${end}`;
+  }
+
+  return start || end;
+}
+
+function formatDay(iso_date, locale) {
+  const date = new Date(`${String(iso_date).slice(0, 10)}T00:00:00`);
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function isoDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 /** One-line season label such as "Kharif 2026" or "Rabi 2025-26". */
 export function seasonChipLabel(option_key, t) {
   if (option_key === ALL_TIME) {

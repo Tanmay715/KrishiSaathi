@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
 import Modal from '../components/Modal';
+import MoneyFilterSheet from '../components/MoneyFilterSheet';
 import PageHeader from '../components/PageHeader';
 import QuickExpenseModal from '../components/QuickExpenseModal';
 import {
@@ -17,18 +18,19 @@ import {
 } from '../services/farm_service';
 import { formatMoneyDate } from '../utils/format_date';
 import {
+  ALL_TIME,
   CUSTOM,
   comparisonPeriod,
   isWithinRange,
   periodOptions,
   periodRange,
+  rangeLabel,
   seasonChipLabel,
 } from '../utils/finance_period';
 import { onDataChanged } from '../utils/app_events';
 
 const FILTERS = ['all', 'expense', 'income'];
 const DEFAULT_PERIOD = 'this_season';
-const ALL_TIME = 'all';
 
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
@@ -314,33 +316,18 @@ function MoneyPage() {
     }
   }
 
-  function handleCustomFrom(value) {
-    setCustomFrom(value);
-    if (value || custom_to) {
-      setPeriod(CUSTOM);
-    } else if (period === CUSTOM) {
-      setPeriod(DEFAULT_PERIOD);
-    }
+  function applyFilters(next) {
+    setPeriod(next.period || DEFAULT_PERIOD);
+    setCustomFrom(next.custom_from || '');
+    setCustomTo(next.custom_to || '');
+    setScopeFarmId(next.farm_id || '');
+    setScopePlotId(next.plot_id || '');
+    setScopeCropId(next.crop_id || '');
+    setShowFilters(false);
   }
 
-  function handleCustomTo(value) {
-    setCustomTo(value);
-    if (value || custom_from) {
-      setPeriod(CUSTOM);
-    } else if (period === CUSTOM) {
-      setPeriod(DEFAULT_PERIOD);
-    }
-  }
-
-  function handleFarmScope(next_farm_id) {
-    setScopeFarmId(next_farm_id);
-    setScopePlotId('');
-    setScopeCropId('');
-  }
-
-  function handlePlotScope(next_plot_id) {
-    setScopePlotId(next_plot_id);
-    setScopeCropId('');
+  function clearFilters() {
+    applyFilters({ period: DEFAULT_PERIOD });
   }
 
   const period_choices = useMemo(() => periodOptions(), []);
@@ -350,7 +337,9 @@ function MoneyPage() {
     [custom_from, custom_to],
   );
 
-  const has_extra_filters = Boolean(custom_from || custom_to || scope_farm_id || scope_plot_id || scope_crop_id);
+  const has_extra_filters = Boolean(
+    custom_from || custom_to || scope_farm_id || scope_plot_id || scope_crop_id || period === ALL_TIME,
+  );
 
   const scoped_ledger = useMemo(
     () => ledger.filter((row) => matchesScope(row, {
@@ -380,7 +369,14 @@ function MoneyPage() {
 
   const selected_farm = scope_tree.find((farm) => farm.id === scope_farm_id);
   const selected_plot = selected_farm?.plots.find((plot) => plot.id === scope_plot_id);
-  const show_scope = scope_tree.length > 0;
+  const selected_crop = selected_plot?.crops.find((crop) => crop.id === scope_crop_id);
+  const active_filter_label = [
+    period === ALL_TIME ? t('money.period_all') : null,
+    period === CUSTOM ? (rangeLabel(custom_from, custom_to, i18n.language) || t('money.period_custom')) : null,
+    selected_farm?.name,
+    selected_plot?.name,
+    selected_crop?.name,
+  ].filter(Boolean).join(' · ');
 
   if (is_loading) {
     return <LoadingState />;
@@ -418,7 +414,12 @@ function MoneyPage() {
         </div>
 
         {has_extra_filters && (
-          <p className="money-filter-note">{t('money.active_filters')}</p>
+          <div className="money-filter-note">
+            <span>{active_filter_label || t('money.active_filters')}</span>
+            <button type="button" className="money-filter-clear" onClick={clearFilters}>
+              {t('money.filters_clear')}
+            </button>
+          </div>
         )}
       </section>
 
@@ -500,84 +501,19 @@ function MoneyPage() {
       )}
 
       {show_filters && (
-        <Modal
-          title={t('money.filters_title')}
+        <MoneyFilterSheet
+          value={{
+            period,
+            custom_from,
+            custom_to,
+            farm_id: scope_farm_id,
+            plot_id: scope_plot_id,
+            crop_id: scope_crop_id,
+          }}
+          scope_tree={scope_tree}
+          on_apply={applyFilters}
           on_close={() => setShowFilters(false)}
-        >
-          <div className="money-filter-sheet">
-            <div className="money-date-range">
-              <label>
-                <span>{t('money.date_from')}</span>
-                <input
-                  className="form-input"
-                  type="date"
-                  value={custom_from}
-                  onChange={(event) => handleCustomFrom(event.target.value)}
-                />
-              </label>
-              <label>
-                <span>{t('money.date_to')}</span>
-                <input
-                  className="form-input"
-                  type="date"
-                  value={custom_to}
-                  min={custom_from || undefined}
-                  onChange={(event) => handleCustomTo(event.target.value)}
-                />
-              </label>
-            </div>
-
-            {show_scope && (
-              <div className="money-scope-row">
-                <label className="money-scope-field">
-                  <span>{t('money.scope_farm')}</span>
-                  <select
-                    className="form-select"
-                    value={scope_farm_id}
-                    onChange={(event) => handleFarmScope(event.target.value)}
-                  >
-                    <option value="">{t('money.scope_all_farms')}</option>
-                    {scope_tree.map((farm) => (
-                      <option key={farm.id} value={farm.id}>{farm.name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                {scope_farm_id && (
-                  <label className="money-scope-field">
-                    <span>{t('money.scope_plot')}</span>
-                    <select
-                      className="form-select"
-                      value={scope_plot_id}
-                      onChange={(event) => handlePlotScope(event.target.value)}
-                    >
-                      <option value="">{t('money.scope_all_plots')}</option>
-                      {(selected_farm?.plots || []).map((plot) => (
-                        <option key={plot.id} value={plot.id}>{plot.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-
-                {scope_plot_id && (selected_plot?.crops || []).length > 0 && (
-                  <label className="money-scope-field">
-                    <span>{t('money.scope_crop')}</span>
-                    <select
-                      className="form-select"
-                      value={scope_crop_id}
-                      onChange={(event) => setScopeCropId(event.target.value)}
-                    >
-                      <option value="">{t('money.scope_all_crops')}</option>
-                      {selected_plot.crops.map((crop) => (
-                        <option key={crop.id} value={crop.id}>{crop.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </div>
-            )}
-          </div>
-        </Modal>
+        />
       )}
 
       <QuickExpenseModal

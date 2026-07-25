@@ -8140,22 +8140,41 @@ html:has(.auth-page) #root {
 }
 
 .money-filter-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin: 0;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(47, 158, 95, 0.09);
   font-size: 0.78rem;
   font-weight: 650;
   color: var(--color-primary-dark);
 }
 
+.money-filter-note span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.money-filter-clear {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary-dark);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 .money-filter-sheet {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.money-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .money-filter-chips {
@@ -8164,29 +8183,36 @@ html:has(.auth-page) #root {
   gap: 8px;
 }
 
+.money-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(30, 92, 64, 0.14);
+  background: #fff;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.money-filter-chip.is-active {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+
+.money-filter-hint {
+  margin: 8px 0 0;
+  font-size: 0.76rem;
+  color: var(--color-text-subtle);
+  line-height: 1.4;
+}
+
 .money-period-chip.is-more {
   border-style: dashed;
-}
-
-.money-date-range label,
-.money-scope-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.money-date-range span,
-.money-scope-field span {
-  font-size: 0.72rem;
-  font-weight: 650;
-  color: var(--color-text-subtle);
-}
-
-.money-scope-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
 }
 
 .money-compare {
@@ -8348,31 +8374,33 @@ html:has(.auth-page) #root {
 }
 
 /* Dashboard mandi market */
-.mandi-market-section {
-  padding: var(--space-4);
-}
-
 .mandi-glance-strip {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
-.mandi-glance-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
+.mandi-market-section .mandi-glance-place {
+  margin: -2px 0 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--color-text-subtle);
 }
 
-.mandi-glance-title {
-  margin: 2px 0 0;
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
-  line-height: 1.25;
+.mandi-market-section .mandi-glance-square-grid {
+  gap: 10px;
+}
+
+.mandi-market-section .mandi-crop-square {
+  min-height: 108px;
+  gap: 5px;
+  padding: 12px 8px;
+  border-radius: 18px;
+}
+
+.mandi-market-section .mandi-crop-square .mandi-change-pill {
+  font-size: 0.66rem;
+  padding: 1px 7px;
 }
 
 .mandi-glance-place {
@@ -8380,22 +8408,6 @@ html:has(.auth-page) #root {
   font-size: var(--text-sm);
   color: var(--color-text-subtle);
   line-height: 1.35;
-}
-
-.mandi-glance-cta {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-primary);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .mandi-glance-status {
@@ -8837,13 +8849,6 @@ html:has(.auth-page) #root {
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;
-}
-
-.mandi-glance-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .mandi-other-block {

@@ -4,17 +4,80 @@ const TITLE_ALIASES = {
   diesel: ['diesel', 'डीजल', 'disel'],
   urea: ['urea', 'यूरिया'],
   labour: ['labour', 'labor', 'मजदूर', 'मज़दूर'],
+  labor: ['labour', 'labor', 'मजदूर', 'मज़दूर'],
   seed: ['seed', 'बीज'],
   fertilizer: ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
+  khaad: ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
   pesticide: ['pesticide', 'spray', 'कीटनाशक', 'स्प्रे'],
   irrigation: ['irrigation', 'पानी', 'सिंचाई'],
+  'डीजल': ['diesel', 'डीजल', 'transport'],
+  'खाद': ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
+  'यूरिया': ['urea', 'यूरिया', 'fertilizer'],
+  'बीज': ['seed', 'बीज'],
+  'मजदूर': ['labour', 'labor', 'मजदूर', 'मज़दूर'],
+  'मज़दूरी': ['labour', 'labor', 'मजदूर', 'मज़दूर'],
+  'दवा': ['pesticide', 'spray', 'दवा', 'कीटनाशक'],
+  'सिंचाई': ['irrigation', 'पानी', 'सिंचाई'],
+  'पानी': ['irrigation', 'पानी', 'सिंचाई'],
 };
 
 /**
- * Answers "how much did I spend on X" style questions from the farmer's own ledger.
+ * Words farmers wrap around a real question ("जुलाई का पूरा खर्च बताओ"). They must
+ * never become a search term, otherwise a plain total looks like "nothing found".
+ */
+const FILLER_WORDS = new Set([
+  'पूरा', 'पूरी', 'पुरा', 'सारा', 'सारी', 'सब', 'कुल', 'टोटल', 'कितना', 'कितने', 'कितनी',
+  'खर्च', 'ख़र्च', 'खर्चा', 'ख़र्चा', 'खर्चे', 'आय', 'आमदनी', 'कमाई', 'पैसा', 'पैसे', 'हिसाब',
+  'बताओ', 'बता', 'बताइए', 'दिखाओ', 'हुआ', 'हुए', 'में', 'का', 'की', 'के', 'पर', 'से', 'तक',
+  'pura', 'poora', 'puro', 'sara', 'saara', 'sab', 'kul', 'total', 'kitna', 'kitne', 'kitni',
+  'kharch', 'kharcha', 'kharche', 'aay', 'kamai', 'paisa', 'paise', 'hisab', 'hisaab',
+  'batao', 'bata', 'dikhao', 'how', 'much', 'many', 'tell', 'show', 'me', 'my', 'all',
+  'spend', 'spent', 'spending', 'expense', 'expenses', 'income', 'earned', 'earning',
+  'money', 'the', 'of', 'on', 'in', 'for', 'and', 'ka', 'ki', 'ke', 'mein', 'par',
+]);
+
+const CATEGORY_LABELS = {
+  seed: { en: 'seed', hi: 'बीज' },
+  fertilizer: { en: 'fertilizer', hi: 'खाद' },
+  pesticide: { en: 'pesticide', hi: 'दवा' },
+  irrigation: { en: 'irrigation', hi: 'सिंचाई' },
+  labor: { en: 'labour', hi: 'मजदूरी' },
+  equipment: { en: 'equipment', hi: 'औज़ार' },
+  transport: { en: 'transport', hi: 'भाड़ा' },
+  harvest: { en: 'harvest', hi: 'कटाई' },
+  sale: { en: 'sale', hi: 'बिक्री' },
+  subsidy: { en: 'subsidy', hi: 'सब्सिडी' },
+  other: { en: 'other', hi: 'अन्य' },
+};
+
+/**
+ * Answers "how much did I spend" questions from the farmer's own ledger. A named
+ * item that matches nothing falls back to the plain total for the same period.
  */
 async function summarizeMoney(user_id, filters = {}) {
   const kind = filters.kind === 'income' ? 'income' : 'expense';
+  const rows = await fetchLedgerRows(user_id, kind, filters);
+  const needle = normalizeQuery(filters.query);
+  const category = filters.category || null;
+  const matched = rows.filter((row) => matchesTitle(row, needle) && matchesCategory(row, category));
+  const has_narrowing = Boolean(needle || category);
+  const is_empty_narrow = has_narrowing && matched.length === 0 && rows.length > 0;
+  const final_rows = is_empty_narrow ? rows : matched;
+
+  return {
+    kind,
+    total: final_rows.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+    count: final_rows.length,
+    from: filters.from || null,
+    to: filters.to || null,
+    query: is_empty_narrow ? null : needle,
+    category: is_empty_narrow ? null : category,
+    missed_query: is_empty_narrow ? (needle || category) : null,
+    breakdown: topBreakdown(final_rows),
+  };
+}
+
+async function fetchLedgerRows(user_id, kind, filters) {
   const table = kind === 'income' ? 'farm_incomes' : 'farm_expenses';
   const date_column = kind === 'income' ? 'income_date' : 'expense_date';
 
@@ -22,13 +85,7 @@ async function summarizeMoney(user_id, filters = {}) {
     .join('farms', `${table}.farm_id`, 'farms.id')
     .where('farms.user_id', user_id)
     .where('farms.is_active', true)
-    .select(
-      `${table}.amount`,
-      `${table}.title`,
-      `${table}.category`,
-      `${table}.${date_column} as entry_date`,
-      'farms.name as farm_name',
-    );
+    .select(`${table}.amount`, `${table}.title`, `${table}.category`, `${table}.${date_column} as entry_date`);
 
   if (filters.from) {
     query = query.andWhere(`${table}.${date_column}`, '>=', filters.from);
@@ -42,28 +99,22 @@ async function summarizeMoney(user_id, filters = {}) {
     query = query.andWhere(`${table}.farm_id`, filters.farm_id);
   }
 
-  if (filters.category) {
-    query = query.andWhere(`${table}.category`, filters.category);
-  }
-
-  const rows = await query;
-  const matched = rows.filter((row) => matchesTitle(row, filters.query));
-  const total = matched.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-
-  return {
-    kind,
-    total,
-    count: matched.length,
-    from: filters.from || null,
-    to: filters.to || null,
-    query: filters.query || null,
-    category: filters.category || null,
-  };
+  return query;
 }
 
-function matchesTitle(row, query) {
-  const needle = String(query || '').trim().toLowerCase();
+/** Drops filler words so "पूरा खर्च" reads as "no item named" instead of an item. */
+function normalizeQuery(raw) {
+  const text = String(raw || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
 
+  if (!text) {
+    return null;
+  }
+
+  const words = text.split(/\s+/).filter((word) => word && !FILLER_WORDS.has(word));
+  return words.length > 0 ? words.join(' ') : null;
+}
+
+function matchesTitle(row, needle) {
   if (!needle) {
     return true;
   }
@@ -74,41 +125,107 @@ function matchesTitle(row, query) {
   return aliases.some((alias) => haystack.includes(String(alias).toLowerCase()));
 }
 
+function matchesCategory(row, category) {
+  return !category || row.category === category;
+}
+
+function topBreakdown(rows, limit = 3) {
+  const totals = new Map();
+
+  rows.forEach((row) => {
+    const key = row.category || 'other';
+    totals.set(key, (totals.get(key) || 0) + Number(row.amount || 0));
+  });
+
+  return [...totals.entries()]
+    .map(([key, total]) => ({ key, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, limit);
+}
+
 function formatMoneyAnswer(summary, language) {
-  const amount = `₹${Number(summary.total || 0).toLocaleString('en-IN')}`;
   const is_hi = language === 'hi';
-  const label = summary.query || summary.category;
-  const when = formatRangeLabel(summary.from, summary.to, is_hi);
 
   if (summary.count === 0) {
-    if (is_hi) {
-      const verb = summary.kind === 'income' ? 'आय' : 'खर्च';
-      return label
-        ? `${when}${label} की कोई ${verb} नहीं मिली।`
-        : `${when}कोई ${verb} नहीं मिली।`;
-    }
-
-    return label
-      ? `No ${summary.kind === 'income' ? 'income' : 'expense'} found for ${label}${when ? ` ${when}` : ''}.`
-      : `No ${summary.kind === 'income' ? 'income' : 'expenses'} found${when ? ` ${when}` : ''}.`;
+    return emptyAnswer(summary, is_hi);
   }
+
+  const amount = formatRupees(summary.total);
+  const when = formatRangeLabel(summary.from, summary.to, is_hi);
+  const label = categoryLabel(summary.query || summary.category, is_hi);
+  const head = is_hi
+    ? hindiTotalLine(summary, amount, when, label)
+    : englishTotalLine(summary, amount, when, label);
+
+  return [head, missedNote(summary, is_hi), breakdownLine(summary, is_hi)].filter(Boolean).join(' ');
+}
+
+function hindiTotalLine(summary, amount, when, label) {
+  const verb = summary.kind === 'income' ? 'की आय हुई' : 'का खर्च हुआ';
+  const on_label = label ? `${label} पर ` : '';
+  return `${when}${on_label}कुल ${amount} ${verb} (${summary.count} एंट्री)।`;
+}
+
+function englishTotalLine(summary, amount, when, label) {
+  const verb = summary.kind === 'income' ? 'earned' : 'spent';
+  const on_label = label ? ` on ${label}` : '';
+  return `You ${verb} ${amount}${on_label}${when ? ` ${when}` : ''} across ${summary.count} entries.`;
+}
+
+function missedNote(summary, is_hi) {
+  if (!summary.missed_query) {
+    return '';
+  }
+
+  const label = categoryLabel(summary.missed_query, is_hi);
+  return is_hi
+    ? `${label} का अलग से कोई हिसाब नहीं मिला, इसलिए पूरा जोड़ बताया है।`
+    : `Nothing was logged separately for ${label}, so this is the full total.`;
+}
+
+function breakdownLine(summary, is_hi) {
+  const parts = (summary.breakdown || [])
+    .filter((row) => row.total > 0)
+    .map((row) => `${categoryLabel(row.key, is_hi)} ${formatRupees(row.total)}`);
+
+  if (parts.length < 2) {
+    return '';
+  }
+
+  return is_hi ? `सबसे ज़्यादा: ${parts.join(', ')}।` : `Biggest heads: ${parts.join(', ')}.`;
+}
+
+function emptyAnswer(summary, is_hi) {
+  const when = formatRangeLabel(summary.from, summary.to, is_hi);
+  const label = categoryLabel(summary.query || summary.category, is_hi);
 
   if (is_hi) {
-    const verb = summary.kind === 'income' ? 'मिली' : 'खर्च हुए';
-    return label
-      ? `${when}${label} पर कुल ${amount} ${verb} (${summary.count} एंट्री)।`
-      : `${when}कुल ${amount} ${verb} (${summary.count} एंट्री)।`;
+    const noun = summary.kind === 'income' ? 'आय' : 'खर्च';
+    const on_label = label ? `${label} का ` : '';
+    return `${when}${on_label}कोई ${noun} दर्ज नहीं है। जोड़ना हो तो बोलिए, मैं लिख दूँगा।`;
   }
 
-  const noun = summary.kind === 'income' ? 'earned' : 'spent';
-  return label
-    ? `You ${noun} ${amount} on ${label}${when ? ` ${when}` : ''} across ${summary.count} entries.`
-    : `You ${noun} ${amount}${when ? ` ${when}` : ''} across ${summary.count} entries.`;
+  const noun = summary.kind === 'income' ? 'income' : 'expense';
+  const on_label = label ? ` for ${label}` : '';
+  return `No ${noun} is recorded${on_label}${when ? ` ${when}` : ''}. Say it aloud and I will log it.`;
+}
+
+function categoryLabel(key, is_hi) {
+  if (!key) {
+    return '';
+  }
+
+  const label = CATEGORY_LABELS[key];
+  return label ? label[is_hi ? 'hi' : 'en'] : String(key);
+}
+
+function formatRupees(value) {
+  return `₹${Number(value || 0).toLocaleString('en-IN')}`;
 }
 
 function formatRangeLabel(from, to, is_hi) {
   if (!from && !to) {
-    return is_hi ? '' : '';
+    return '';
   }
 
   if (from && to && from.slice(0, 7) === to.slice(0, 7)) {
