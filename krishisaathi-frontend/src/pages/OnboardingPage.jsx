@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { updateProfile } from '../services/auth_service';
 import { normalizeLanguage } from '../utils/language';
+import BrandWordmark from '../components/BrandWordmark';
 
 function OnboardingPage() {
   const { t, i18n } = useTranslation();
@@ -69,18 +70,9 @@ function OnboardingPage() {
   return (
     <div className="auth-page is-premium">
       <header className="auth-brand-bar">
-        <div className="auth-brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-            <path
-              d="M12 3c-2.8 3.2-4.2 6-4.2 8.4a4.2 4.2 0 108.4 0C16.2 9 14.8 6.2 12 3z"
-              fill="currentColor"
-            />
-            <path d="M12 14v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </div>
-        <div className="auth-brand-copy">
-          <strong>{t('app.name')}</strong>
-          <span>{t('app.tagline')}</span>
+        <div className="auth-brand-stack">
+          <BrandWordmark size="lg" show_mark />
+          <span className="auth-brand-tagline">{t('app.tagline')}</span>
         </div>
       </header>
 

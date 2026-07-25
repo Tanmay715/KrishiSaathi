@@ -5,6 +5,7 @@ import PwaInstallPrompt from '../components/PwaInstallPrompt';
 import QuickLogFab from '../components/QuickLogFab';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import BrandWordmark from '../components/BrandWordmark';
 
 const TAB_ITEMS = [
   { to: '/', end: true, key: 'dashboard', icon: 'home' },
@@ -85,7 +86,7 @@ function AppLayout() {
         {!is_assistant && (
           <header className="app-topbar is-centered">
             <div className="app-topbar-brand">
-              <h1>{t('app.name')}</h1>
+              <BrandWordmark as="h1" size="sm" />
               <p>{t('app.tagline')}</p>
             </div>
             <LanguageSwitcher variant="topbar" />

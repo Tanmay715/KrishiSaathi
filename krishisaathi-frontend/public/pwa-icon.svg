@@ -1,13 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fasalya">
-  <rect width="512" height="512" rx="96" fill="#2d6a4f"/>
+  <rect width="512" height="512" rx="108" fill="#1e5c40"/>
+  <rect x="36" y="36" width="440" height="440" rx="88" fill="#2d6a4f"/>
+  <!-- Sprout Y mark -->
+  <path d="M256 400V232" stroke="#f8f6f0" stroke-width="28" stroke-linecap="round"/>
   <path
-    d="M256 96c-48 72-96 120-96 184a96 96 0 0 0 192 0c0-64-48-112-96-184z"
+    d="M256 248C256 248 168 220 152 148C138 84 204 68 246 118C258 134 256 186 256 248Z"
     fill="#95d5b2"
   />
   <path
-    d="M256 320v96M208 368h96"
-    stroke="#f8f6f0"
-    stroke-width="24"
-    stroke-linecap="round"
+    d="M256 248C256 248 344 214 358 144C370 82 308 68 266 116C254 132 256 188 256 248Z"
+    fill="#b7e4c7"
   />
+  <circle cx="256" cy="128" r="18" fill="#d8f3dc" opacity="0.9"/>
 </svg>

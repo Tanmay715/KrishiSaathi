@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatMoneyDate } from '../utils/format_date';
+import BrandWordmark from './BrandWordmark';
 
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
@@ -21,7 +22,9 @@ function SeasonReportSheet({ farm, finance, plots, crops, season, year }) {
   return (
     <div className="season-report-sheet">
       <header className="season-report-header">
-        <p className="season-report-brand">{t('app.name')}</p>
+        <p className="season-report-brand">
+          <BrandWordmark size="xs" />
+        </p>
         <h1>{t('season.report_title')}</h1>
         <p className="season-report-farm">{farm?.name}</p>
         {location && <p className="season-report-location">{location}</p>}

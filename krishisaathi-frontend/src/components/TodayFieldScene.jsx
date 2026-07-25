@@ -5,6 +5,7 @@ import HealthBloom from './illustrations/HealthBloom';
 import InsightIcon from './InsightIcon';
 import { weatherMood } from '../utils/field_identity';
 import { normalizeLanguage } from '../utils/language';
+import BrandWordmark from './BrandWordmark';
 
 function formatForecastDate(iso_date, language) {
   const date = new Date(`${iso_date}T00:00:00`);
@@ -46,7 +47,7 @@ function TodayFieldScene({
         <header className="today-field-top">
           <div>
             <p className="today-field-greeting">{greeting}</p>
-            <h1 className="today-field-brand">{t('app.name')}</h1>
+            <BrandWordmark as="h1" className="today-field-brand" size="lg" />
           </div>
           <div className={`today-field-rain${rain >= 50 ? ' is-urgent' : ''}`}>
             <em>{rain}%</em>

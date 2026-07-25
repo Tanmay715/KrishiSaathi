@@ -2433,6 +2433,20 @@ html:has(.auth-page) #root {
   z-index: 1;
 }
 
+.auth-brand-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.auth-brand-tagline {
+  margin-left: 54px;
+  font-size: 0.8rem;
+  opacity: 0.82;
+  line-height: 1.3;
+}
+
 .auth-brand-mark {
   width: 42px;
   height: 42px;
@@ -5431,6 +5445,13 @@ html:has(.auth-page) #root {
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.2;
+}
+
+.today-field-brand.brand-wordmark,
+.today-field-brand .brand-wordmark-text {
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 .today-field-rain {
@@ -8938,5 +8959,167 @@ html:has(.auth-page) #root {
   .mandi-location-form .btn-primary {
     width: auto;
     min-width: 140px;
+  }
+}
+
+/* —— Fasalya wordmark (sprout-Y lettermark) —— */
+.brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+}
+
+.brand-wordmark-badge {
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: 0.42em;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.16);
+  color: #9be4b4;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.brand-wordmark-lockup {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.brand-wordmark-text {
+  display: inline-flex;
+  align-items: flex-end;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.brand-wordmark-y {
+  display: inline-flex;
+  align-items: flex-end;
+  width: 0.62em;
+  height: 0.95em;
+  margin: 0 0.01em;
+  color: #7ddea0;
+  transform-origin: bottom center;
+  animation: brand-sprout-sway 3.6s ease-in-out infinite;
+}
+
+.brand-sprout-y {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.brand-sprout-leaf--left {
+  transform-origin: 14px 18px;
+  animation: brand-leaf-left 3.6s ease-in-out infinite;
+}
+
+.brand-sprout-leaf--right {
+  transform-origin: 14px 18px;
+  animation: brand-leaf-right 3.6s ease-in-out infinite;
+}
+
+.brand-wordmark--xs {
+  font-size: 0.85rem;
+}
+
+.brand-wordmark--xs .brand-wordmark-y {
+  color: var(--color-primary);
+  animation: none;
+}
+
+.brand-wordmark--xs .brand-sprout-leaf--left,
+.brand-wordmark--xs .brand-sprout-leaf--right {
+  animation: none;
+}
+
+.brand-wordmark--sm {
+  font-size: 1.15rem;
+}
+
+.brand-wordmark--md {
+  font-size: 1.35rem;
+}
+
+.brand-wordmark--lg {
+  font-size: 1.7rem;
+}
+
+.app-topbar-brand .brand-wordmark {
+  color: #fff;
+}
+
+.app-topbar-brand .brand-wordmark-y {
+  color: #9be4b4;
+}
+
+.today-field-brand .brand-wordmark {
+  font-size: inherit;
+  color: inherit;
+}
+
+.today-field-brand .brand-wordmark-y {
+  color: #c8f5d4;
+  filter: drop-shadow(0 1px 2px rgba(20, 60, 40, 0.25));
+}
+
+.season-report-brand {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.season-report-brand .brand-wordmark {
+  color: var(--color-primary-dark);
+}
+
+.season-report-brand .brand-wordmark-y {
+  color: var(--color-primary);
+}
+
+@keyframes brand-sprout-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes brand-leaf-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes brand-leaf-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-wordmark-y,
+  .brand-sprout-leaf--left,
+  .brand-sprout-leaf--right {
+    animation: none;
   }
 }
