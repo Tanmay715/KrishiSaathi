@@ -2,6 +2,7 @@ const Joi = require('joi');
 const ExpenseService = require('./ExpenseService');
 const ExpenseParseService = require('./ExpenseParseService');
 const ApiResponse = require('../../utils/ApiResponse');
+const { parseDateRange } = require('../../utils/date_range');
 
 const EXPENSE_CATEGORIES = [
   'seed',
@@ -39,7 +40,10 @@ class ExpenseController {
 
   async summary(req, res, next) {
     try {
-      const summary = await ExpenseService.getExpenseSummary(req.user.id);
+      const summary = await ExpenseService.getExpenseSummary(
+        req.user.id,
+        parseDateRange(req.query),
+      );
       return ApiResponse.success(res, summary);
     } catch (error) {
       return next(error);

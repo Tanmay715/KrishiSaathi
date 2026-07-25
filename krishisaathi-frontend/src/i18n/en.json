@@ -62,7 +62,15 @@
     "filter_all": "All",
     "filter_expense": "Expenses",
     "filter_income": "Incomes",
-    "empty": "No expenses or incomes yet. Tap Log Expense or Log Income to start."
+    "empty": "No expenses or incomes yet. Tap Log Expense or Log Income to start.",
+    "empty_period": "Nothing logged in this period. Pick another season or year above.",
+    "period_label": "Time period",
+    "period_all": "All time",
+    "spent_in_period": "Spent",
+    "earned_in_period": "Earned",
+    "vs_previous": "{{amount}} {{direction}} than last time",
+    "better_by": "better",
+    "worse_by": "worse"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -93,6 +101,8 @@
     "health_strain": "Needs care",
     "market_insights": "Market",
     "today_summary": "Today's summary",
+    "season_summary": "This season's money",
+    "see_all_money": "See all money",
     "total_profit": "Total profit",
     "from_farm": "From your farm",
     "quick_do": "Do quickly",
@@ -133,6 +143,33 @@
     "title": "Weather",
     "rain_chance": "Rain chance",
     "rain": "rain",
+    "temp_min": "Min",
+    "temp_max": "Max",
+    "conditions": {
+      "0": "Clear",
+      "1": "Mostly clear",
+      "2": "Partly cloudy",
+      "3": "Overcast",
+      "45": "Fog",
+      "48": "Fog",
+      "51": "Light drizzle",
+      "53": "Drizzle",
+      "55": "Heavy drizzle",
+      "61": "Light rain",
+      "63": "Rain",
+      "65": "Heavy rain",
+      "71": "Light snow",
+      "80": "Rain showers",
+      "81": "Rain showers",
+      "82": "Heavy showers",
+      "95": "Thunderstorm"
+    },
+    "advisory": {
+      "rain": "Rain likely — delay spraying and plan drainage.",
+      "clear": "Clear skies — good window for field work and irrigation checks.",
+      "fog": "Foggy conditions — be careful with morning spraying and travel.",
+      "default": "Monitor the forecast and adjust irrigation if rain is expected."
+    },
     "advice_delay_spray": "Rain expected — delay pesticide spraying.",
     "advice_skip_irrigation": "Skip irrigation today if soil is wet.",
     "advice_harvest_after_rain": "Plan harvest after the rain clears.",
@@ -422,6 +459,7 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "close": "Close",
+    "send": "Send",
     "sheet_basics": "Basics",
     "sheet_location": "Location",
     "sheet_details": "Details",
@@ -460,6 +498,31 @@
     "unsupported": "Voice not supported in this browser. Type details instead.",
     "error": "Could not hear you. Try again.",
     "transcript_only": "Heard you. Fill amount/category and save — parse needs internet."
+  },
+  "voice_command": {
+    "title": "Just speak",
+    "subtitle": "Say it in Hindi or English — I will ask if anything is missing.",
+    "tap_hint": "Tap the mic and speak",
+    "examples": "Try: \"Spent 800 rupees on urea\" · \"Sold 12 quintal wheat for 26000\" · \"Remind me to irrigate on Monday\"",
+    "thinking": "Understanding…",
+    "ready": "Ready to save.",
+    "retry_hint": "I did not catch that. Please say it again.",
+    "confirm_hint": "Check it once and save",
+    "confirm_save": "Save",
+    "say_again": "Start over",
+    "saved": "Saved.",
+    "log_another": "Log another",
+    "save_failed": "Could not save. Please try again.",
+    "type_placeholder": "Type your command instead",
+    "field_kind": "Entry",
+    "field_what": "For",
+    "field_amount": "Amount",
+    "field_quantity": "Quantity",
+    "field_date": "Date",
+    "intent_expense": "Expense",
+    "intent_income": "Income",
+    "intent_reminder": "Reminder",
+    "intent_unknown": "Not understood"
   },
   "disease": {
     "title": "Crop disease check",
@@ -509,6 +572,21 @@
       "harvest": "Harvest",
       "weather": "Weather",
       "custom": "Custom"
+    },
+    "rule_titles": {
+      "irrigation_first": "First irrigation check",
+      "irrigation_check": "Irrigation check",
+      "irrigation_frequent": "Frequent irrigation check",
+      "fertilizer_window": "Fertilizer application window",
+      "fertilizer_time": "Fertilizer window",
+      "nutrient_check": "Nutrient / rhizobium check",
+      "top_dressing": "Top dressing window",
+      "pest_scout_spray": "Pest scout / spray review",
+      "pest_scout": "Pest scout",
+      "aphid_scout": "Aphid / pest scout",
+      "pest_disease_scout": "Pest / disease scout",
+      "harvest_check": "Harvest readiness check",
+      "weather_delay_spray": "Delay spray due to rain risk"
     }
   },
   "season": {
@@ -530,6 +608,11 @@
     "install_body": "Add to your home screen for quick access in the field.",
     "install_action": "Install app",
     "install_ios_body": "On iPhone: tap Share, then Add to Home Screen for quick field access."
+  },
+  "mandi_source": {
+    "agmarknet": "AGMARKNET (data.gov.in)",
+    "reference": "Reference estimate",
+    "unavailable": "Not available"
   },
   "quick_log": {
     "title": "Quick expense",

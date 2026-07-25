@@ -11,6 +11,7 @@ const assistant_routes = require('../modules/assistant/assistant_routes');
 const disease_routes = require('../modules/disease/disease_routes');
 const reminder_routes = require('../modules/reminders/reminder_routes');
 const mandi_routes = require('../modules/mandi/mandi_routes');
+const voice_routes = require('../modules/voice/voice_routes');
 const { controller: expense_controller } = require('../modules/expenses/ExpenseController');
 const { controller: income_controller } = require('../modules/incomes/IncomeController');
 const { controller: weather_controller } = require('../modules/weather/WeatherController');
@@ -68,6 +69,7 @@ router.use('/crop-templates', crop_template_routes);
 router.use('/assistant', assistant_routes);
 router.use('/reminders', reminder_routes);
 router.use('/mandi', mandi_routes);
+router.use('/voice', voice_routes);
 
 router.get('/expenses/summary', authenticate, expense_controller.summary.bind(expense_controller));
 router.get('/incomes/summary', authenticate, income_controller.summary.bind(income_controller));

@@ -121,8 +121,8 @@ export async function updateExpense(farm_id, expense_id, payload) {
   return response.data;
 }
 
-export async function getExpenseSummary() {
-  const response = await api_client.get('/expenses/summary');
+export async function getExpenseSummary(range = {}) {
+  const response = await api_client.get('/expenses/summary', { params: dateRangeParams(range) });
   return response.data;
 }
 
@@ -141,9 +141,23 @@ export async function updateIncome(farm_id, income_id, payload) {
   return response.data;
 }
 
-export async function getIncomeSummary() {
-  const response = await api_client.get('/incomes/summary');
+export async function getIncomeSummary(range = {}) {
+  const response = await api_client.get('/incomes/summary', { params: dateRangeParams(range) });
   return response.data;
+}
+
+function dateRangeParams({ from, to } = {}) {
+  const params = {};
+
+  if (from) {
+    params.from = from;
+  }
+
+  if (to) {
+    params.to = to;
+  }
+
+  return params;
 }
 
 export async function getPendingIncomeCrops() {

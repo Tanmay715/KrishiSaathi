@@ -9,16 +9,25 @@ import PageHeader from '../components/PageHeader';
 import QuickExpenseModal from '../components/QuickExpenseModal';
 import {
   createIncome,
-  getExpenseSummary,
   getFarmExpenses,
   getFarmIncomes,
   getFarms,
-  getIncomeSummary,
   getQuickLogTargets,
 } from '../services/farm_service';
 import { formatMoneyDate } from '../utils/format_date';
+import {
+  ALL_TIME,
+  comparisonPeriod,
+  currentSeason,
+  isWithinRange,
+  periodOptions,
+  periodRange,
+  periodYear,
+  previousSeason,
+} from '../utils/finance_period';
 
 const FILTERS = ['all', 'expense', 'income'];
+const DEFAULT_PERIOD = 'this_season';
 
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
@@ -56,6 +65,77 @@ function buildLedger(farms, expense_lists, income_lists) {
   );
 }
 
+function sumLedger(rows) {
+  return rows.reduce((totals, row) => {
+    if (row.kind === 'expense') {
+      totals.spent += row.amount;
+    } else {
+      totals.earned += row.amount;
+    }
+    return totals;
+  }, { spent: 0, earned: 0 });
+}
+
+/** How this period's profit compares with the equivalent earlier one, or null if there is none. */
+function comparisonChange(ledger, period, profit) {
+  const comparison = comparisonPeriod(period);
+
+  if (!comparison) {
+    return null;
+  }
+
+  const previous_rows = ledger.filter((row) => isWithinRange(row.date, comparison.range));
+
+  if (previous_rows.length === 0) {
+    return null;
+  }
+
+  const previous = sumLedger(previous_rows);
+  return profit - (previous.earned - previous.spent);
+}
+
+/** Opens on the current season, unless nothing was logged then — an empty screen helps nobody. */
+function bestInitialPeriod(ledger) {
+  const candidates = periodOptions(ledger.map((row) => row.date)).map((option) => option.key);
+  const found = candidates.find((key) => (
+    ledger.some((row) => isWithinRange(row.date, periodRange(key)))
+  ));
+
+  return found || DEFAULT_PERIOD;
+}
+
+function periodLabel(option_key, t) {
+  const year = periodYear(option_key);
+
+  if (year) {
+    return String(year);
+  }
+
+  if (option_key === ALL_TIME) {
+    return t('money.period_all');
+  }
+
+  const season = option_key === 'this_season'
+    ? currentSeason()
+    : previousSeason(currentSeason());
+
+  return t(`crops.season.${season.season}`);
+}
+
+function periodSubLabel(option_key, t) {
+  const year = periodYear(option_key);
+
+  if (year || option_key === ALL_TIME) {
+    return '';
+  }
+
+  const season = option_key === 'this_season'
+    ? currentSeason()
+    : previousSeason(currentSeason());
+
+  return season.season === 'rabi' ? `${season.year}-${String(season.year + 1).slice(2)}` : String(season.year);
+}
+
 function targetLabel(target) {
   if (target.target_type === 'crop') {
     return `${target.farm_name} · ${target.plot_name} · ${target.crop_name}`;
@@ -71,10 +151,9 @@ function MoneyPage() {
   const [search_params, setSearchParams] = useSearchParams();
   const [is_loading, setIsLoading] = useState(true);
   const [error_message, setErrorMessage] = useState('');
-  const [spent, setSpent] = useState(0);
-  const [earned, setEarned] = useState(0);
   const [ledger, setLedger] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [period, setPeriod] = useState(DEFAULT_PERIOD);
   const [show_expense_modal, setShowExpenseModal] = useState(false);
   const [show_income_modal, setShowIncomeModal] = useState(false);
   const [targets, setTargets] = useState([]);
@@ -104,20 +183,16 @@ function MoneyPage() {
     setErrorMessage('');
 
     try {
-      const [farms_response, expense_summary, income_summary] = await Promise.all([
-        getFarms(),
-        getExpenseSummary(),
-        getIncomeSummary(),
-      ]);
+      const farms_response = await getFarms();
       const farms = farms_response.data || [];
       const [expense_lists, income_lists] = await Promise.all([
         Promise.all(farms.map((farm) => getFarmExpenses(farm.id).then((res) => res.data || []))),
         Promise.all(farms.map((farm) => getFarmIncomes(farm.id).then((res) => res.data || []))),
       ]);
 
-      setSpent(Number(expense_summary.data?.total_spent || 0));
-      setEarned(Number(income_summary.data?.total_earned || 0));
-      setLedger(buildLedger(farms, expense_lists, income_lists));
+      const rows = buildLedger(farms, expense_lists, income_lists);
+      setLedger(rows);
+      setPeriod(bestInitialPeriod(rows));
     } catch (error) {
       setErrorMessage(error.response?.data?.message || t('common.error'));
     } finally {
@@ -182,14 +257,27 @@ function MoneyPage() {
     }
   }
 
-  const visible_rows = useMemo(() => {
-    if (filter === 'all') {
-      return ledger;
-    }
-    return ledger.filter((row) => row.kind === filter);
-  }, [filter, ledger]);
+  const period_choices = useMemo(
+    () => periodOptions(ledger.map((row) => row.date)),
+    [ledger],
+  );
 
+  const period_rows = useMemo(() => {
+    const range = periodRange(period);
+    return ledger.filter((row) => isWithinRange(row.date, range));
+  }, [ledger, period]);
+
+  const visible_rows = useMemo(
+    () => period_rows.filter((row) => filter === 'all' || row.kind === filter),
+    [filter, period_rows],
+  );
+
+  const { spent, earned } = useMemo(() => sumLedger(period_rows), [period_rows]);
   const profit = earned - spent;
+  const net_change = useMemo(
+    () => comparisonChange(ledger, period, profit),
+    [ledger, period, profit],
+  );
 
   if (is_loading) {
     return <LoadingState />;
@@ -203,22 +291,47 @@ function MoneyPage() {
     <div className="money-page page-stack">
       <PageHeader title={t('nav.money')} subtitle={t('money.subtitle')} />
 
+      <div className="money-period-bar" role="tablist" aria-label={t('money.period_label')}>
+        {period_choices.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            role="tab"
+            aria-selected={period === option.key}
+            className={`money-period-chip${period === option.key ? ' is-active' : ''}`}
+            onClick={() => setPeriod(option.key)}
+          >
+            <span>{periodLabel(option.key, t)}</span>
+            {periodSubLabel(option.key, t) && <em>{periodSubLabel(option.key, t)}</em>}
+          </button>
+        ))}
+      </div>
+
       <div className="money-summary-grid">
         <div className="money-summary-card tone-spend">
-          <span>{t('dashboard.total_spent')}</span>
+          <span>{t('money.spent_in_period')}</span>
           <strong>₹{formatAmount(spent)}</strong>
         </div>
         <div className="money-summary-card tone-earn">
-          <span>{t('dashboard.total_earned')}</span>
+          <span>{t('money.earned_in_period')}</span>
           <strong>₹{formatAmount(earned)}</strong>
         </div>
         <div className={`money-summary-card tone-net${profit < 0 ? ' is-loss' : ''}`}>
-          <span>{t('dashboard.net')}</span>
+          <span>{profit >= 0 ? t('finance.status_profit') : t('finance.status_loss')}</span>
           <strong>
             {profit >= 0 ? '+' : '-'}₹{formatAmount(Math.abs(profit))}
           </strong>
         </div>
       </div>
+
+      {net_change !== null && (
+        <p className={`money-compare${net_change >= 0 ? ' is-up' : ' is-down'}`}>
+          {t('money.vs_previous', {
+            direction: net_change >= 0 ? t('money.better_by') : t('money.worse_by'),
+            amount: `₹${formatAmount(Math.abs(net_change))}`,
+          })}
+        </p>
+      )}
 
       <div className="money-toolbar">
         <div className="money-filters" role="tablist" aria-label={t('money.filters')}>
@@ -248,7 +361,7 @@ function MoneyPage() {
       {error_message && <div className="error-banner">{error_message}</div>}
 
       {visible_rows.length === 0 ? (
-        <EmptyState message={t('money.empty')} />
+        <EmptyState message={ledger.length ? t('money.empty_period') : t('money.empty')} />
       ) : (
         <div className="card money-ledger-card">
           <ul className="money-ledger">

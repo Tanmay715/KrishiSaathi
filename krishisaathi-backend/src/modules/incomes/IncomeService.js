@@ -3,6 +3,7 @@ const db = require('../../db/connection');
 const ApiError = require('../../utils/ApiError');
 const ActivityService = require('../activity/ActivityService');
 const ExpenseService = require('../expenses/ExpenseService');
+const { applyDateRange } = require('../../utils/date_range');
 
 class IncomeService {
   async listFarmIncomes(user_id, farm_id) {
@@ -47,9 +48,9 @@ class IncomeService {
     return Object.fromEntries(rows.map((row) => [row.crop_cycle_id, Number(row.total || 0)]));
   }
 
-  async getIncomeSummary(user_id) {
-    const result = await db('farm_incomes')
-      .where({ user_id })
+  async getIncomeSummary(user_id, range = {}) {
+    const query = applyDateRange(db('farm_incomes').where({ user_id }), 'income_date', range);
+    const result = await query
       .sum('amount as total_earned')
       .count('id as income_count')
       .first();
@@ -57,6 +58,8 @@ class IncomeService {
     return {
       total_earned: Number(result.total_earned || 0),
       income_count: Number(result.income_count || 0),
+      from: range.from || null,
+      to: range.to || null,
     };
   }
 

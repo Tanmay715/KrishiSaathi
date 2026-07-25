@@ -7,11 +7,13 @@ import {
   getOfflineExpenseCount,
 } from '../utils/offline_expense_queue';
 import QuickExpenseModal from './QuickExpenseModal';
+import VoiceCommandSheet from './VoiceCommandSheet';
 
 function QuickLogFab() {
   const { t } = useTranslation();
   const is_online = useOnlineStatus();
   const [is_open, setIsOpen] = useState(false);
+  const [is_voice_open, setIsVoiceOpen] = useState(false);
   const [sync_notice, setSyncNotice] = useState('');
   const [pending_count, setPendingCount] = useState(getOfflineExpenseCount());
 
@@ -46,14 +48,24 @@ function QuickLogFab() {
           {t('quick_log.pending_offline', { count: pending_count })}
         </div>
       )}
-      <button
-        type="button"
-        className="quick-log-fab no-print"
-        onClick={() => setIsOpen(true)}
-        aria-label={t('quick_log.title')}
-      >
-        + ₹
-      </button>
+      <div className="quick-log-fab-stack no-print">
+        <button
+          type="button"
+          className="quick-log-fab is-secondary"
+          onClick={() => setIsOpen(true)}
+          aria-label={t('quick_log.title')}
+        >
+          + ₹
+        </button>
+        <button
+          type="button"
+          className="quick-log-fab is-voice"
+          onClick={() => setIsVoiceOpen(true)}
+          aria-label={t('voice_command.title')}
+        >
+          <MicGlyph />
+        </button>
+      </div>
       <QuickExpenseModal
         is_open={is_open}
         on_close={() => {
@@ -62,7 +74,26 @@ function QuickLogFab() {
         }}
         on_saved={() => setPendingCount(getOfflineExpenseCount())}
       />
+      <VoiceCommandSheet
+        is_open={is_voice_open}
+        on_close={() => setIsVoiceOpen(false)}
+        on_saved={() => setPendingCount(getOfflineExpenseCount())}
+      />
     </>
+  );
+}
+
+function MicGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" aria-hidden="true">
+      <rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor" />
+      <path
+        d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const IncomeService = require('./IncomeService');
 const ApiResponse = require('../../utils/ApiResponse');
+const { parseDateRange } = require('../../utils/date_range');
 
 const INCOME_CATEGORIES = ['harvest', 'sale', 'subsidy', 'other'];
 
@@ -16,7 +17,10 @@ class IncomeController {
 
   async summary(req, res, next) {
     try {
-      const summary = await IncomeService.getIncomeSummary(req.user.id);
+      const summary = await IncomeService.getIncomeSummary(
+        req.user.id,
+        parseDateRange(req.query),
+      );
       return ApiResponse.success(res, summary);
     } catch (error) {
       return next(error);

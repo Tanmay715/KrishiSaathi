@@ -1,3 +1,5 @@
+import { weatherAdvisoryText } from './localize_weather';
+
 /**
  * Build dashboard insight tips from weather + farm context.
  * Reminder tasks stay in the reminders list — never duplicated here.
@@ -36,12 +38,12 @@ export function buildTodayRecommendations({
       icon: 'sun',
       text: t('weather.advice_good_field_work'),
     });
-  } else if (weather?.advisory) {
+  } else if (weather?.advisory || weather?.advisory_key) {
     items.push({
       id: 'weather_advisory',
       tone: 'calm',
       icon: 'cloud',
-      text: weather.advisory,
+      text: weatherAdvisoryText(t, weather),
     });
   }
 
@@ -102,8 +104,8 @@ export function buildWeatherAdvice(t, weather) {
     tips.push(t('weather.advice_good_field_work'));
   }
 
-  if (weather.advisory && tips.length < 2) {
-    tips.unshift(weather.advisory);
+  if ((weather.advisory || weather.advisory_key) && tips.length < 2) {
+    tips.unshift(weatherAdvisoryText(t, weather));
   }
 
   return [...new Set(tips)].slice(0, 3);

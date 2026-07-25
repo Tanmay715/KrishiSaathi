@@ -23,6 +23,9 @@ import {
 import { CACHE_KEYS, consumeLocationUpdated, loadOfflineData, saveOfflineData } from '../utils/offline_store';
 import { weatherMood } from '../utils/field_identity';
 import { normalizeLanguage } from '../utils/language';
+import { currentSeason, periodRange } from '../utils/finance_period';
+import { weatherConditionLabel, weatherPlaceLabel } from '../utils/localize_weather';
+import { reminderTitle } from '../utils/localize_reminder';
 
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 
@@ -104,6 +107,7 @@ function DashboardPage() {
   async function loadDashboard() {
     setIsLoading(true);
     setErrorMessage('');
+    const season_range = periodRange('this_season');
 
     try {
       const [
@@ -114,8 +118,8 @@ function DashboardPage() {
         reminders_response,
       ] = await Promise.all([
         getFarms(),
-        getExpenseSummary(),
-        getIncomeSummary(),
+        getExpenseSummary(season_range),
+        getIncomeSummary(season_range),
         getPendingIncomeCrops(),
         getReminders({ status: 'pending' }),
       ]);
@@ -217,6 +221,10 @@ function DashboardPage() {
   const expense_count = Number(expense_summary.expense_count || 0);
   const income_count = Number(income_summary.income_count || 0);
   const language = i18n.resolvedLanguage || i18n.language;
+  const season = currentSeason();
+  const season_label = `${t(`crops.season.${season.season}`)} ${
+    season.season === 'rabi' ? `${season.year}-${String(season.year + 1).slice(2)}` : season.year
+  }`;
 
   const sorted_reminders = useMemo(() => (
     [...reminders].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
@@ -226,9 +234,7 @@ function DashboardPage() {
     ? sorted_reminders
     : sorted_reminders.slice(0, 2);
   const has_hidden_reminders = sorted_reminders.length > 2;
-  const weather_location = [weather?.location?.name, weather?.location?.region]
-    .filter(Boolean)
-    .join(', ');
+  const weather_location = weatherPlaceLabel(weather, language);
   const temp = weather?.current?.temperature_c != null
     ? Math.round(weather.current.temperature_c)
     : null;
@@ -273,36 +279,41 @@ function DashboardPage() {
               )}
               <div className="home-weather-main">
                 <strong>{temp != null ? `${temp}°C` : '—'}</strong>
-                <span>{weather?.current?.condition || t('weather.title')}</span>
+                <span>{weatherConditionLabel(t, weather?.current)}</span>
               </div>
               {forecast_day && (
                 <p className="home-weather-range">
-                  Min {Math.round(forecast_day.temp_min)}° | Max {Math.round(forecast_day.temp_max)}°
+                  {t('weather.temp_min')} {Math.round(forecast_day.temp_min)}°
+                  {' | '}
+                  {t('weather.temp_max')} {Math.round(forecast_day.temp_max)}°
                 </p>
               )}
             </div>
           </section>
 
           <section className="home-section">
-            <h3 className="home-section-title">{t('dashboard.today_summary')}</h3>
+            <div className="home-section-head">
+              <h3 className="home-section-title">{t('dashboard.season_summary')}</h3>
+              <span className="home-season-chip">{season_label}</span>
+            </div>
             <div className="home-summary-row">
               <div className="home-summary-card tone-spent">
                 <SectionIcon name="expense" tone="warn" />
-                <span>{t('dashboard.total_spent')}</span>
+                <span>{t('money.spent_in_period')}</span>
                 <strong>₹{total_spent.toLocaleString('en-IN')}</strong>
                 <small>{t('profile.entry_count', { count: expense_count })}</small>
               </div>
               <div className="home-summary-card tone-earned">
                 <SectionIcon name="income" tone="success" />
-                <span>{t('dashboard.total_earned')}</span>
+                <span>{t('money.earned_in_period')}</span>
                 <strong>₹{total_earned.toLocaleString('en-IN')}</strong>
                 <small>{t('profile.entry_count', { count: income_count })}</small>
               </div>
               <Link to="/money" className="home-summary-card tone-profit">
                 <SectionIcon name="mandi" tone="accent" />
-                <span>{t('dashboard.total_profit')}</span>
+                <span>{net >= 0 ? t('finance.status_profit') : t('finance.status_loss')}</span>
                 <strong>{net >= 0 ? '+' : '-'}₹{Math.abs(net).toLocaleString('en-IN')}</strong>
-                <small>{t('dashboard.from_farm')}</small>
+                <small>{t('dashboard.see_all_money')}</small>
               </Link>
             </div>
           </section>
@@ -329,7 +340,7 @@ function DashboardPage() {
                   {preview_reminders.map((item) => (
                     <li key={item.id}>
                       <div>
-                        <strong>{item.title}</strong>
+                        <strong>{reminderTitle(t, item, language)}</strong>
                         <span>
                           {t(`reminders.types.${item.type}`)}
                           {' · '}

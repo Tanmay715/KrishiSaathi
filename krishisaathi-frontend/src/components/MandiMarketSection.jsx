@@ -5,6 +5,7 @@ import { INDIAN_STATES } from '../config/indian_states';
 import { getDistrictsForState, normalizeDistrictOption } from '../config/indian_districts';
 import { getMandiBoard } from '../services/farm_service';
 import { normalizeLanguage } from '../utils/language';
+import { localizeCropName, localizePlaceLabel } from '../utils/localize_names';
 import CropMark from './CropMark';
 
 const BOARD_CROPS = [
@@ -193,14 +194,16 @@ function MandiBoardBody({
   on_quantity_change,
   on_step_quantity,
   t,
+  language,
 }) {
   const markets = selected_row?.markets || [];
+  const place_label = localizePlaceLabel(board?.place, language, board?.place_label || '');
 
   return (
     <div className="mandi-board-sheet is-premium is-vertical">
       <p className="mandi-board-subtitle">
-        {board?.place_label
-          ? t('mandi.board_subtitle_place', { place: board.place_label })
+        {place_label
+          ? t('mandi.board_subtitle_place', { place: place_label })
           : t('mandi.board_subtitle')}
       </p>
 
@@ -216,7 +219,7 @@ function MandiBoardBody({
               onClick={() => on_select_crop(row.crop)}
             >
               <CropMark crop={row.crop} size={36} shape="circle" />
-              <strong>{row.crop}</strong>
+              <strong>{localizeCropName(row.crop, language)}</strong>
             </button>
           );
         })}
@@ -501,7 +504,7 @@ function MandiMarketSection({
     : null;
   const trend_points = selected_row?.trend || [];
   const is_override = Boolean(override?.state);
-  const applied_label = board?.place_label || null;
+  const applied_label = localizePlaceLabel(board?.place, app_language, board?.place_label || '') || null;
 
   function openMarket(crop_name) {
     const params = crop_name ? `?crop=${encodeURIComponent(crop_name)}` : '';
@@ -556,6 +559,7 @@ function MandiMarketSection({
     on_quantity_change: setQuantity,
     on_step_quantity: stepQuantity,
     t,
+    language: app_language,
   };
 
   if (layout === 'page') {
@@ -591,7 +595,7 @@ function MandiMarketSection({
             <p className="surface-kicker">
               {t('dashboard.market_insights')} ({t('mandi.nearby_rates')})
             </p>
-            <h3 className="mandi-glance-title">{board?.place_label || t('mandi.unit_note')}</h3>
+            <h3 className="mandi-glance-title">{applied_label || t('mandi.unit_note')}</h3>
             </div>
             {!is_loading && !has_error && crop_rows.length > 0 && (
               <Link to="/market" className="mandi-glance-cta">
@@ -621,7 +625,7 @@ function MandiMarketSection({
                 onClick={() => openMarket(row.crop)}
               >
                 <CropMark crop={row.crop} size={40} shape="circle" />
-                <strong>{row.crop}</strong>
+                <strong>{localizeCropName(row.crop, app_language)}</strong>
                 <span className="mandi-crop-square-price">{formatRate(row.modal)}</span>
               </button>
             ))}

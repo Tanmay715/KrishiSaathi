@@ -49,7 +49,8 @@ class WeatherService {
 
     const coords = await this.#geocode(location);
     const forecast = await this.#fetchForecast(coords.latitude, coords.longitude);
-    const payload = this.#formatPayload(farm, coords, forecast);
+    const local_names = await this.#localizedPlaceNames(coords);
+    const payload = this.#formatPayload(farm, coords, forecast, local_names);
 
     try {
       await redis.set(cache_key, JSON.stringify(payload), 'EX', CACHE_TTL_SECONDS);
@@ -207,13 +208,40 @@ class WeatherService {
     return response.json();
   }
 
-  #formatPayload(farm, coords, forecast) {
+  /**
+   * Open-Meteo can return Hindi place names, so the app can show a fully Hindi
+   * location line. Failure here is non-fatal — the English name still ships.
+   */
+  async #localizedPlaceNames(coords) {
+    if (!coords?.name) {
+      return { name_hi: null, region_hi: null };
+    }
+
+    try {
+      const results = await this.#searchPlaces(coords.name, 'hi');
+      const match = results.find((place) => (
+        Math.abs(place.latitude - coords.latitude) < 0.25
+        && Math.abs(place.longitude - coords.longitude) < 0.25
+      ));
+
+      return {
+        name_hi: match?.name || null,
+        region_hi: match?.admin1 || null,
+      };
+    } catch (error) {
+      console.warn('[weather] hindi place lookup failed:', error.message);
+      return { name_hi: null, region_hi: null };
+    }
+  }
+
+  #formatPayload(farm, coords, forecast, local_names = {}) {
     const current_code = forecast.current?.weather_code ?? 0;
     const rain_chance = forecast.daily?.precipitation_probability_max?.[0] ?? 0;
     const condition = WEATHER_CODE_MAP[current_code] || 'Unknown';
 
     const days = (forecast.daily?.time || []).map((date, index) => ({
       date,
+      weather_code: forecast.daily.weather_code[index] ?? null,
       condition: WEATHER_CODE_MAP[forecast.daily.weather_code[index]] || 'Unknown',
       temp_max: forecast.daily.temperature_2m_max[index],
       temp_min: forecast.daily.temperature_2m_min[index],
@@ -226,6 +254,8 @@ class WeatherService {
       location: {
         name: coords.name,
         region: coords.admin1,
+        name_hi: local_names.name_hi || null,
+        region_hi: local_names.region_hi || null,
         latitude: coords.latitude,
         longitude: coords.longitude,
         unresolved: Boolean(coords.unresolved),
@@ -233,31 +263,44 @@ class WeatherService {
       current: {
         temperature_c: forecast.current?.temperature_2m ?? null,
         humidity: forecast.current?.relative_humidity_2m ?? null,
+        weather_code: current_code,
         condition,
         precipitation_mm: forecast.current?.precipitation ?? 0,
         rain_chance,
       },
+      advisory_key: this.#advisoryKey(condition, rain_chance),
       advisory: this.#buildAdvisory(condition, rain_chance),
       forecast: days,
     };
   }
 
-  #buildAdvisory(condition, rain_chance) {
+  #advisoryKey(condition, rain_chance) {
     const lower = String(condition).toLowerCase();
 
     if (rain_chance >= 60 || lower.includes('rain') || lower.includes('shower') || lower.includes('thunder')) {
-      return 'Rain likely — delay spraying and plan drainage.';
+      return 'rain';
     }
 
-    if (lower.includes('clear') || lower.includes('mostly clear')) {
-      return 'Clear skies — good window for field work and irrigation checks.';
+    if (lower.includes('clear')) {
+      return 'clear';
     }
 
     if (lower.includes('fog')) {
-      return 'Foggy conditions — be careful with morning spraying and travel.';
+      return 'fog';
     }
 
-    return 'Monitor the forecast and adjust irrigation if rain is expected.';
+    return 'default';
+  }
+
+  #buildAdvisory(condition, rain_chance) {
+    const messages = {
+      rain: 'Rain likely — delay spraying and plan drainage.',
+      clear: 'Clear skies — good window for field work and irrigation checks.',
+      fog: 'Foggy conditions — be careful with morning spraying and travel.',
+      default: 'Monitor the forecast and adjust irrigation if rain is expected.',
+    };
+
+    return messages[this.#advisoryKey(condition, rain_chance)];
   }
 }
 

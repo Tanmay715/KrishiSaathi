@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMandiRates } from '../services/farm_service';
+import { normalizeLanguage } from '../utils/language';
+import { localizeCropName, localizePlaceLabel } from '../utils/localize_names';
 import LoadingState from './LoadingState';
 import SectionIcon from './SectionIcon';
 
@@ -42,7 +44,8 @@ function MandiPricePanel({
   crop_options = [],
   embedded = false,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const [is_open, setIsOpen] = useState(default_open || embedded);
   const [selected_crop, setSelectedCrop] = useState(crop_name || crop_options[0] || 'Wheat');
   const [quantity, setQuantity] = useState('');
@@ -107,6 +110,7 @@ function MandiPricePanel({
     Number(expense_total || 0),
     Number(quantity || 0),
   );
+  const farm_place_label = localizePlaceLabel(rates?.farm, language);
   const disclaimer = rates?.source === 'reference'
     ? t('mandi.disclaimer_reference')
     : t('mandi.disclaimer');
@@ -123,7 +127,7 @@ function MandiPricePanel({
             {!is_open && (
               <p className="section-note is-one-line">
                 {crop_name
-                  ? t('mandi.collapsed_hint_crop', { crop: crop_name })
+                  ? t('mandi.collapsed_hint_crop', { crop: localizeCropName(crop_name, language) })
                   : t('mandi.collapsed_hint')}
               </p>
             )}
@@ -151,7 +155,7 @@ function MandiPricePanel({
                 onChange={(e) => setSelectedCrop(e.target.value)}
               >
                 {crop_options.map((name) => (
-                  <option key={name} value={name}>{name}</option>
+                  <option key={name} value={name}>{localizeCropName(name, language)}</option>
                 ))}
               </select>
             </div>
@@ -195,10 +199,9 @@ function MandiPricePanel({
               </div>
 
               <p className="section-note" style={{ marginTop: 8 }}>
-                {t('mandi.unit_note')} · {rates.source_label}
-                {rates.farm?.district || rates.farm?.state
-                  ? ` · ${[rates.farm.district, rates.farm.state].filter(Boolean).join(', ')}`
-                  : ''}
+                {t('mandi.unit_note')}
+                {rates.source ? ` · ${t(`mandi_source.${rates.source}`, { defaultValue: rates.source_label || '' })}` : ''}
+                {farm_place_label ? ` · ${farm_place_label}` : ''}
               </p>
 
               {sale_estimate && (

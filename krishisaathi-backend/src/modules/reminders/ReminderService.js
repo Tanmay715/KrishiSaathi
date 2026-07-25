@@ -152,7 +152,12 @@ class ReminderService {
             due_at: new Date(),
             status: 'pending',
             source: 'weather',
-            payload: JSON.stringify({ rain_chance, advisory: weather?.advisory || null }),
+            payload: JSON.stringify({
+              title_key: 'weather_delay_spray',
+              farm_name: farm.name,
+              rain_chance,
+              advisory: weather?.advisory || null,
+            }),
           });
         }
       } catch (error) {
