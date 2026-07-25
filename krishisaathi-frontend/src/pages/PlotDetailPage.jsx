@@ -571,31 +571,6 @@ function PlotDetailPage() {
         <div className="error-banner">{error_message}</div>
       )}
 
-      <div className="farm-detail-stats">
-        <div className="farm-detail-stat">
-          <span>{t('farms.plot_area')}</span>
-          <strong>{plot.area}</strong>
-          <small>{land_unit_label}</small>
-        </div>
-        <div className="farm-detail-stat">
-          <span>{t('expenses.crop_total')}</span>
-          <strong>₹{spending.toLocaleString('en-IN')}</strong>
-          <small>{t('farms.summary_estimated')}</small>
-        </div>
-        <div className="farm-detail-stat">
-          <span>{t('incomes.crop_total')}</span>
-          <strong>₹{earned.toLocaleString('en-IN')}</strong>
-          <small>{t('farms.summary_estimated')}</small>
-        </div>
-        <div className="farm-detail-stat">
-          <span>{profit >= 0 ? t('finance.status_profit') : t('finance.status_loss')}</span>
-          <strong>
-            {profit >= 0 ? '+' : '-'}₹{Math.abs(profit).toLocaleString('en-IN')}
-          </strong>
-          <small>{t('farms.finance_summary')}</small>
-        </div>
-      </div>
-
       {!plot.active_crop ? (
         <div className="crop-invite surface-panel">
           <div className="crop-invite-art" aria-hidden="true">
