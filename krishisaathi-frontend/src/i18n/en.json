@@ -529,6 +529,7 @@
     "title": "Just speak",
     "subtitle": "Say it in Hindi or English — I will ask if anything is missing.",
     "tap_hint": "Tap the mic and speak",
+    "live_waiting": "Listening for your words…",
     "examples": "Try: \"Spent 800 on urea\" · \"Add a farm in Meerut\" · \"Remind me to irrigate Monday\"",
     "thinking": "Understanding…",
     "ready": "Ready to save.",

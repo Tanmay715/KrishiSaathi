@@ -38,7 +38,7 @@ function VoiceCommandSheet({
   const { t, i18n } = useTranslation();
   const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const is_online = useOnlineStatus();
-  const { is_listening, is_supported, listen, stopListening, speak } = useSpeech(language);
+  const { is_listening, is_supported, live_transcript, listen, stopListening, speak } = useSpeech(language);
 
   const [status, setStatus] = useState('idle');
   const [turn, setTurn] = useState(null);
@@ -223,6 +223,7 @@ function VoiceCommandSheet({
               status={status}
               turn={turn}
               is_listening={is_listening}
+              live_transcript={live_transcript}
               on_mic={is_listening ? stopListening : startListening}
             />
 
@@ -310,7 +311,7 @@ function seedDraftForIntent(intent, context) {
   return {};
 }
 
-function VoicePrompt({ t, status, turn, is_listening, on_mic }) {
+function VoicePrompt({ t, status, turn, is_listening, live_transcript = '', on_mic }) {
   const status_labels = {
     idle: t('voice_command.tap_hint'),
     listening: t('voice.listening'),
@@ -349,6 +350,12 @@ function VoicePrompt({ t, status, turn, is_listening, on_mic }) {
         </button>
       </div>
       <p className="voice-command-status">{status_labels[status]}</p>
+      {(is_listening || status === 'listening') && (
+        <p className={`voice-command-live${live_transcript ? '' : ' is-waiting'}`} aria-live="polite">
+          {live_transcript || t('voice_command.live_waiting')}
+          {live_transcript ? <span className="voice-command-live-caret" aria-hidden="true" /> : null}
+        </p>
+      )}
       {status === 'idle' && (
         <p className="voice-command-examples">{t('voice_command.examples')}</p>
       )}

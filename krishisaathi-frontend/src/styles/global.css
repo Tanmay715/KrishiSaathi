@@ -4178,6 +4178,45 @@ html:has(.auth-page) #root {
   color: var(--color-text);
 }
 
+.voice-command-live {
+  margin: 0;
+  max-width: 22rem;
+  min-height: 2.6em;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(47, 158, 95, 0.08);
+  border: 1px solid rgba(47, 158, 95, 0.16);
+  color: var(--color-primary-dark);
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.voice-command-live.is-waiting {
+  color: var(--color-text-subtle);
+  font-weight: 550;
+  font-style: italic;
+  background: rgba(30, 92, 64, 0.04);
+  border-color: rgba(30, 92, 64, 0.08);
+}
+
+.voice-command-live-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: voice-caret-blink 1s steps(1) infinite;
+}
+
+@keyframes voice-caret-blink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
 .voice-command-examples {
   margin: 0;
   font-size: 0.78rem;
@@ -9718,7 +9757,8 @@ html:has(.auth-page) #root {
   .brand-sprout-leaf--right,
   .voice-command-mic.is-listening,
   .voice-command-ring,
-  .voice-command-wave-side span {
+  .voice-command-wave-side span,
+  .voice-command-live-caret {
     animation: none;
   }
 }

@@ -9,8 +9,11 @@ export function useSpeech(language = 'en') {
   const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
   const [is_listening, setIsListening] = useState(false);
   const [is_supported, setIsSupported] = useState(true);
+  const [live_transcript, setLiveTranscript] = useState('');
   const recognition_ref = useRef(null);
   const handlers_ref = useRef({});
+  const live_ref = useRef('');
+  const final_ref = useRef('');
 
   useEffect(() => {
     setIsSupported(Boolean(getSpeechRecognition()));
@@ -22,7 +25,7 @@ export function useSpeech(language = 'en') {
     };
   }, []);
 
-  const listen = useCallback(({ on_result, on_error } = {}) => {
+  const listen = useCallback(({ on_result, on_error, on_partial } = {}) => {
     const SpeechRecognition = getSpeechRecognition();
 
     if (!SpeechRecognition) {
@@ -33,18 +36,24 @@ export function useSpeech(language = 'en') {
 
     stopSpeaking();
     recognition_ref.current?.abort?.();
-    handlers_ref.current = { on_result, on_error };
+    handlers_ref.current = { on_result, on_error, on_partial };
+    live_ref.current = '';
+    final_ref.current = '';
+    setLiveTranscript('');
 
     const recognition = new SpeechRecognition();
     recognition.lang = locale;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
+    recognition.continuous = false;
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-      if (transcript) {
-        handlers_ref.current.on_result?.(transcript);
-      }
+      const { final_text, interim_text } = readSpeechChunks(event.results);
+      final_ref.current = final_text;
+      const live = `${final_text} ${interim_text}`.replace(/\s+/g, ' ').trim();
+      live_ref.current = live;
+      setLiveTranscript(live);
+      handlers_ref.current.on_partial?.(live);
     };
 
     recognition.onerror = (event) => {
@@ -52,7 +61,13 @@ export function useSpeech(language = 'en') {
       handlers_ref.current.on_error?.(event?.error || 'error');
     };
 
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      const transcript = (final_ref.current || live_ref.current).trim();
+      if (transcript) {
+        handlers_ref.current.on_result?.(transcript);
+      }
+    };
 
     recognition_ref.current = recognition;
 
@@ -88,7 +103,34 @@ export function useSpeech(language = 'en') {
     synth.speak(utterance);
   }, [locale]);
 
-  return { is_listening, is_supported, listen, stopListening, speak, stopSpeaking };
+  return {
+    is_listening,
+    is_supported,
+    live_transcript,
+    listen,
+    stopListening,
+    speak,
+    stopSpeaking,
+  };
+}
+
+function readSpeechChunks(results) {
+  let final_text = '';
+  let interim_text = '';
+
+  for (let index = 0; index < results.length; index += 1) {
+    const piece = String(results[index]?.[0]?.transcript || '');
+    if (results[index].isFinal) {
+      final_text += `${piece} `;
+    } else {
+      interim_text += `${piece} `;
+    }
+  }
+
+  return {
+    final_text: final_text.trim(),
+    interim_text: interim_text.trim(),
+  };
 }
 
 function getSpeechRecognition() {
