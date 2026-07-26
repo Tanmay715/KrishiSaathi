@@ -58,6 +58,9 @@ function formatChange(change_pct) {
     return null;
   }
   const value = Number(change_pct);
+  if (value === 0) {
+    return '0%';
+  }
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(1)}%`;
 }
@@ -103,13 +106,14 @@ function pickGlanceCrops(preferred_crops = [], board_rows = []) {
 }
 
 function ChangePill({ change_pct, label = null, compact = false }) {
-  const text = formatChange(change_pct);
-  if (!text) {
+  if (change_pct == null || Number.isNaN(Number(change_pct))) {
     return null;
   }
 
-  const tone = change_pct > 0 ? 'up' : change_pct < 0 ? 'down' : 'flat';
-  const arrow = change_pct > 0 ? '↑' : change_pct < 0 ? '↓' : '→';
+  const value = Number(change_pct);
+  const text = formatChange(value);
+  const tone = value > 0 ? 'up' : value < 0 ? 'down' : 'flat';
+  const arrow = value > 0 ? '↑' : value < 0 ? '↓' : '→';
 
   return (
     <span className={`mandi-change-pill is-${tone}${compact ? ' is-compact' : ''}`}>
@@ -640,25 +644,30 @@ function MandiMarketSection({
         )}
 
         {!is_loading && !has_error && (
-          <div className="mandi-glance-square-grid">
-            {glance_rows.map((row, index) => (
-              <button
-                key={row.crop}
-                type="button"
-                className="mandi-crop-square is-glance"
-                style={{ animationDelay: `${index * 60}ms` }}
-                onClick={() => openMarket(row.crop)}
-              >
-                <CropSquareContent
-                  crop={row.crop}
-                  language={app_language}
-                  modal={row.modal}
-                  change_pct={row.change_pct}
-                  show_price
-                />
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="mandi-glance-square-grid">
+              {glance_rows.map((row, index) => (
+                <button
+                  key={row.crop}
+                  type="button"
+                  className="mandi-crop-square is-glance"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                  onClick={() => openMarket(row.crop)}
+                >
+                  <CropSquareContent
+                    crop={row.crop}
+                    language={app_language}
+                    modal={row.modal}
+                    change_pct={row.change_pct}
+                    show_price
+                  />
+                </button>
+              ))}
+            </div>
+            {glance_rows.some((row) => row.change_pct != null) && (
+              <p className="mandi-trend-legend">{t('mandi.trend_legend')}</p>
+            )}
+          </>
         )}
       </div>
     </section>

@@ -9,9 +9,13 @@ const { getAgmarknetStateQueries } = require('./agmarknet_aliases');
 
 const CACHE_TTL_SECONDS = 1800;
 const HISTORY_TTL_SECONDS = 60 * 60 * 24 * 14;
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const DATA_GOV_RESOURCE_ID = process.env.DATA_GOV_MANDI_RESOURCE_ID
   || '9ef84268-d588-465a-a308-a864a43d0070';
+// Variety-wise daily prices — supports Arrival_Date filters for day-over-day trends.
+const DATA_GOV_HISTORY_RESOURCE_ID = process.env.DATA_GOV_MANDI_HISTORY_RESOURCE_ID
+  || '35985678-0d79-46b4-9ed6-6f13308a1d24';
+const TREND_LOOKBACK_DAYS = 6;
 
 const DEFAULT_BOARD_CROPS = [
   'Potato', 'Wheat', 'Onion', 'Rice', 'Tomato', 'Mustard', 'Moong', 'Chana', 'Cotton',
@@ -258,39 +262,96 @@ class MandiService {
           continue;
         }
 
-        const trend = this.#buildTrend(markets);
-
-        return {
+        return this.#buildLivePayload({
           commodity,
-          unit: '₹/quintal',
-          source: 'agmarknet',
-          source_label: 'AGMARKNET (data.gov.in)',
-          place_scope: attempt.place_scope,
-          as_of: markets[0].date || new Date().toISOString().slice(0, 10),
+          markets,
           state: attempt.state,
           district: attempt.district || district,
-          markets: markets.slice(0, 8),
-          summary: this.#summarizeMarkets(markets),
-          trend,
-          change_pct: trend.change_pct,
-          disclaimer_key: attempt.place_scope === 'district'
-            ? 'mandi.disclaimer'
-            : 'mandi.disclaimer_state',
-        };
+          place_scope: attempt.place_scope,
+        });
       }
 
-      return null;
+      // Current-daily feed often lags — fall back to the latest historical day.
+      return this.#fetchHistoryFallback(commodity, state_queries, district);
     } catch (error) {
       console.warn('[mandi] live fetch failed:', error.message);
       return null;
     }
   }
 
+  async #buildLivePayload({ commodity, markets, state, district, place_scope, source = 'agmarknet' }) {
+    const live_trend = this.#buildTrend(markets);
+    const as_of = (live_trend.points[live_trend.points.length - 1]?.date)
+      || markets.find((row) => row.date)?.date
+      || new Date().toISOString().slice(0, 10);
+    const history_points = await this.#fetchRecentHistoryPoints(commodity, state, district, as_of);
+    const summary = this.#summarizeMarkets(markets);
+    const points = this.#mergeTrendPoints([
+      ...history_points,
+      ...live_trend.points,
+      ...(summary?.modal_median > 0 ? [{ date: as_of, modal: summary.modal_median }] : []),
+    ]);
+    const change_pct = this.#changeFromPoints(points);
+
+    return {
+      commodity,
+      unit: '₹/quintal',
+      source,
+      source_label: 'AGMARKNET (data.gov.in)',
+      place_scope,
+      as_of,
+      state,
+      district,
+      markets: markets.slice(0, 8),
+      summary,
+      trend: { points, change_pct },
+      change_pct,
+      disclaimer_key: place_scope === 'district'
+        ? 'mandi.disclaimer'
+        : 'mandi.disclaimer_state',
+    };
+  }
+
+  async #fetchHistoryFallback(commodity, state_queries, district) {
+    const today = new Date();
+
+    for (const state_name of state_queries) {
+      for (let offset = 0; offset < 5; offset += 1) {
+        const day = new Date(today);
+        day.setDate(today.getDate() - offset);
+        const records = await this.#queryHistoryDay(commodity, state_name, day);
+        let markets = this.#normalizeRecords(records);
+
+        if (district && markets.length) {
+          const filtered = markets.filter((row) => (
+            String(row.district || '').toLowerCase() === String(district).toLowerCase()
+          ));
+          if (filtered.length) {
+            markets = filtered;
+          }
+        }
+
+        if (!markets.length) {
+          continue;
+        }
+
+        return this.#buildLivePayload({
+          commodity,
+          markets,
+          state: state_name,
+          district,
+          place_scope: district ? 'district' : 'state',
+        });
+      }
+    }
+
+    return null;
+  }
+
   async #queryDataGov(commodity, state, district) {
     const url = new URL(`https://api.data.gov.in/resource/${DATA_GOV_RESOURCE_ID}`);
     url.searchParams.set('api-key', process.env.DATA_GOV_API_KEY);
     url.searchParams.set('format', 'json');
-    // Pull enough rows that a few distinct arrival days usually show up for trend arrows.
     url.searchParams.set('limit', '300');
     url.searchParams.set('filters[commodity]', commodity);
 
@@ -315,17 +376,100 @@ class MandiService {
     return Array.isArray(body.records) ? body.records : [];
   }
 
+  /**
+   * Historical AGMARKNET resource accepts Arrival_Date (DD/MM/YYYY) so we can
+   * compare yesterday vs today even when the current-daily feed has one day only.
+   * History is fetched at state level — district series is often empty on some days.
+   */
+  async #fetchRecentHistoryPoints(commodity, state, _district, as_of) {
+    if (!state) {
+      return [];
+    }
+
+    const base = as_of
+      ? new Date(`${String(as_of).slice(0, 10)}T00:00:00`)
+      : new Date();
+
+    if (Number.isNaN(base.getTime())) {
+      return [];
+    }
+
+    const offsets = Array.from({ length: TREND_LOOKBACK_DAYS }, (_, index) => index + 1);
+    const settled = await Promise.all(offsets.map(async (offset) => {
+      const day = new Date(base);
+      day.setDate(base.getDate() - offset);
+      const iso = this.#toIsoDate(day);
+      const records = await this.#queryHistoryDay(commodity, state, day);
+      const markets = this.#normalizeRecords(records);
+      const modal = this.#median(markets.map((row) => row.modal).filter((value) => value > 0));
+      return modal != null ? { date: iso, modal } : null;
+    }));
+
+    return settled.filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  async #queryHistoryDay(commodity, state, day) {
+    try {
+      const url = new URL(`https://api.data.gov.in/resource/${DATA_GOV_HISTORY_RESOURCE_ID}`);
+      url.searchParams.set('api-key', process.env.DATA_GOV_API_KEY);
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('limit', '200');
+      url.searchParams.set('filters[Commodity]', commodity);
+      url.searchParams.set('filters[State]', state);
+      url.searchParams.set('filters[Arrival_Date]', this.#toArrivalFilter(day));
+
+      const response = await fetch(url.toString(), {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const body = await response.json();
+      return Array.isArray(body.records) ? body.records : [];
+    } catch (error) {
+      console.warn('[mandi] history day fetch failed:', error.message);
+      return [];
+    }
+  }
+
+  #toIsoDate(date) {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  }
+
+  #toArrivalFilter(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${date.getFullYear()}`;
+  }
+
   #normalizeRecords(records) {
     return records
       .map((row) => {
         const modal = Number(
-          row.modal_price ?? row['Modal Price'] ?? row.modal ?? 0,
+          row.modal_price
+          ?? row.Modal_Price
+          ?? row['Modal Price']
+          ?? row.modal
+          ?? 0,
         );
         const min = Number(
-          row.min_price ?? row['Min Price'] ?? row.min ?? modal,
+          row.min_price
+          ?? row.Min_Price
+          ?? row['Min Price']
+          ?? row.min
+          ?? modal,
         );
         const max = Number(
-          row.max_price ?? row['Max Price'] ?? row.max ?? modal,
+          row.max_price
+          ?? row.Max_Price
+          ?? row['Max Price']
+          ?? row.max
+          ?? modal,
         );
 
         if (!modal && !min && !max) {

@@ -743,6 +743,7 @@
     "modal_rate_line": "Today’s rate {{price}} / quintal",
     "range_line": "Range {{min}} – {{max}}",
     "trend_title": "Price trend (available days)",
+    "trend_legend": "↑ price up  ·  ↓ price down  ·  → little change (vs last mandi day)",
     "unit_note": "Prices in ₹ per quintal",
     "break_even_title": "Vs your crop cost",
     "break_even_hint": "Your break-even ≈ ₹{{cost}}/qtl · mandi modal ≈ ₹{{modal}}/qtl",
