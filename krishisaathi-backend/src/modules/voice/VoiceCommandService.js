@@ -139,7 +139,7 @@ class VoiceCommandService {
     const filters = {
       kind,
       category: this.#toCategory(kind, fields.category),
-      query: this.#toText(fields.query || fields.title, 80),
+      query: this.#toText(fields.query || fields.title, 80) || this.#moneyNeedleFromSpeech(spoken),
       from: this.#toDate(fields.date_from || fields.from || fields.date),
       to: this.#toDate(fields.date_to || fields.to) || this.#monthEnd(fields.date_from || fields.from || fields.date),
       farm_id: context.farm_id || null,
@@ -168,6 +168,17 @@ class VoiceCommandService {
         suggestions: suggestionsForContext(context),
       };
     }
+  }
+
+  /** Pull a known money item word from speech when the model leaves query empty. */
+  #moneyNeedleFromSpeech(spoken) {
+    const text = String(spoken || '').toLowerCase().normalize('NFC');
+    const needles = [
+      'खाद', 'यूरिया', 'बीज', 'डीजल', 'मजदूर', 'मज़दूर', 'मजदूरी', 'दवा', 'कीटनाशक',
+      'सिंचाई', 'पानी', 'भाड़ा', 'urea', 'diesel', 'khaad', 'khad', 'seed', 'labour', 'labor',
+      'spray', 'dap', 'npk',
+    ];
+    return needles.find((word) => text.includes(word.toLowerCase())) || null;
   }
 
   #monthEnd(value) {

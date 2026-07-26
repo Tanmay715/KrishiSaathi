@@ -1,24 +1,64 @@
 const db = require('../../db/connection');
 
+/**
+ * Spoken words → search terms that should hit title OR category.
+ * Farmers often save the Hindi title ("खाद") while category is English ("fertilizer").
+ */
 const TITLE_ALIASES = {
-  diesel: ['diesel', 'डीजल', 'disel'],
-  urea: ['urea', 'यूरिया'],
-  labour: ['labour', 'labor', 'मजदूर', 'मज़दूर'],
-  labor: ['labour', 'labor', 'मजदूर', 'मज़दूर'],
+  diesel: ['diesel', 'डीजल', 'disel', 'transport'],
+  urea: ['urea', 'यूरिया', 'fertilizer', 'खाद'],
+  labour: ['labour', 'labor', 'मजदूर', 'मज़दूर', 'मजदूरी'],
+  labor: ['labour', 'labor', 'मजदूर', 'मज़दूर', 'मजदूरी'],
   seed: ['seed', 'बीज'],
-  fertilizer: ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
-  khaad: ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
-  pesticide: ['pesticide', 'spray', 'कीटनाशक', 'स्प्रे'],
+  fertilizer: ['fertilizer', 'खाद', 'खाद्य', 'khaad', 'khad', 'urea', 'dap', 'npk', 'यूरिया'],
+  khaad: ['fertilizer', 'खाद', 'khaad', 'khad', 'urea', 'dap', 'यूरिया'],
+  khad: ['fertilizer', 'खाद', 'khaad', 'khad', 'urea', 'dap', 'यूरिया'],
+  pesticide: ['pesticide', 'spray', 'कीटनाशक', 'स्प्रे', 'दवा'],
   irrigation: ['irrigation', 'पानी', 'सिंचाई'],
+  transport: ['transport', 'diesel', 'डीजल', 'भाड़ा'],
+  equipment: ['equipment', 'pump', 'pipe', 'औज़ार', 'पंप'],
   'डीजल': ['diesel', 'डीजल', 'transport'],
-  'खाद': ['fertilizer', 'खाद', 'urea', 'dap', 'यूरिया'],
-  'यूरिया': ['urea', 'यूरिया', 'fertilizer'],
+  'खाद': ['fertilizer', 'खाद', 'khaad', 'khad', 'urea', 'dap', 'यूरिया'],
+  'यूरिया': ['urea', 'यूरिया', 'fertilizer', 'खाद'],
   'बीज': ['seed', 'बीज'],
   'मजदूर': ['labour', 'labor', 'मजदूर', 'मज़दूर'],
   'मज़दूरी': ['labour', 'labor', 'मजदूर', 'मज़दूर'],
+  'मजदूरी': ['labour', 'labor', 'मजदूर', 'मज़दूर'],
   'दवा': ['pesticide', 'spray', 'दवा', 'कीटनाशक'],
+  'कीटनाशक': ['pesticide', 'spray', 'दवा', 'कीटनाशक'],
   'सिंचाई': ['irrigation', 'पानी', 'सिंचाई'],
   'पानी': ['irrigation', 'पानी', 'सिंचाई'],
+  'भाड़ा': ['transport', 'भाड़ा', 'diesel', 'डीजल'],
+};
+
+const QUERY_TO_CATEGORY = {
+  fertilizer: 'fertilizer',
+  khaad: 'fertilizer',
+  khad: 'fertilizer',
+  खाद: 'fertilizer',
+  urea: 'fertilizer',
+  यूरिया: 'fertilizer',
+  dap: 'fertilizer',
+  npk: 'fertilizer',
+  seed: 'seed',
+  बीज: 'seed',
+  pesticide: 'pesticide',
+  spray: 'pesticide',
+  दवा: 'pesticide',
+  कीटनाशक: 'pesticide',
+  irrigation: 'irrigation',
+  सिंचाई: 'irrigation',
+  पानी: 'irrigation',
+  labour: 'labor',
+  labor: 'labor',
+  मजदूर: 'labor',
+  मज़दूर: 'labor',
+  मजदूरी: 'labor',
+  diesel: 'transport',
+  डीजल: 'transport',
+  भाड़ा: 'transport',
+  transport: 'transport',
+  equipment: 'equipment',
 };
 
 /**
@@ -28,12 +68,12 @@ const TITLE_ALIASES = {
 const FILLER_WORDS = new Set([
   'पूरा', 'पूरी', 'पुरा', 'सारा', 'सारी', 'सब', 'कुल', 'टोटल', 'कितना', 'कितने', 'कितनी',
   'खर्च', 'ख़र्च', 'खर्चा', 'ख़र्चा', 'खर्चे', 'आय', 'आमदनी', 'कमाई', 'पैसा', 'पैसे', 'हिसाब',
-  'बताओ', 'बता', 'बताइए', 'दिखाओ', 'हुआ', 'हुए', 'में', 'का', 'की', 'के', 'पर', 'से', 'तक',
+  'बताओ', 'बता', 'बताइए', 'दिखाओ', 'हुआ', 'हुए', 'हुई', 'में', 'का', 'की', 'के', 'पर', 'से', 'तक',
   'pura', 'poora', 'puro', 'sara', 'saara', 'sab', 'kul', 'total', 'kitna', 'kitne', 'kitni',
   'kharch', 'kharcha', 'kharche', 'aay', 'kamai', 'paisa', 'paise', 'hisab', 'hisaab',
   'batao', 'bata', 'dikhao', 'how', 'much', 'many', 'tell', 'show', 'me', 'my', 'all',
   'spend', 'spent', 'spending', 'expense', 'expenses', 'income', 'earned', 'earning',
-  'money', 'the', 'of', 'on', 'in', 'for', 'and', 'ka', 'ki', 'ke', 'mein', 'par',
+  'money', 'the', 'of', 'on', 'in', 'for', 'and', 'ka', 'ki', 'ke', 'mein', 'par', 'hua',
 ]);
 
 const CATEGORY_LABELS = {
@@ -48,6 +88,9 @@ const CATEGORY_LABELS = {
   sale: { en: 'sale', hi: 'बिक्री' },
   subsidy: { en: 'subsidy', hi: 'सब्सिडी' },
   other: { en: 'other', hi: 'अन्य' },
+  khaad: { en: 'fertilizer', hi: 'खाद' },
+  khad: { en: 'fertilizer', hi: 'खाद' },
+  खाद: { en: 'fertilizer', hi: 'खाद' },
 };
 
 /**
@@ -58,11 +101,12 @@ async function summarizeMoney(user_id, filters = {}) {
   const kind = filters.kind === 'income' ? 'income' : 'expense';
   const rows = await fetchLedgerRows(user_id, kind, filters);
   const needle = normalizeQuery(filters.query);
-  const category = filters.category || null;
-  const matched = rows.filter((row) => matchesTitle(row, needle) && matchesCategory(row, category));
+  const category = filters.category || categoryFromNeedle(needle);
+  const matched = rows.filter((row) => matchesRow(row, needle, category));
   const has_narrowing = Boolean(needle || category);
   const is_empty_narrow = has_narrowing && matched.length === 0 && rows.length > 0;
   const final_rows = is_empty_narrow ? rows : matched;
+  const display_key = category || needle;
 
   return {
     kind,
@@ -72,7 +116,7 @@ async function summarizeMoney(user_id, filters = {}) {
     to: filters.to || null,
     query: is_empty_narrow ? null : needle,
     category: is_empty_narrow ? null : category,
-    missed_query: is_empty_narrow ? (needle || category) : null,
+    missed_query: is_empty_narrow ? display_key : null,
     breakdown: topBreakdown(final_rows),
   };
 }
@@ -104,7 +148,13 @@ async function fetchLedgerRows(user_id, kind, filters) {
 
 /** Drops filler words so "पूरा खर्च" reads as "no item named" instead of an item. */
 function normalizeQuery(raw) {
-  const text = String(raw || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
+  // Keep \p{M} (matras like ा ि ी) — stripping them turns खाद into ख द.
+  const text = String(raw || '')
+    .toLowerCase()
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{M}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   if (!text) {
     return null;
@@ -114,19 +164,55 @@ function normalizeQuery(raw) {
   return words.length > 0 ? words.join(' ') : null;
 }
 
-function matchesTitle(row, needle) {
+function categoryFromNeedle(needle) {
   if (!needle) {
+    return null;
+  }
+
+  if (QUERY_TO_CATEGORY[needle]) {
+    return QUERY_TO_CATEGORY[needle];
+  }
+
+  const word = needle.split(/\s+/).find((part) => QUERY_TO_CATEGORY[part]);
+  return word ? QUERY_TO_CATEGORY[word] : null;
+}
+
+/**
+ * Match if the row's title/category hits ANY expanded term. Category and query are
+ * OR'd — Hindi title "खाद" with English category "other" must still count.
+ */
+function matchesRow(row, needle, category) {
+  const terms = expandSearchTerms(needle, category);
+
+  if (!terms.length) {
     return true;
   }
 
-  const haystack = `${row.title || ''} ${row.category || ''}`.toLowerCase();
-  const aliases = TITLE_ALIASES[needle] || [needle];
-
-  return aliases.some((alias) => haystack.includes(String(alias).toLowerCase()));
+  const haystack = `${row.title || ''} ${row.category || ''}`.toLowerCase().normalize('NFC');
+  return terms.some((term) => haystack.includes(term));
 }
 
-function matchesCategory(row, category) {
-  return !category || row.category === category;
+function expandSearchTerms(needle, category) {
+  const terms = new Set();
+
+  function addTerm(value) {
+    const text = String(value || '').toLowerCase().normalize('NFC').trim();
+    if (!text || FILLER_WORDS.has(text)) {
+      return;
+    }
+
+    terms.add(text);
+    (TITLE_ALIASES[text] || []).forEach((alias) => terms.add(String(alias).toLowerCase()));
+  }
+
+  addTerm(category);
+  addTerm(needle);
+
+  String(needle || '')
+    .split(/\s+/)
+    .forEach((word) => addTerm(word));
+
+  return [...terms];
 }
 
 function topBreakdown(rows, limit = 3) {
@@ -152,7 +238,7 @@ function formatMoneyAnswer(summary, language) {
 
   const amount = formatRupees(summary.total);
   const when = formatRangeLabel(summary.from, summary.to, is_hi);
-  const label = categoryLabel(summary.query || summary.category, is_hi);
+  const label = categoryLabel(summary.category || summary.query, is_hi);
   const head = is_hi
     ? hindiTotalLine(summary, amount, when, label)
     : englishTotalLine(summary, amount, when, label);
@@ -215,7 +301,9 @@ function categoryLabel(key, is_hi) {
     return '';
   }
 
-  const label = CATEGORY_LABELS[key];
+  const normalized = String(key).toLowerCase().normalize('NFC');
+  const mapped = QUERY_TO_CATEGORY[normalized];
+  const label = CATEGORY_LABELS[normalized] || CATEGORY_LABELS[mapped] || CATEGORY_LABELS[key];
   return label ? label[is_hi ? 'hi' : 'en'] : String(key);
 }
 
@@ -252,4 +340,9 @@ function monthName(iso_date, is_hi) {
 module.exports = {
   summarizeMoney,
   formatMoneyAnswer,
+  // Exported for focused matching tests without a database.
+  normalizeQuery,
+  matchesRow,
+  categoryFromNeedle,
+  expandSearchTerms,
 };
