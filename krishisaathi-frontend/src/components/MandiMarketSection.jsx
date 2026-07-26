@@ -89,10 +89,20 @@ function pickGlanceCrops(preferred_crops = [], board_rows = []) {
     .map((name) => String(name || '').trim())
     .filter(Boolean);
   const board_names = board_rows.map((row) => row.crop);
-  return [...new Set([...preferred, ...BOARD_CROPS, ...board_names])].slice(0, 6);
+  const ordered = [...new Set([...preferred, ...BOARD_CROPS, ...board_names])];
+  const priced = new Set(
+    board_rows
+      .filter((row) => row.modal != null)
+      .map((row) => row.crop),
+  );
+  // Show crops with live rates first so price + trend arrows are useful at a glance.
+  return [
+    ...ordered.filter((name) => priced.has(name)),
+    ...ordered.filter((name) => !priced.has(name)),
+  ].slice(0, 6);
 }
 
-function ChangePill({ change_pct, label = null }) {
+function ChangePill({ change_pct, label = null, compact = false }) {
   const text = formatChange(change_pct);
   if (!text) {
     return null;
@@ -102,9 +112,23 @@ function ChangePill({ change_pct, label = null }) {
   const arrow = change_pct > 0 ? '↑' : change_pct < 0 ? '↓' : '→';
 
   return (
-    <span className={`mandi-change-pill is-${tone}`}>
-      {arrow} {text}{label ? ` ${label}` : ''}
+    <span className={`mandi-change-pill is-${tone}${compact ? ' is-compact' : ''}`}>
+      <span className="mandi-change-arrow" aria-hidden="true">{arrow}</span>
+      <span>{text}{label ? ` ${label}` : ''}</span>
     </span>
+  );
+}
+
+function CropSquareContent({ crop, language, modal = null, change_pct = null, show_price = false }) {
+  return (
+    <>
+      <CropMark crop={crop} size={show_price ? 34 : 36} shape="circle" />
+      <strong>{localizeCropName(crop, language)}</strong>
+      {show_price && (
+        <span className="mandi-crop-square-price">{formatRate(modal)}</span>
+      )}
+      <ChangePill change_pct={change_pct} compact />
+    </>
   );
 }
 
@@ -218,8 +242,13 @@ function MandiBoardBody({
               className={`mandi-crop-square${is_active ? ' is-active' : ''}`}
               onClick={() => on_select_crop(row.crop)}
             >
-              <CropMark crop={row.crop} size={36} shape="circle" />
-              <strong>{localizeCropName(row.crop, language)}</strong>
+              <CropSquareContent
+                crop={row.crop}
+                language={language}
+                modal={row.modal}
+                change_pct={row.change_pct}
+                show_price
+              />
             </button>
           );
         })}
@@ -620,10 +649,13 @@ function MandiMarketSection({
                 style={{ animationDelay: `${index * 60}ms` }}
                 onClick={() => openMarket(row.crop)}
               >
-                <CropMark crop={row.crop} size={38} shape="circle" />
-                <strong>{localizeCropName(row.crop, app_language)}</strong>
-                <span className="mandi-crop-square-price">{formatRate(row.modal)}</span>
-                <ChangePill change_pct={row.change_pct} />
+                <CropSquareContent
+                  crop={row.crop}
+                  language={app_language}
+                  modal={row.modal}
+                  change_pct={row.change_pct}
+                  show_price
+                />
               </button>
             ))}
           </div>

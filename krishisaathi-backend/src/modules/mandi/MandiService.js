@@ -8,7 +8,8 @@ const { getReferenceRate } = require('./reference_rates');
 const { getAgmarknetStateQueries } = require('./agmarknet_aliases');
 
 const CACHE_TTL_SECONDS = 1800;
-const CACHE_VERSION = 'v4';
+const HISTORY_TTL_SECONDS = 60 * 60 * 24 * 14;
+const CACHE_VERSION = 'v5';
 const DATA_GOV_RESOURCE_ID = process.env.DATA_GOV_MANDI_RESOURCE_ID
   || '9ef84268-d588-465a-a308-a864a43d0070';
 
@@ -182,6 +183,7 @@ class MandiService {
         }
       }
 
+      payload = await this.#enrichWithHistory(cache_key, payload);
       await this.#writeCache(cache_key, payload);
     }
 
@@ -288,7 +290,8 @@ class MandiService {
     const url = new URL(`https://api.data.gov.in/resource/${DATA_GOV_RESOURCE_ID}`);
     url.searchParams.set('api-key', process.env.DATA_GOV_API_KEY);
     url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '100');
+    // Pull enough rows that a few distinct arrival days usually show up for trend arrows.
+    url.searchParams.set('limit', '300');
     url.searchParams.set('filters[commodity]', commodity);
 
     if (state) {
@@ -301,7 +304,7 @@ class MandiService {
 
     const response = await fetch(url.toString(), {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {
@@ -383,6 +386,14 @@ class MandiService {
   }
 
   #buildTrend(markets = []) {
+    const points = this.#pointsFromMarkets(markets);
+    return {
+      points,
+      change_pct: this.#changeFromPoints(points),
+    };
+  }
+
+  #pointsFromMarkets(markets = []) {
     const by_date = new Map();
 
     markets.forEach((item) => {
@@ -395,22 +406,86 @@ class MandiService {
       by_date.get(item.date).push(item.modal);
     });
 
-    const points = [...by_date.entries()]
+    return [...by_date.entries()]
       .map(([date, values]) => ({ date, modal: this.#median(values) }))
       .filter((point) => point.modal != null)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-7);
+  }
 
-    let change_pct = null;
-    if (points.length >= 2) {
-      const previous = points[points.length - 2].modal;
-      const current = points[points.length - 1].modal;
-      if (previous > 0) {
-        change_pct = Math.round(((current - previous) / previous) * 1000) / 10;
-      }
+  #changeFromPoints(points = []) {
+    if (points.length < 2) {
+      return null;
     }
 
-    return { points, change_pct };
+    const previous = points[points.length - 2].modal;
+    const current = points[points.length - 1].modal;
+
+    if (!(previous > 0) || current == null) {
+      return null;
+    }
+
+    return Math.round(((current - previous) / previous) * 1000) / 10;
+  }
+
+  /**
+   * AGMARKNET often returns only today's row. Keep a short Redis history of daily
+   * medians so day-over-day arrows still appear on later visits.
+   */
+  async #enrichWithHistory(cache_key, payload) {
+    if (!payload || payload.source === 'unavailable' || payload.source === 'reference') {
+      return payload;
+    }
+
+    const modal = payload.summary?.modal_median
+      || payload.summary?.modal_avg
+      || null;
+    const as_of = payload.as_of || null;
+    const live_points = payload.trend?.points || [];
+    const history_key = `${cache_key}:history`;
+    const stored = await this.#readCache(history_key);
+    const merged = this.#mergeTrendPoints([
+      ...(Array.isArray(stored?.points) ? stored.points : []),
+      ...live_points,
+      ...(as_of && modal > 0 ? [{ date: as_of, modal }] : []),
+    ]);
+    const change_pct = this.#changeFromPoints(merged);
+
+    await this.#writeHistory(history_key, merged);
+
+    return {
+      ...payload,
+      trend: { points: merged, change_pct },
+      change_pct,
+    };
+  }
+
+  #mergeTrendPoints(points = []) {
+    const by_date = new Map();
+
+    points.forEach((point) => {
+      if (!point?.date || !(point.modal > 0)) {
+        return;
+      }
+      by_date.set(point.date, { date: point.date, modal: Number(point.modal) });
+    });
+
+    return [...by_date.values()]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-7);
+  }
+
+  async #writeHistory(history_key, points) {
+    try {
+      await redis.set(
+        history_key,
+        JSON.stringify({ points }),
+        'EX',
+        HISTORY_TTL_SECONDS,
+      );
+    } catch (error) {
+      console.warn('[mandi] history write failed:', error.message);
+    }
   }
 
   #summarizeMarkets(markets) {

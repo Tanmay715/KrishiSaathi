@@ -8392,15 +8392,14 @@ html:has(.auth-page) #root {
 }
 
 .mandi-market-section .mandi-crop-square {
-  min-height: 108px;
-  gap: 5px;
+  min-height: 118px;
+  gap: 4px;
   padding: 12px 8px;
   border-radius: 18px;
 }
 
 .mandi-market-section .mandi-crop-square .mandi-change-pill {
-  font-size: 0.66rem;
-  padding: 1px 7px;
+  font-size: 0.68rem;
 }
 
 .mandi-glance-place {
@@ -8525,13 +8524,26 @@ html:has(.auth-page) #root {
 .mandi-change-pill {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
+}
+
+.mandi-change-pill.is-compact {
+  margin-top: 2px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+}
+
+.mandi-change-arrow {
+  font-size: 0.85em;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .mandi-change-pill.is-up {
@@ -8592,12 +8604,12 @@ html:has(.auth-page) #root {
 
 .mandi-crop-square {
   aspect-ratio: auto;
-  min-height: 76px;
+  min-height: 112px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   padding: 10px 8px;
   border: 1.5px solid rgba(30, 92, 64, 0.12);
   border-radius: 16px;
