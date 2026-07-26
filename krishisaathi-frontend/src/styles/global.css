@@ -4178,6 +4178,29 @@ html:has(.auth-page) #root {
   color: var(--color-text);
 }
 
+.voice-command-companion {
+  margin: 0;
+  max-width: 22rem;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(47, 158, 95, 0.1), rgba(47, 158, 95, 0.04));
+  border: 1px solid rgba(47, 158, 95, 0.16);
+  text-align: center;
+}
+
+.voice-command-companion p {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.45;
+  color: var(--color-primary-dark);
+}
+
+.voice-command-companion p + p {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
 .voice-command-live {
   margin: 0;
   max-width: 22rem;

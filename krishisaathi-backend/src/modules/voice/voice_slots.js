@@ -81,10 +81,10 @@ const UNKNOWN_PROMPT = {
 };
 
 const HELP_TEXT = {
-  en: 'I am your farm companion. Tell me things like "spent 800 on urea", "add a farm in Meerut", '
-    + '"how much did I spend on diesel in July", or "remind me to irrigate on Monday".',
-  hi: 'मैं आपका खेती साथी हूँ। मुझसे ऐसे कहें: "खाद पर आठ सौ खर्च हुए", "मेरठ में नया खेत जोड़ो", '
-    + '"जुलाई में डीजल पर कितना खर्च हुआ", या "सोमवार को सिंचाई की याद दिलाना"।',
+  en: 'I am Fasalya, your farm companion. Say things like "spent 800 on urea", "add a farm in Meerut", '
+    + '"how much on diesel in July", or "remind me to irrigate Monday". I keep it short and useful.',
+  hi: 'मैं फसल्या हूँ — आपका खेती साथी। जैसे बोलें: "खाद पर आठ सौ खर्च", "मेरठ में नया खेत जोड़ो", '
+    + '"जुलाई में डीजल पर कितना खर्च", या "सोमवार को सिंचाई याद दिलाना"। कम बात, ज़्यादा मदद।',
 };
 
 const ASSISTANT_ERROR = {

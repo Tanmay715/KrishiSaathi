@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
+router.get('/companion-open', controller.companionOpen.bind(controller));
 router.post('/command', validateRequest(voice_command_schema), controller.interpret.bind(controller));
 
 module.exports = router;

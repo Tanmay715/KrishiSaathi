@@ -6,7 +6,8 @@ import { useSpeech } from '../hooks/useSpeech';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { normalizeLanguage } from '../utils/language';
 import { getQuickLogTargets } from '../services/farm_service';
-import { interpretVoiceCommand } from '../services/voice_service';
+import { getCompanionOpen, interpretVoiceCommand } from '../services/voice_service';
+import { buildCompanionOpening } from '../config/voice_personality';
 import {
   STRUCTURE_INTENTS,
   findTarget,
@@ -24,8 +25,8 @@ const INTENT_OPENERS = {
 };
 
 /**
- * The farmer's voice companion: logs money, creates farms/plots, answers questions,
- * and offers tappable options instead of a dead end when speech is unclear.
+ * The farmer's voice companion: warm on open, quiet unless useful, and always
+ * ready to interrupt a greeting the moment the farmer starts speaking.
  */
 function VoiceCommandSheet({
   is_open,
@@ -38,7 +39,15 @@ function VoiceCommandSheet({
   const { t, i18n } = useTranslation();
   const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
   const is_online = useOnlineStatus();
-  const { is_listening, is_supported, live_transcript, listen, stopListening, speak } = useSpeech(language);
+  const {
+    is_listening,
+    is_supported,
+    live_transcript,
+    listen,
+    stopListening,
+    speak,
+    stopSpeaking,
+  } = useSpeech(language);
 
   const [status, setStatus] = useState('idle');
   const [turn, setTurn] = useState(null);
@@ -47,7 +56,10 @@ function VoiceCommandSheet({
   const [target_key, setTargetKey] = useState('');
   const [typed_text, setTypedText] = useState('');
   const [error_message, setErrorMessage] = useState('');
+  const [companion_lines, setCompanionLines] = useState([]);
   const turn_ref = useRef(null);
+  const greeting_active_ref = useRef(false);
+  const session_id_ref = useRef(0);
 
   const idle_suggestions = useMemo(
     () => suggestionsForPage(page_context.page),
@@ -56,23 +68,91 @@ function VoiceCommandSheet({
 
   useEffect(() => {
     if (!is_open) {
+      greeting_active_ref.current = false;
+      stopSpeaking();
+      stopListening();
+      return undefined;
+    }
+
+    beginCompanionSession();
+    return undefined;
+  }, [is_open, page_context.page, page_context.farm_id, page_context.plot_id]);
+
+  async function beginCompanionSession() {
+    const session_id = session_id_ref.current + 1;
+    session_id_ref.current = session_id;
+    resetConversation();
+    setStatus('greeting');
+
+    getQuickLogTargets()
+      .then((response) => {
+        if (session_id_ref.current === session_id) {
+          setTargets(response.data || []);
+        }
+      })
+      .catch(() => {
+        if (session_id_ref.current === session_id) {
+          setTargets([]);
+        }
+      });
+
+    let briefing = null;
+    try {
+      const response = await getCompanionOpen({ farm_id: page_context.farm_id || undefined });
+      briefing = response.data || null;
+    } catch (_error) {
+      briefing = null;
+    }
+
+    if (session_id_ref.current !== session_id) {
       return;
     }
 
-    resetConversation();
-    getQuickLogTargets()
-      .then((response) => setTargets(response.data || []))
-      .catch(() => setTargets([]));
-  }, [is_open, page_context.page, page_context.farm_id, page_context.plot_id]);
+    const opening = buildCompanionOpening(briefing, language);
+    setCompanionLines(opening.display_lines || []);
+
+    if (!opening.speak_text) {
+      startListening();
+      return;
+    }
+
+    greeting_active_ref.current = true;
+    speak(opening.speak_text, () => {
+      if (!greeting_active_ref.current || session_id_ref.current !== session_id) {
+        return;
+      }
+      greeting_active_ref.current = false;
+      startListening();
+    });
+  }
 
   function resetConversation() {
     turn_ref.current = null;
+    greeting_active_ref.current = false;
     setStatus('idle');
     setTurn(null);
     setSaid([]);
     setTargetKey('');
     setTypedText('');
     setErrorMessage('');
+    setCompanionLines([]);
+  }
+
+  function handleMicPress() {
+    // Farmer speech always wins — interrupt the greeting and listen.
+    if (greeting_active_ref.current || status === 'greeting') {
+      greeting_active_ref.current = false;
+      stopSpeaking();
+      startListening();
+      return;
+    }
+
+    if (is_listening) {
+      stopListening();
+      return;
+    }
+
+    startListening();
   }
 
   function startListening() {
@@ -92,6 +172,8 @@ function VoiceCommandSheet({
   }
 
   function startIntent(intent) {
+    greeting_active_ref.current = false;
+    stopSpeaking();
     const seed = {
       intent,
       draft: seedDraftForIntent(intent, page_context),
@@ -125,7 +207,6 @@ function VoiceCommandSheet({
 
   function activeIntent(previous_turn) {
     const intent = previous_turn?.intent;
-    // Keep record/structure drafts sticky; let Q&A intents reclassify freely.
     if (!intent || ['unknown', 'help', 'money_query'].includes(intent)) {
       return undefined;
     }
@@ -183,7 +264,6 @@ function VoiceCommandSheet({
   function handleTypedSubmit(event) {
     event.preventDefault();
     const text = typed_text.trim();
-
     if (text) {
       setTypedText('');
       sendTranscript(text);
@@ -191,6 +271,8 @@ function VoiceCommandSheet({
   }
 
   function handleManualEntry() {
+    greeting_active_ref.current = false;
+    stopSpeaking();
     stopListening();
     on_manual_entry?.();
   }
@@ -201,13 +283,15 @@ function VoiceCommandSheet({
 
   const suggestions = turn?.suggestions?.length
     ? turn.suggestions
-    : (status === 'idle' ? idle_suggestions : []);
+    : ((status === 'idle' || status === 'greeting') ? idle_suggestions : []);
 
   return (
     <Modal
       title={t('voice_command.title')}
       subtitle={t('voice_command.subtitle')}
       on_close={() => {
+        greeting_active_ref.current = false;
+        stopSpeaking();
         stopListening();
         on_close?.();
       }}
@@ -215,7 +299,7 @@ function VoiceCommandSheet({
     >
       <div className="voice-command">
         {status === 'saved' ? (
-          <VoiceSavedState t={t} on_again={resetConversation} on_close={on_close} />
+          <VoiceSavedState t={t} on_again={beginCompanionSession} on_close={on_close} />
         ) : (
           <>
             <VoicePrompt
@@ -224,7 +308,8 @@ function VoiceCommandSheet({
               turn={turn}
               is_listening={is_listening}
               live_transcript={live_transcript}
-              on_mic={is_listening ? stopListening : startListening}
+              companion_lines={companion_lines}
+              on_mic={handleMicPress}
             />
 
             {turn?.answer && (status === 'answered' || status === 'listening') && (
@@ -262,7 +347,7 @@ function VoiceCommandSheet({
                 target_key={target_key}
                 on_target_change={setTargetKey}
                 on_save={handleSave}
-                on_redo={resetConversation}
+                on_redo={beginCompanionSession}
               />
             )}
 
@@ -311,9 +396,18 @@ function seedDraftForIntent(intent, context) {
   return {};
 }
 
-function VoicePrompt({ t, status, turn, is_listening, live_transcript = '', on_mic }) {
+function VoicePrompt({
+  t,
+  status,
+  turn,
+  is_listening,
+  live_transcript = '',
+  companion_lines = [],
+  on_mic,
+}) {
   const status_labels = {
     idle: t('voice_command.tap_hint'),
+    greeting: t('voice_command.greeting_status'),
     listening: t('voice.listening'),
     thinking: t('voice_command.thinking'),
     asking: turn?.question || t(INTENT_OPENERS[turn?.intent] || 'voice_command.thinking'),
@@ -321,11 +415,12 @@ function VoicePrompt({ t, status, turn, is_listening, live_transcript = '', on_m
     review: t('voice_command.confirm_hint'),
     saving: t('common.loading'),
   };
+  const is_greeting = status === 'greeting';
 
   return (
     <div className="voice-command-stage">
-      <div className={`voice-command-mic-wrap${is_listening ? ' is-listening' : ''}`}>
-        {is_listening && (
+      <div className={`voice-command-mic-wrap${is_listening || is_greeting ? ' is-listening' : ''}`}>
+        {(is_listening || is_greeting) && (
           <>
             <span className="voice-command-ring" aria-hidden="true" />
             <span className="voice-command-ring" aria-hidden="true" />
@@ -340,7 +435,7 @@ function VoicePrompt({ t, status, turn, is_listening, live_transcript = '', on_m
         )}
         <button
           type="button"
-          className={`voice-command-mic${is_listening ? ' is-listening' : ''}`}
+          className={`voice-command-mic${is_listening || is_greeting ? ' is-listening' : ''}`}
           onClick={on_mic}
           disabled={status === 'thinking' || status === 'saving'}
           aria-label={t('voice.tap_to_speak')}
@@ -349,13 +444,24 @@ function VoicePrompt({ t, status, turn, is_listening, live_transcript = '', on_m
           <MicIcon />
         </button>
       </div>
+
       <p className="voice-command-status">{status_labels[status]}</p>
+
+      {companion_lines.length > 0 && (is_greeting || status === 'listening') && !live_transcript && (
+        <div className="voice-command-companion" aria-live="polite">
+          {companion_lines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      )}
+
       {(is_listening || status === 'listening') && (
         <p className={`voice-command-live${live_transcript ? '' : ' is-waiting'}`} aria-live="polite">
           {live_transcript || t('voice_command.live_waiting')}
           {live_transcript ? <span className="voice-command-live-caret" aria-hidden="true" /> : null}
         </p>
       )}
+
       {status === 'idle' && (
         <p className="voice-command-examples">{t('voice_command.examples')}</p>
       )}

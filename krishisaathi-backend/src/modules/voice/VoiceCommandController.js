@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const VoiceCommandService = require('./VoiceCommandService');
+const VoiceCompanionService = require('./VoiceCompanionService');
 const ApiResponse = require('../../utils/ApiResponse');
 
 class VoiceCommandController {
@@ -7,6 +8,17 @@ class VoiceCommandController {
     try {
       const turn = await VoiceCommandService.interpret(req.user.id, req.body);
       return ApiResponse.success(res, turn);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async companionOpen(req, res, next) {
+    try {
+      const briefing = await VoiceCompanionService.getOpenBriefing(req.user.id, {
+        farm_id: req.query.farm_id || null,
+      });
+      return ApiResponse.success(res, briefing);
     } catch (error) {
       return next(error);
     }
