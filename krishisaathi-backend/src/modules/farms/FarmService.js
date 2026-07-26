@@ -16,12 +16,15 @@ class FarmService {
       return [];
     }
 
-    const plot_counts = await db('plots')
-      .select('farm_id')
-      .count('id as plot_count')
-      .whereIn('farm_id', farm_ids)
-      .where('is_active', true)
-      .groupBy('farm_id');
+    const [plot_counts, status_map] = await Promise.all([
+      db('plots')
+        .select('farm_id')
+        .count('id as plot_count')
+        .whereIn('farm_id', farm_ids)
+        .where('is_active', true)
+        .groupBy('farm_id'),
+      this.#farmStatusMap(user_id, farm_ids),
+    ]);
 
     const count_map = Object.fromEntries(
       plot_counts.map((row) => [row.farm_id, Number(row.plot_count)]),
@@ -30,7 +33,81 @@ class FarmService {
     return farms.map((farm) => ({
       ...farm,
       plot_count: count_map[farm.id] || 0,
+      status_key: status_map[farm.id] || 'healthy',
     }));
+  }
+
+  /**
+   * One glance status per farm for the list cards.
+   * Priority: disease alert > irrigation due > healthy.
+   */
+  async #farmStatusMap(user_id, farm_ids) {
+    const status_map = Object.fromEntries(farm_ids.map((id) => [id, 'healthy']));
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const due_before = new Date();
+    due_before.setHours(23, 59, 59, 999);
+    due_before.setDate(due_before.getDate() + 1);
+
+    const [reminders, scans] = await Promise.all([
+      db('farm_reminders')
+        .where({ user_id, status: 'pending', type: 'irrigation' })
+        .whereIn('farm_id', farm_ids)
+        .andWhere('due_at', '<=', due_before)
+        .select('farm_id'),
+      db('disease_scans')
+        .where({ user_id })
+        .whereIn('farm_id', farm_ids)
+        .andWhere('created_at', '>=', since)
+        .select('farm_id', 'confidence', 'diagnosis_json')
+        .orderBy('created_at', 'desc'),
+    ]);
+
+    reminders.forEach((row) => {
+      if (row.farm_id) {
+        status_map[row.farm_id] = 'irrigation';
+      }
+    });
+
+    // Newest scan wins — a clear/healthy re-check clears the red alert.
+    const latest_scan = new Map();
+    scans.forEach((row) => {
+      if (row.farm_id && !latest_scan.has(row.farm_id)) {
+        latest_scan.set(row.farm_id, row);
+      }
+    });
+
+    latest_scan.forEach((row, farm_id) => {
+      if (this.#isDiseaseAlert(row)) {
+        status_map[farm_id] = 'disease';
+      }
+    });
+
+    return status_map;
+  }
+
+  #isDiseaseAlert(scan) {
+    let diagnosis = scan.diagnosis_json;
+
+    if (typeof diagnosis === 'string') {
+      try {
+        diagnosis = JSON.parse(diagnosis);
+      } catch (_error) {
+        return false;
+      }
+    }
+
+    const name = String(diagnosis?.disease || '').trim().toLowerCase();
+
+    if (!name) {
+      return false;
+    }
+
+    if (/(healthy|no disease|none|normal|clear|unknown|not detected|स्वस्थ|कोई रोग नहीं)/i.test(name)) {
+      return false;
+    }
+
+    const confidence = Number(scan.confidence ?? diagnosis?.confidence ?? 0);
+    return confidence >= 0.35;
   }
 
   async getQuickLogTargets(user_id) {

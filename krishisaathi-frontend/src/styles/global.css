@@ -7629,11 +7629,55 @@ html:has(.auth-page) #root {
   flex: 1;
 }
 
+.farm-hub-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
 .farm-hub-card-copy h3,
+.farm-hub-title-row h3,
 .plot-hub-title h3 {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 750;
+}
+
+.farm-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 3px 8px 3px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.farm-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.farm-status-chip.is-healthy {
+  background: #e8f7ee;
+  color: #18794a;
+}
+
+.farm-status-chip.is-irrigation {
+  background: #fff6df;
+  color: #a16207;
+}
+
+.farm-status-chip.is-disease {
+  background: #fdecea;
+  color: #b42318;
 }
 
 .farm-hub-card-copy p,

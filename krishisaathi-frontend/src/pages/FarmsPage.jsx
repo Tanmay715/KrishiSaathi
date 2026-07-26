@@ -28,6 +28,19 @@ function formatAmount(value) {
   return Number(value || 0).toLocaleString('en-IN');
 }
 
+function FarmStatusChip({ status_key = 'healthy', t }) {
+  const key = ['disease', 'irrigation', 'healthy'].includes(status_key)
+    ? status_key
+    : 'healthy';
+
+  return (
+    <span className={`farm-status-chip is-${key}`}>
+      <span className="farm-status-dot" aria-hidden="true" />
+      {t(`farms.status_${key}`)}
+    </span>
+  );
+}
+
 function FarmsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -247,7 +260,10 @@ function FarmsPage() {
                     {(farm.name || '?').trim().charAt(0).toUpperCase()}
                   </span>
                   <div className="farm-hub-card-copy">
-                    <h3>{farm.name}</h3>
+                    <div className="farm-hub-title-row">
+                      <h3>{farm.name}</h3>
+                      <FarmStatusChip status_key={farm.status_key} t={t} />
+                    </div>
                     {(farm.village || farm.district || farm.state) && (
                       <p>
                         {[farm.village, farm.district, farm.state].filter(Boolean).join(' · ')}
