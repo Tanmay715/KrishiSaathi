@@ -323,15 +323,31 @@ function VoicePrompt({ t, status, turn, is_listening, on_mic }) {
 
   return (
     <div className="voice-command-stage">
-      <button
-        type="button"
-        className={`voice-command-mic${is_listening ? ' is-listening' : ''}`}
-        onClick={on_mic}
-        disabled={status === 'thinking' || status === 'saving'}
-        aria-label={t('voice.tap_to_speak')}
-      >
-        <MicIcon />
-      </button>
+      <div className={`voice-command-mic-wrap${is_listening ? ' is-listening' : ''}`}>
+        {is_listening && (
+          <>
+            <span className="voice-command-ring" aria-hidden="true" />
+            <span className="voice-command-ring" aria-hidden="true" />
+            <span className="voice-command-ring" aria-hidden="true" />
+            <div className="voice-command-wave-side is-left" aria-hidden="true">
+              <span /><span /><span />
+            </div>
+            <div className="voice-command-wave-side is-right" aria-hidden="true">
+              <span /><span /><span />
+            </div>
+          </>
+        )}
+        <button
+          type="button"
+          className={`voice-command-mic${is_listening ? ' is-listening' : ''}`}
+          onClick={on_mic}
+          disabled={status === 'thinking' || status === 'saving'}
+          aria-label={t('voice.tap_to_speak')}
+          aria-pressed={is_listening}
+        >
+          <MicIcon />
+        </button>
+      </div>
       <p className="voice-command-status">{status_labels[status]}</p>
       {status === 'idle' && (
         <p className="voice-command-examples">{t('voice_command.examples')}</p>
