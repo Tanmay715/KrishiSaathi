@@ -108,6 +108,7 @@ class DiseaseService {
         model: getOpenAiModel(),
         response_format: { type: 'json_object' },
         temperature: 0.2,
+        max_tokens: 400,
         messages: [
           {
             role: 'system',

@@ -7,7 +7,9 @@ const { detectMessageLanguage } = require('../../utils/detect_message_language')
 const WeatherService = require('../weather/WeatherService');
 const KccService = require('./KccService');
 
-const MAX_HISTORY_MESSAGES = 20;
+const MAX_HISTORY_MESSAGES = 8;
+const MAX_REPLY_TOKENS = 350;
+const KCC_HINT = /pest|disease|कीट|रोग|spray|स्प्रे|fertilizer|खाद|यूरिया|scheme|योजना|subsidy|सिंचाई|irrigation|फसल|crop|wheat|गेह|धान|rice|leaf|पत्ती/i;
 
 class AssistantService {
   async getThread(user_id) {
@@ -40,7 +42,9 @@ class AssistantService {
     const thread = await this.#getOrCreateThread(user_id);
     const user = await db('users').where({ id: user_id }).first();
     const context_payload = await this.#buildFarmContext(user_id, user, scope);
-    const government = await this.#lookupGovernmentAdvice(trimmed, context_payload, user);
+    const government = KCC_HINT.test(trimmed)
+      ? await this.#lookupGovernmentAdvice(trimmed, context_payload, user)
+      : null;
     const history = await this.#getRecentHistory(thread.id);
 
     await this.#saveMessage(thread.id, 'user', trimmed);
@@ -72,6 +76,7 @@ class AssistantService {
           { role: 'user', content: message },
         ],
         temperature: 0.4,
+        max_tokens: MAX_REPLY_TOKENS,
       });
     } catch (error) {
       console.error('[assistant] OpenAI error:', error.message);
@@ -185,7 +190,7 @@ class AssistantService {
       farms_query = farms_query.andWhere({ id: scope.farm_id });
     }
 
-    const farms = await farms_query.limit(5);
+    const farms = await farms_query.limit(3);
     const farm_ids = farms.map((farm) => farm.id);
 
     let active_crops = [];
@@ -212,7 +217,7 @@ class AssistantService {
           'plots.farm_id',
           'plots.area as plot_area',
         )
-        .limit(10);
+        .limit(6);
 
       if (scope.plot_id) {
         crops_query = crops_query.andWhere('plots.id', scope.plot_id);
@@ -228,8 +233,16 @@ class AssistantService {
         const current_stage = stages.find((stage) => !stage.completed)?.name || null;
 
         return {
-          ...crop,
-          lifecycle_stages: stages,
+          crop_cycle_id: crop.crop_cycle_id,
+          crop_name: crop.crop_name,
+          season_type: crop.season_type,
+          status: crop.status,
+          sowing_date: crop.sowing_date,
+          expected_harvest_date: crop.expected_harvest_date,
+          plot_id: crop.plot_id,
+          plot_name: crop.plot_name,
+          farm_id: crop.farm_id,
+          plot_area: crop.plot_area,
           current_stage,
         };
       });
@@ -243,8 +256,8 @@ class AssistantService {
           }
         })
         .orderBy('expense_date', 'desc')
-        .limit(8)
-        .select('title', 'category', 'amount', 'expense_date', 'farm_id', 'plot_id', 'crop_cycle_id');
+        .limit(3)
+        .select('title', 'category', 'amount', 'expense_date', 'farm_id', 'plot_id');
 
       recent_incomes = await db('farm_incomes')
         .where({ user_id })
@@ -255,8 +268,8 @@ class AssistantService {
           }
         })
         .orderBy('income_date', 'desc')
-        .limit(5)
-        .select('title', 'category', 'amount', 'income_date', 'farm_id', 'plot_id', 'crop_cycle_id');
+        .limit(3)
+        .select('title', 'category', 'amount', 'income_date', 'farm_id', 'plot_id');
 
       const weather_farm_id = scope.farm_id || farm_ids[0];
 
@@ -296,9 +309,8 @@ class AssistantService {
       weather: weather
         ? {
           location: weather.location,
-          current: weather.current,
+          current: slimWeatherCurrent(weather.current),
           advisory: weather.advisory,
-          forecast: weather.forecast?.slice?.(0, 3) || weather.forecast,
         }
         : null,
     };
@@ -359,6 +371,20 @@ class AssistantService {
 
     return db('assistant_messages').where({ id: message_id }).first();
   }
+}
+
+function slimWeatherCurrent(current) {
+  if (!current || typeof current !== 'object') {
+    return current || null;
+  }
+
+  return {
+    temp_c: current.temp_c ?? current.temperature ?? null,
+    condition: current.condition || current.summary || null,
+    humidity: current.humidity ?? null,
+    rain_chance: current.rain_chance ?? null,
+    wind_kph: current.wind_kph ?? current.wind_speed ?? null,
+  };
 }
 
 module.exports = new AssistantService();

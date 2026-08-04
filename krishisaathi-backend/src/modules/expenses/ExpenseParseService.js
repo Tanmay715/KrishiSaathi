@@ -2,6 +2,7 @@ const db = require('../../db/connection');
 const { getOpenAiClient, getOpenAiModel } = require('../../lib/openai_client');
 const { assertRateLimit } = require('../../utils/rate_limit');
 const ApiError = require('../../utils/ApiError');
+const { tryLocalInterpret, parseSpokenAmount, matchKnownItem } = require('../voice/local_voice_parse');
 
 const EXPENSE_CATEGORIES = [
   'seed',
@@ -21,6 +22,7 @@ class ExpenseParseService {
     if (!farm) {
       throw ApiError.notFound('Farm not found');
     }
+
     await assertRateLimit({
       key: `expense_parse:${user_id}`,
       limit: 30,
@@ -34,9 +36,46 @@ class ExpenseParseService {
       throw ApiError.badRequest('Transcript is required');
     }
 
+    const local = this.#tryLocalExpense(trimmed);
+    if (local) {
+      return { ...local, plot_id, crop_cycle_id };
+    }
+
+    return this.#askModel(trimmed, { plot_id, crop_cycle_id });
+  }
+
+  #tryLocalExpense(transcript) {
+    const local = tryLocalInterpret(transcript, {});
+    const item = matchKnownItem(transcript);
+    const amount = parseSpokenAmount(transcript);
+    const is_expense = local?.intent === 'expense' || (item && amount);
+
+    if (!is_expense) {
+      return null;
+    }
+
+    const fields = local?.intent === 'expense' ? (local.fields || {}) : {};
+    const category = EXPENSE_CATEGORIES.includes(fields.category)
+      ? fields.category
+      : (item?.category || 'other');
+
+    return {
+      title: String(fields.title || item?.title || '').slice(0, 150)
+        || (category !== 'other' ? category : 'Expense'),
+      category,
+      quantity: null,
+      unit: null,
+      amount: fields.amount || amount,
+      expense_date: fields.date || new Date().toISOString().slice(0, 10),
+      notes: null,
+      confidence: 0.8,
+      transcript,
+    };
+  }
+
+  async #askModel(trimmed, { plot_id, crop_cycle_id }) {
     const openai = getOpenAiClient();
     const today = new Date().toISOString().slice(0, 10);
-
     let completion;
 
     try {
@@ -44,6 +83,7 @@ class ExpenseParseService {
         model: getOpenAiModel(),
         response_format: { type: 'json_object' },
         temperature: 0.1,
+        max_tokens: 180,
         messages: [
           {
             role: 'system',

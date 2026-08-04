@@ -15,6 +15,7 @@ const {
 const { matchTargetFromSpeech } = require('./target_matcher');
 const { summarizeMoney, formatMoneyAnswer } = require('./money_query');
 const { sanitizeStructureName, parseSpokenArea } = require('./structure_parse');
+const { tryLocalInterpret } = require('./local_voice_parse');
 
 const RECORD_INTENTS = ['expense', 'income', 'reminder'];
 const STRUCTURE_INTENTS = ['create_farm', 'create_plot'];
@@ -26,6 +27,7 @@ const EXPENSE_CATEGORIES = [
 const INCOME_CATEGORIES = ['harvest', 'sale', 'subsidy', 'other'];
 const REMINDER_TYPES = ['irrigation', 'fertilizer', 'pesticide', 'harvest', 'weather', 'custom'];
 const MAX_TARGETS_IN_PROMPT = 25;
+const MAX_VOICE_TOKENS = 220;
 
 /**
  * The farmer's voice companion. It logs money and reminders, creates farms/plots,
@@ -49,7 +51,7 @@ class VoiceCommandService {
     const reply_language = this.#replyLanguage(language, spoken);
     const targets = await FarmService.getQuickLogTargets(user_id);
     const seeded_draft = this.#seedDraftFromContext(draft, context, targets);
-    const parsed = await this.#askModel(spoken, {
+    const parsed = await this.#resolveParse(spoken, {
       draft: seeded_draft,
       intent,
       targets,
@@ -348,6 +350,21 @@ class VoiceCommandService {
     return preferred?.target_key || null;
   }
 
+  async #resolveParse(spoken, options) {
+    const local = tryLocalInterpret(spoken, {
+      intent: options.intent,
+      draft: options.draft,
+      targets: options.targets,
+      context: options.context,
+    });
+
+    if (local) {
+      return local;
+    }
+
+    return this.#askModel(spoken, options);
+  }
+
   async #askModel(spoken, { draft, intent, targets, reply_language, context }) {
     const openai = getOpenAiClient();
     let completion;
@@ -357,6 +374,7 @@ class VoiceCommandService {
         model: getOpenAiModel(),
         response_format: { type: 'json_object' },
         temperature: 0.1,
+        max_tokens: MAX_VOICE_TOKENS,
         messages: [
           {
             role: 'system',
